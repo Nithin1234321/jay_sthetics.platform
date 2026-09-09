@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useState } from "react";
+import { ChangeEvent, FormEvent, useEffect, useState } from "react";
 import { api, apiBlob } from "./lib/api";
 import { downloadExcel } from "./lib/excel";
 
@@ -15,6 +15,60 @@ const fallback:Program[]=[
 const loadUser=()=>{try{return JSON.parse(localStorage.getItem("user")||"null") as User|null}catch{return null}};
 const money=(paise:number)=>`₹${(paise/100).toLocaleString("en-IN")}`;
 const date=(v:string)=>new Date(v).toLocaleString();
+
+function PasswordField({
+  name = "password",
+  placeholder = "Enter your password",
+  autoComplete = "current-password",
+  minLength,
+  required = true,
+  value,
+  onChange
+}: {
+  name?: string;
+  placeholder?: string;
+  autoComplete?: string;
+  minLength?: number;
+  required?: boolean;
+  value?: string;
+  onChange?: (e:ChangeEvent<HTMLInputElement>)=>void;
+}){
+  const [showPassword,setShowPassword]=useState(false);
+
+  return <div style={{position:"relative",width:"100%"}}>
+    <input
+      name={name}
+      type={showPassword?"text":"password"}
+      placeholder={placeholder}
+      autoComplete={autoComplete}
+      minLength={minLength}
+      required={required}
+      value={value}
+      onChange={onChange}
+      style={{width:"100%",paddingRight:"72px"}}
+    />
+    <button
+      type="button"
+      onClick={()=>setShowPassword(v=>!v)}
+      aria-label={showPassword?"Hide password":"Show password"}
+      style={{
+        position:"absolute",
+        right:"12px",
+        top:"50%",
+        transform:"translateY(-50%)",
+        border:"0",
+        background:"transparent",
+        color:"inherit",
+        cursor:"pointer",
+        fontSize:"12px",
+        fontWeight:700,
+        padding:"6px"
+      }}
+    >
+      {showPassword?"HIDE":"SHOW"}
+    </button>
+  </div>;
+}
 
 export default function App(){
   const [programs,setPrograms]=useState<Program[]>(fallback);
@@ -147,8 +201,8 @@ export default function App(){
     </main>
     <footer><div className="brand"><b>JAY</b><span>AESTHETICS</span></div><span>© 2026 Jay Aesthetics</span></footer>
     {modal&&<div className="modal" onMouseDown={e=>e.target===e.currentTarget&&setModal(null)}><div className="modalCard"><button className="close" onClick={()=>setModal(null)}>×</button>
-      {modal==="login"&&<><div className="modalAuthHead"><span>WELCOME BACK</span><h2>Client Login</h2><p>Access your training, nutrition, progress and coaching support.</p></div><form className="authForm compact" onSubmit={login}><label>Email address<input name="email" type="email" placeholder="name@example.com" autoComplete="email" required/></label><label>Password<input name="password" type="password" placeholder="Enter your password" autoComplete="current-password" required/></label><button className="btn red full authSubmit">Sign In</button></form><div className="modalLoginFooter"><span>Don't have an account?</span><button onClick={()=>{setModal(null);location.href="/programs"}}>View programmes</button></div></>}
-      {modal==="signup"&&<><h2>Start Coaching</h2>{selectedProgram&&<div className="selectedPlanMini"><small>SELECTED PROGRAMME</small><b>{selectedProgram.name}</b><span>{money(selectedProgram.pricePaise)}</span></div>}<form onSubmit={register}><input name="fullName" placeholder="Full name" required/><input name="email" type="email" placeholder="Email" required/><input name="phone" placeholder="Phone" required/><input name="password" type="password" minLength={8} placeholder="Create password" required/><button className="btn red full">Create Account</button></form>{selectedProgram&&<div className="modalLoginFooter"><span>Already have an account?</span><button onClick={()=>setModal("login")}>Sign in instead</button></div>}</>}
+      {modal==="login"&&<><div className="modalAuthHead"><span>WELCOME BACK</span><h2>Client Login</h2><p>Access your training, nutrition, progress and coaching support.</p></div><form className="authForm compact" onSubmit={login}><label>Email address<input name="email" type="email" placeholder="name@example.com" autoComplete="email" required/></label><label>Password<PasswordField placeholder="Enter your password" autoComplete="current-password"/></label><div className="authOptions"><span>Your account is protected</span><a href="/forgot-password">Forgot password?</a></div><button className="btn red full authSubmit">Sign In</button></form><div className="modalLoginFooter"><span>Don't have an account?</span><button onClick={()=>{setModal(null);location.href="/programs"}}>View programmes</button></div></>}
+      {modal==="signup"&&<><h2>Start Coaching</h2>{selectedProgram&&<div className="selectedPlanMini"><small>SELECTED PROGRAMME</small><b>{selectedProgram.name}</b><span>{money(selectedProgram.pricePaise)}</span></div>}<form onSubmit={register}><input name="fullName" placeholder="Full name" required/><input name="email" type="email" placeholder="Email" required/><input name="phone" placeholder="Phone" required/><PasswordField placeholder="Create password" autoComplete="new-password" minLength={8}/><button className="btn red full">Create Account</button></form>{selectedProgram&&<div className="modalLoginFooter"><span>Already have an account?</span><button onClick={()=>setModal("login")}>Sign in instead</button></div>}</>}
       {modal==="call"&&<><div className="modalAuthHead"><span>CONSULTATION</span><h2>Schedule a Call</h2><p>Talk with Jay before choosing your coaching programme. Times are shown in India Standard Time (IST).</p></div><form className="authForm compact" onSubmit={schedulePublicCall}><label>Full name<input name="fullName" required/></label><label>Email<input name="email" type="email" required/></label><label>Phone<input name="phone" required/></label><div className="formGrid"><label>Date<input name="date" type="date" required/></label><label>Time (IST)<input name="time" type="time" required/></label></div><label>What do you want to discuss?<textarea name="reason"/></label><button className="btn red full">Request Call</button></form></>}
       {modal==="message"&&<><div className="modalAuthHead"><span>CONTACT JAY</span><h2>Send a Message</h2><p>Leave your details and Jay can follow up.</p></div><form className="authForm compact" onSubmit={submitLead}><label>Full name<input name="fullName" required/></label><label>Email<input name="email" type="email" required/></label><label>Phone<input name="phone"/></label><label>Goal<input name="goal" placeholder="e.g. fat loss / muscle gain"/></label><label>Message<textarea name="message" required/></label><button className="btn red full">Send Message</button></form></>}
     </div></div>}
@@ -186,7 +240,7 @@ function ForgotPassword(){
   const [email,setEmail]=useState(""); const [code,setCode]=useState(""); const [password,setPassword]=useState(""); const [step,setStep]=useState<1|2>(1); const [msg,setMsg]=useState("");
   async function request(e:FormEvent){e.preventDefault();try{const r=await api<any>("/auth/password/request",{method:"POST",body:JSON.stringify({email})});setMsg(`${r.message}${r.devCode?` Test code: ${r.devCode}`:""}`);setStep(2)}catch(e:any){setMsg(e.message)}}
   async function reset(e:FormEvent){e.preventDefault();try{const r=await api<any>("/auth/password/reset",{method:"POST",body:JSON.stringify({email,code,password})});setMsg(r.message);setTimeout(()=>location.href="/dashboard",900)}catch(e:any){setMsg(e.message)}}
-  return <div className="authPage"><div className="authVisual"><div className="authVisualShade"></div><a className="brand authBrand" href="/"><b>JAY</b><span>AESTHETICS</span></a><div className="authVisualCopy"><p className="eyebrow">SECURE ACCOUNT <i>RECOVERY.</i></p><h1>RESET.<br/><span>RETURN.</span></h1><p>Recover your coaching account securely with a one-time verification code.</p></div></div><div className="authPanel"><div className="authPanelInner"><div className="authHeader"><span className="authKicker">ACCOUNT SECURITY</span><h2>Reset Password</h2><p>{step===1?"Enter the email used for your coaching account.":"Enter your verification code and choose a new password."}</p></div>{msg&&<div className="authError">{msg}</div>}{step===1?<form className="authForm" onSubmit={request}><label>Email address<input type="email" value={email} onChange={e=>setEmail(e.target.value)} required/></label><button className="btn red authSubmit">Send Verification Code</button></form>:<form className="authForm" onSubmit={reset}><label>Verification code<input value={code} onChange={e=>setCode(e.target.value)} inputMode="numeric" maxLength={6} required/></label><label>New password<input type="password" value={password} onChange={e=>setPassword(e.target.value)} minLength={8} required/></label><button className="btn red authSubmit">Update Password</button></form>}<a className="authTextLink" href="/dashboard">Back to sign in</a></div></div></div>;
+  return <div className="authPage"><div className="authVisual"><div className="authVisualShade"></div><a className="brand authBrand" href="/"><b>JAY</b><span>AESTHETICS</span></a><div className="authVisualCopy"><p className="eyebrow">SECURE ACCOUNT <i>RECOVERY.</i></p><h1>RESET.<br/><span>RETURN.</span></h1><p>Recover your coaching account securely with a one-time verification code.</p></div></div><div className="authPanel"><div className="authPanelInner"><div className="authHeader"><span className="authKicker">ACCOUNT SECURITY</span><h2>Reset Password</h2><p>{step===1?"Enter the email used for your coaching account.":"Enter your verification code and choose a new password."}</p></div>{msg&&<div className="authError">{msg}</div>}{step===1?<form className="authForm" onSubmit={request}><label>Email address<input type="email" value={email} onChange={e=>setEmail(e.target.value)} required/></label><button className="btn red authSubmit">Send Verification Code</button></form>:<form className="authForm" onSubmit={reset}><label>Verification code<input value={code} onChange={e=>setCode(e.target.value)} inputMode="numeric" maxLength={6} required/></label><label>New password<PasswordField value={password} onChange={e=>setPassword(e.target.value)} placeholder="Minimum 8 characters" autoComplete="new-password" minLength={8}/></label><button className="btn red authSubmit">Update Password</button></form>}<a className="authTextLink" href="/dashboard">Back to sign in</a></div></div></div>;
 }
 
 function AccessGate({title,login,notice}:{title:string;login:(e:FormEvent<HTMLFormElement>)=>void;notice?:string}){
@@ -218,7 +272,7 @@ function AccessGate({title,login,notice}:{title:string;login:(e:FormEvent<HTMLFo
             <input name="email" type="email" placeholder="name@example.com" autoComplete="email" required/>
           </label>
           <label>Password
-            <input name="password" type="password" placeholder="Enter your password" autoComplete="current-password" required/>
+            <PasswordField placeholder="Enter your password" autoComplete="current-password"/>
           </label>
           {isCoach&&<label>Admin verification code <input name="adminCode" inputMode="numeric" maxLength={6} placeholder="Enter after password check"/></label>}
           <div className="authOptions">
@@ -849,11 +903,12 @@ function SignupPage({program,register,login,notice}:{program:Program|null;regist
             <label>Full name<input name="fullName" placeholder="Your full name" required/></label>
             <label>Email address<input name="email" type="email" placeholder="name@example.com" required/></label>
             <label>Phone number<input name="phone" placeholder="+91..." required/></label>
-            <label>Create password<input name="password" type="password" minLength={8} placeholder="Minimum 8 characters" required/></label>
+            <label>Create password<PasswordField placeholder="Minimum 8 characters" autoComplete="new-password" minLength={8}/></label>
             <button className="btn red authSubmit">Create Account & Continue</button>
           </form>:<form className="authForm" onSubmit={login}>
             <label>Email address<input name="email" type="email" placeholder="name@example.com" required/></label>
-            <label>Password<input name="password" type="password" placeholder="Your password" required/></label>
+            <label>Password<PasswordField placeholder="Your password" autoComplete="current-password"/></label>
+            <div className="authOptions"><span>Your account is protected</span><a href="/forgot-password">Forgot password?</a></div>
             <button className="btn red authSubmit">Sign In & Continue</button>
           </form>}
           <p className="authSecurity">🔒 You will review the programme again before payment.</p>
