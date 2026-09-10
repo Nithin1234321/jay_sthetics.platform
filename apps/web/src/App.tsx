@@ -292,7 +292,18 @@ export default function App(){
       </section>
       <section className="section" id="programs"><p className="eyebrow redText">COACHING PROGRAMMES</p><h2>CHOOSE YOUR PROGRAMME</h2>
         <div className="cards">{programs.filter(p=>p.isActive!==false).map((p,i)=><article className="card" key={p.id}>
-          <img src={i<2?"/assets/jay-stage-1.jpeg":"/assets/jay-stage-2.jpeg"} alt={p.name}/>
+          <img
+            src={
+              p.slug === "natural-6-months"
+                ? "/programs/natural-6m.jpeg"
+                : p.slug === "enhanced-6-months"
+                  ? "/programs/enhanced-6m.jpeg"
+                  : p.slug.includes("natural")
+                    ? "/assets/jay-stage-1.jpeg"
+                    : "/assets/jay-stage-2.jpeg"
+            }
+            alt={p.name}
+          />
           <div className="cardBody"><div className="pill">{p.name.includes("Natural")?"NATURAL":"ENHANCED"}</div><h3>{p.name}</h3><p>{p.description}</p><strong>{money(p.pricePaise)}</strong><button className="btn red full" onClick={()=>chooseProgram(p)}>Join Coaching</button></div>
         </article>)}</div>
       </section>
