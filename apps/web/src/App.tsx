@@ -169,7 +169,7 @@ export default function App(){
 
   return <div className="publicPage">
     <header>
-      <a className="brand" href="/"><b>JAY</b><span>AESTHETICS</span></a>
+      <a className="brand" href="/"><b>jay.</b><span>__sthetics</span></a>
       <nav><a href="#home">Home</a><a href="#about">About Jay</a><a href="/programs">Programs</a><a href="#contact">Contact</a></nav>
       <div className="actions">{user?.role==="CLIENT"?<a className="btn ghost" href="/dashboard">My Dashboard</a>:<button className="btn ghost" onClick={()=>setModal("login")}>Client Login</button>}<a className="btn red" href="/programs">Get Started</a></div>
     </header>
@@ -177,7 +177,7 @@ export default function App(){
     <main>
       <section className="hero" id="home"><div className="heroInner">
         <p className="eyebrow">TRANSFORM YOUR <i>BODY.</i><br/>ELEVATE YOUR <i>LIFE.</i></p>
-        <h1>JAY<br/><span>AESTHETICS</span></h1><h2>Online Coaching. Real Results.</h2>
+        <h1>jay.<br/><span>__sthetics</span></h1><h2>Online Coaching. Real Results.</h2>
         <p className="muted">Personalized training, nutrition, weekly check-ins and direct coaching support in one platform.</p>
         <div className="heroButtons"><a className="btn red" href="/programs">View Coaching →</a><button className="btn ghost" onClick={()=>setModal("call")}>Schedule a Call</button></div>
       </div></section>
@@ -199,7 +199,7 @@ export default function App(){
       </section>
       <section className="cta" id="contact"><div><h2>READY TO TRANSFORM?</h2><p>Choose your programme or speak with Jay before joining.</p><a className="btn red" href="/programs">Choose Programme</a><button className="btn ghost" onClick={()=>setModal("call")}>Schedule a Call</button><button className="btn ghost" onClick={()=>setModal("message")}>Message Jay</button></div></section>
     </main>
-    <footer><div className="brand"><b>JAY</b><span>AESTHETICS</span></div><span>© 2026 Jay Aesthetics</span></footer>
+    <footer><div className="brand"><b>jay.</b><span>__sthetics</span></div><span>© 2026 jay.__sthetics</span></footer>
     {modal&&<div className="modal" onMouseDown={e=>e.target===e.currentTarget&&setModal(null)}><div className="modalCard"><button className="close" onClick={()=>setModal(null)}>×</button>
       {modal==="login"&&<><div className="modalAuthHead"><span>WELCOME BACK</span><h2>Client Login</h2><p>Access your training, nutrition, progress and coaching support.</p></div><form className="authForm compact" onSubmit={login}><label>Email address<input name="email" type="email" placeholder="name@example.com" autoComplete="email" required/></label><label>Password<PasswordField placeholder="Enter your password" autoComplete="current-password"/></label><div className="authOptions"><span>Your account is protected</span><a href="/forgot-password">Forgot password?</a></div><button className="btn red full authSubmit">Sign In</button></form><div className="modalLoginFooter"><span>Don't have an account?</span><button onClick={()=>{setModal(null);location.href="/programs"}}>View programmes</button></div></>}
       {modal==="signup"&&<><h2>Start Coaching</h2>{selectedProgram&&<div className="selectedPlanMini"><small>SELECTED PROGRAMME</small><b>{selectedProgram.name}</b><span>{money(selectedProgram.pricePaise)}</span></div>}<form onSubmit={register}><input name="fullName" placeholder="Full name" required/><input name="email" type="email" placeholder="Email" required/><input name="phone" placeholder="Phone" required/><PasswordField placeholder="Create password" autoComplete="new-password" minLength={8}/><button className="btn red full">Create Account</button></form>{selectedProgram&&<div className="modalLoginFooter"><span>Already have an account?</span><button onClick={()=>setModal("login")}>Sign in instead</button></div>}</>}
@@ -233,14 +233,14 @@ function VerifyEmail({session}:{session:(token:string,u:User,next?:string)=>void
       setMsg(`${r.message}${r.devCode?` Development test code: ${r.devCode}`:""}`);
     }catch(e:any){setMsg(e.message)}
   }
-  return <div className="authPage"><div className="authVisual"><div className="authVisualShade"></div><a className="brand authBrand" href="/"><b>JAY</b><span>AESTHETICS</span></a><div className="authVisualCopy"><p className="eyebrow">VERIFY. <i>ACTIVATE.</i></p><h1>ONE CODE.<br/><span>FULL ACCESS.</span></h1><p>Confirm your coaching account before continuing to checkout and your private dashboard.</p></div></div><div className="authPanel"><div className="authPanelInner"><div className="authHeader"><span className="authKicker">EMAIL VERIFICATION</span><h2>Verify Your Account</h2><p>We generated a 6-digit verification code for <b>{email}</b>.</p></div>{msg&&<div className="authError">{msg}</div>}<form className="authForm" onSubmit={verify}><label>Verification code<input value={code} onChange={e=>setCode(e.target.value.replace(/\D/g,"").slice(0,6))} inputMode="numeric" autoComplete="one-time-code" placeholder="000000" maxLength={6} required/></label><button className="btn red authSubmit">Verify & Continue</button></form><button className="authResend" onClick={resend}>Generate another code</button><p className="authSecurity">🔒 Codes expire after 10 minutes and can only be used once.</p></div></div></div>;
+  return <div className="authPage"><div className="authVisual"><div className="authVisualShade"></div><a className="brand authBrand" href="/"><b>jay.</b><span>__sthetics</span></a><div className="authVisualCopy"><p className="eyebrow">VERIFY. <i>ACTIVATE.</i></p><h1>ONE CODE.<br/><span>FULL ACCESS.</span></h1><p>Confirm your coaching account before continuing to checkout and your private dashboard.</p></div></div><div className="authPanel"><div className="authPanelInner"><div className="authHeader"><span className="authKicker">EMAIL VERIFICATION</span><h2>Verify Your Account</h2><p>We generated a 6-digit verification code for <b>{email}</b>.</p></div>{msg&&<div className="authError">{msg}</div>}<form className="authForm" onSubmit={verify}><label>Verification code<input value={code} onChange={e=>setCode(e.target.value.replace(/\D/g,"").slice(0,6))} inputMode="numeric" autoComplete="one-time-code" placeholder="000000" maxLength={6} required/></label><button className="btn red authSubmit">Verify & Continue</button></form><button className="authResend" onClick={resend}>Generate another code</button><p className="authSecurity">🔒 Codes expire after 10 minutes and can only be used once.</p></div></div></div>;
 }
 
 function ForgotPassword(){
   const [email,setEmail]=useState(""); const [code,setCode]=useState(""); const [password,setPassword]=useState(""); const [step,setStep]=useState<1|2>(1); const [msg,setMsg]=useState("");
   async function request(e:FormEvent){e.preventDefault();try{const r=await api<any>("/auth/password/request",{method:"POST",body:JSON.stringify({email})});setMsg(`${r.message}${r.devCode?` Test code: ${r.devCode}`:""}`);setStep(2)}catch(e:any){setMsg(e.message)}}
   async function reset(e:FormEvent){e.preventDefault();try{const r=await api<any>("/auth/password/reset",{method:"POST",body:JSON.stringify({email,code,password})});setMsg(r.message);setTimeout(()=>location.href="/dashboard",900)}catch(e:any){setMsg(e.message)}}
-  return <div className="authPage"><div className="authVisual"><div className="authVisualShade"></div><a className="brand authBrand" href="/"><b>JAY</b><span>AESTHETICS</span></a><div className="authVisualCopy"><p className="eyebrow">SECURE ACCOUNT <i>RECOVERY.</i></p><h1>RESET.<br/><span>RETURN.</span></h1><p>Recover your coaching account securely with a one-time verification code.</p></div></div><div className="authPanel"><div className="authPanelInner"><div className="authHeader"><span className="authKicker">ACCOUNT SECURITY</span><h2>Reset Password</h2><p>{step===1?"Enter the email used for your coaching account.":"Enter your verification code and choose a new password."}</p></div>{msg&&<div className="authError">{msg}</div>}{step===1?<form className="authForm" onSubmit={request}><label>Email address<input type="email" value={email} onChange={e=>setEmail(e.target.value)} required/></label><button className="btn red authSubmit">Send Verification Code</button></form>:<form className="authForm" onSubmit={reset}><label>Verification code<input value={code} onChange={e=>setCode(e.target.value)} inputMode="numeric" maxLength={6} required/></label><label>New password<PasswordField value={password} onChange={e=>setPassword(e.target.value)} placeholder="Minimum 8 characters" autoComplete="new-password" minLength={8}/></label><button className="btn red authSubmit">Update Password</button></form>}<a className="authTextLink" href="/dashboard">Back to sign in</a></div></div></div>;
+  return <div className="authPage"><div className="authVisual"><div className="authVisualShade"></div><a className="brand authBrand" href="/"><b>jay.</b><span>__sthetics</span></a><div className="authVisualCopy"><p className="eyebrow">SECURE ACCOUNT <i>RECOVERY.</i></p><h1>RESET.<br/><span>RETURN.</span></h1><p>Recover your coaching account securely with a one-time verification code.</p></div></div><div className="authPanel"><div className="authPanelInner"><div className="authHeader"><span className="authKicker">ACCOUNT SECURITY</span><h2>Reset Password</h2><p>{step===1?"Enter the email used for your coaching account.":"Enter your verification code and choose a new password."}</p></div>{msg&&<div className="authError">{msg}</div>}{step===1?<form className="authForm" onSubmit={request}><label>Email address<input type="email" value={email} onChange={e=>setEmail(e.target.value)} required/></label><button className="btn red authSubmit">Send Verification Code</button></form>:<form className="authForm" onSubmit={reset}><label>Verification code<input value={code} onChange={e=>setCode(e.target.value)} inputMode="numeric" maxLength={6} required/></label><label>New password<PasswordField value={password} onChange={e=>setPassword(e.target.value)} placeholder="Minimum 8 characters" autoComplete="new-password" minLength={8}/></label><button className="btn red authSubmit">Update Password</button></form>}<a className="authTextLink" href="/dashboard">Back to sign in</a></div></div></div>;
 }
 
 function AccessGate({title,login,notice}:{title:string;login:(e:FormEvent<HTMLFormElement>)=>void;notice?:string}){
@@ -248,22 +248,22 @@ function AccessGate({title,login,notice}:{title:string;login:(e:FormEvent<HTMLFo
   return <div className="authPage">
     <div className="authVisual">
       <div className="authVisualShade"></div>
-      <a className="brand authBrand" href="/"><b>JAY</b><span>AESTHETICS</span></a>
+      <a className="brand authBrand" href="/"><b>jay.</b><span>__sthetics</span></a>
       <div className="authVisualCopy">
         <p className="eyebrow">BUILD YOUR <i>BEST PHYSIQUE.</i></p>
         <h1>COACHING.<br/><span>STRUCTURED.</span></h1>
         <p>Training, nutrition, check-ins and progress — all managed in one place.</p>
       </div>
-      <div className="authVisualFooter"><span>JAY AESTHETICS</span><span>ONLINE COACHING</span></div>
+      <div className="authVisualFooter"><span>jay.__sthetics</span><span>ONLINE COACHING</span></div>
     </div>
 
     <div className="authPanel">
       <div className="authPanelInner">
-        <a className="brand mobileAuthBrand" href="/"><b>JAY</b><span>AESTHETICS</span></a>
+        <a className="brand mobileAuthBrand" href="/"><b>jay.</b><span>__sthetics</span></a>
         <div className="authHeader">
           <span className="authKicker">{isCoach?"PRIVATE COACH PORTAL":"WELCOME BACK"}</span>
           <h2>{title}</h2>
-          <p>{isCoach?"Authorized Jay Aesthetics coach access only.":"Sign in to access your coaching dashboard."}</p>
+          <p>{isCoach?"Authorized jay.__sthetics coach access only.":"Sign in to access your coaching dashboard."}</p>
         </div>
         {notice&&<div className="authError">{notice}</div>}
 
@@ -283,7 +283,7 @@ function AccessGate({title,login,notice}:{title:string;login:(e:FormEvent<HTMLFo
         </form>
 
         {!isCoach&&<>
-          <div className="authDivider"><span>New to Jay Aesthetics?</span></div>
+          <div className="authDivider"><span>New to jay.__sthetics?</span></div>
           <a href="/programs" className="btn red full authSecondary">Create Account / Join Coaching</a>
           <a href="/programs" className="authTextLink">View coaching programmes and pricing</a>
         </>}
@@ -302,7 +302,7 @@ function CoachPanel({user,logout}:{user:User;logout:()=>void}){
   return <div className="appShell">
     <Sidebar items={adminTabs} tab={tab} setTab={setTab} logout={logout}/>
     <main className="dash premiumDash">
-      <div className="dashTop premiumTop"><div><small className="redText">JAY AESTHETICS · ADMIN</small><h1>{tab.toUpperCase()}</h1><p>Manage coaching operations from one place.</p></div><div className="topRight"><div className="topStatus"><span></span>Online</div><div className="avatar premiumAvatar">{user.fullName?.split(" ").map((x:string)=>x[0]).join("").slice(0,2)}</div></div></div>
+      <div className="dashTop premiumTop"><div><small className="redText">jay.__sthetics · ADMIN</small><h1>{tab.toUpperCase()}</h1><p>Manage coaching operations from one place.</p></div><div className="topRight"><div className="topStatus"><span></span>Online</div><div className="avatar premiumAvatar">{user.fullName?.split(" ").map((x:string)=>x[0]).join("").slice(0,2)}</div></div></div>
       {notice&&<div className="inlineNotice">{notice}</div>}
       {tab==="overview"&&<AdminOverview/>}
       {tab==="clients"&&<AdminClients setNotice={setNotice}/>} 
@@ -326,7 +326,7 @@ function Sidebar({items,tab,setTab,logout}:{items:string[];tab:string;setTab:(x:
     dashboard:"◫",onboarding:"◎",training:"⌁",progress:"↗","weekly check-in":"✓",chat:"✉"
   } as Record<string,string>)[x]||"•";
   return <aside className="sidebar premiumSidebar">
-    <div className="sidebarBrandWrap"><div className="brand"><b>JAY</b><span>AESTHETICS</span></div><small>COACHING PLATFORM</small></div>
+    <div className="sidebarBrandWrap"><div className="brand"><b>jay.</b><span>__sthetics</span></div><small>COACHING PLATFORM</small></div>
     <div className="sidebarNav">{items.map(x=><button key={x} className={tab===x?"sideActive":""} onClick={()=>setTab(x)}><span className="sideIcon">{icon(x)}</span><span>{x}</span></button>)}</div>
     <div className="sidebarFooter"><button className="logoutBtn" onClick={logout}><span>↪</span><span>Logout</span></button></div>
   </aside>
@@ -371,7 +371,7 @@ function AdminClients({setNotice}:{setNotice:(s:string)=>void}){
   async function saveProfile(e:FormEvent<HTMLFormElement>){e.preventDefault();if(!selected)return;const f=new FormData(e.currentTarget);try{await api(`/admin/clients/${selected.id}/profile`,{method:"PATCH",body:JSON.stringify({fullName:f.get("fullName"),phone:f.get("phone"),dateOfBirth:f.get("dob"),heightCm:Number(f.get("height")),currentWeightKg:Number(f.get("weight")),fitnessGoal:f.get("goal"),trainingExperience:f.get("experience")})});setNotice("Client details updated.");refresh()}catch(e:any){setNotice(e.message)}}
   async function addNote(e:FormEvent<HTMLFormElement>){e.preventDefault();if(!selected)return;const f=new FormData(e.currentTarget);await api(`/admin/clients/${selected.id}/notes`,{method:"POST",body:JSON.stringify({body:f.get("body")})});e.currentTarget.reset();setNotice("Private note saved.");refresh()}
   return <div>
-    <div className="toolbar"><div className="search"><input value={q} onChange={e=>setQ(e.target.value)} placeholder="Search name, email or phone"/><button className="btn ghost" onClick={()=>load()}>Search</button></div><div className="toolbarActions"><button className="btn ghost" onClick={()=>downloadExcel("jay-aesthetics-clients.xlsx",[{name:"Clients",rows:clients.map(c=>({Client_ID:c.id,Name:c.fullName,Email:c.email,Phone:c.phone||"",Account_Status:c.isActive?"Active":"Disabled",Programme:c.subscriptions?.[0]?.program?.name||"Not assigned",Subscription_Status:c.subscriptions?.[0]?.status||"No subscription",Joined:new Date(c.createdAt).toLocaleDateString()}))}])}>↓ Excel</button><button className="btn red" onClick={()=>setShowNew(true)}>+ Add Client</button></div></div>
+    <div className="toolbar"><div className="search"><input value={q} onChange={e=>setQ(e.target.value)} placeholder="Search name, email or phone"/><button className="btn ghost" onClick={()=>load()}>Search</button></div><div className="toolbarActions"><button className="btn ghost" onClick={()=>downloadExcel("jay-sthetics-clients.xlsx",[{name:"Clients",rows:clients.map(c=>({Client_ID:c.id,Name:c.fullName,Email:c.email,Phone:c.phone||"",Account_Status:c.isActive?"Active":"Disabled",Programme:c.subscriptions?.[0]?.program?.name||"Not assigned",Subscription_Status:c.subscriptions?.[0]?.status||"No subscription",Joined:new Date(c.createdAt).toLocaleDateString()}))}])}>↓ Excel</button><button className="btn red" onClick={()=>setShowNew(true)}>+ Add Client</button></div></div>
     <div className="dataTable premiumTable"><div className="tr head"><span>Client</span><span>Contact</span><span>Programme</span><span>Access</span></div>{clients.map(c=><button className="tr rowButton" key={c.id} onClick={()=>open(c.id)}><span><b>{c.fullName}</b><small>{date(c.createdAt)}</small></span><span>{c.email}<small>{c.phone||"No phone"}</small></span><span>{c.subscriptions?.[0]?.program?.name||"Not assigned"}</span><span>{c.subscriptions?.[0]?.status||"NO PLAN"}</span></button>)}</div>
     {showNew&&<Dialog title="Create Client" close={()=>setShowNew(false)}><form onSubmit={create}><input name="fullName" placeholder="Full name" required/><input name="email" type="email" placeholder="Email" required/><input name="phone" placeholder="Phone"/><input name="goal" placeholder="Fitness goal"/><input name="password" placeholder="Temporary password" minLength={8} required/><button className="btn red full">Create Client</button></form></Dialog>}
     {selected&&<div className="clientWorkspaceOverlay"><div className="clientWorkspace"><div className="clientWorkspaceTop"><button className="backClient" onClick={()=>setSelected(null)}>← Back to clients</button><div className="clientIdentity"><div className="clientInitial">{selected.fullName?.[0]}</div><div><h2>{selected.fullName}</h2><p>{selected.email} · {selected.phone||"No phone"}</p></div></div><div className="clientAccessBadge">{selected.subscriptions?.[0]?.status||"NO PLAN"}</div></div>
@@ -396,7 +396,7 @@ function AdminLeads({setNotice}:{setNotice:(s:string)=>void}){
   async function load(){setItems(await api<any[]>("/admin/leads"))}
   useEffect(()=>{load().catch(e=>setNotice(e.message))},[]);
   async function update(id:string,status:string){try{await api(`/admin/leads/${id}`,{method:"PATCH",body:JSON.stringify({status})});load()}catch(e:any){setNotice(e.message)}}
-  return <><div className="toolbar"><p className="muted">People who contacted Jay before purchasing.</p><button className="btn ghost" onClick={()=>downloadExcel("jay-aesthetics-leads.xlsx",[{name:"Leads",rows:items.map(x=>({Name:x.fullName,Email:x.email,Phone:x.phone||"",Goal:x.fitnessGoal||"",Message:x.message||"",Status:x.status,Created:date(x.createdAt)}))}])}>↓ Excel</button></div>
+  return <><div className="toolbar"><p className="muted">People who contacted Jay before purchasing.</p><button className="btn ghost" onClick={()=>downloadExcel("jay-sthetics-leads.xlsx",[{name:"Leads",rows:items.map(x=>({Name:x.fullName,Email:x.email,Phone:x.phone||"",Goal:x.fitnessGoal||"",Message:x.message||"",Status:x.status,Created:date(x.createdAt)}))}])}>↓ Excel</button></div>
     <div className="dataTable"><div className="tr head"><span>Name</span><span>Contact</span><span>Goal / message</span><span>Status</span></div>{items.map(x=><div className="tr" key={x.id}><span><b>{x.fullName}</b><small>{date(x.createdAt)}</small></span><span>{x.email}<small>{x.phone||"—"}</small></span><span>{x.fitnessGoal||x.message||"—"}</span><span><select value={x.status} onChange={e=>update(x.id,e.target.value)}><option>NEW</option><option>CONTACTED</option><option>INTERESTED</option><option>CONVERTED</option><option>NOT_INTERESTED</option></select></span></div>)}</div></>
 }
 
@@ -564,7 +564,7 @@ function AdminCheckins(){
   const [items,setItems]=useState<any[]>([]);
   useEffect(()=>{api<any[]>("/admin/check-ins").then(setItems)},[]);
   const exportRows=items.map(c=>({Client:c.user.fullName,Email:c.user.email,Date:new Date(c.createdAt).toLocaleDateString(),Weight_kg:c.weightKg?Number(c.weightKg):null,Body_Fat_Percent:c.bodyFat?Number(c.bodyFat):null,Sleep_Hours:c.sleepHours?Number(c.sleepHours):null,Energy_1_to_10:c.energyLevel??null,Diet_Adherence_Percent:c.dietAdherence??null,Notes:c.notes||""}));
-  return <><div className="toolbar"><p className="muted">Weekly client progress submissions.</p><button className="btn ghost" onClick={()=>downloadExcel("jay-aesthetics-checkins.xlsx",[{name:"Weekly Check-ins",rows:exportRows}])}>↓ Download Excel</button></div><div className="dataTable"><div className="tr checkHead"><span>Client</span><span>Date</span><span>Weight</span><span>Sleep</span><span>Energy</span><span>Adherence</span></div>{items.map(c=><div className="tr checkRow" key={c.id}><span><b>{c.user.fullName}</b><small>{c.user.email}</small></span><span>{new Date(c.createdAt).toLocaleDateString()}</span><span>{c.weightKg?`${c.weightKg} kg`:"—"}</span><span>{c.sleepHours?`${c.sleepHours}h`:"—"}</span><span>{c.energyLevel||"—"}/10</span><span>{c.dietAdherence??"—"}%</span></div>)}</div></>
+  return <><div className="toolbar"><p className="muted">Weekly client progress submissions.</p><button className="btn ghost" onClick={()=>downloadExcel("jay-sthetics-checkins.xlsx",[{name:"Weekly Check-ins",rows:exportRows}])}>↓ Download Excel</button></div><div className="dataTable"><div className="tr checkHead"><span>Client</span><span>Date</span><span>Weight</span><span>Sleep</span><span>Energy</span><span>Adherence</span></div>{items.map(c=><div className="tr checkRow" key={c.id}><span><b>{c.user.fullName}</b><small>{c.user.email}</small></span><span>{new Date(c.createdAt).toLocaleDateString()}</span><span>{c.weightKg?`${c.weightKg} kg`:"—"}</span><span>{c.sleepHours?`${c.sleepHours}h`:"—"}</span><span>{c.energyLevel||"—"}/10</span><span>{c.dietAdherence??"—"}%</span></div>)}</div></>
 }
 
 function AdminCalls({setNotice}:{setNotice:(s:string)=>void}){
@@ -573,7 +573,7 @@ function AdminCalls({setNotice}:{setNotice:(s:string)=>void}){
   useEffect(()=>{load().catch(e=>setNotice(e.message))},[]);
   async function status(id:string,status:string){try{await api(`/admin/appointments/${id}`,{method:"PATCH",body:JSON.stringify({status})});setNotice("Call updated.");load()}catch(e:any){setNotice(e.message)}}
   const exportRows=items.map(c=>({Name:c.fullName,Email:c.email,Phone:c.phone||"",Requested_Date_Time:date(c.preferredAt),Reason:c.reason||"",Status:c.status,Meeting_Link:c.meetingUrl||""}));
-  return <><div className="toolbar"><p className="muted">Consultation and coaching call requests.</p><button className="btn ghost" onClick={()=>downloadExcel("jay-aesthetics-calls.xlsx",[{name:"Calls",rows:exportRows}])}>↓ Download Excel</button></div><div className="dataTable"><div className="tr head"><span>Client</span><span>Contact</span><span>Requested time</span><span>Status</span></div>{items.map(c=><div className="tr" key={c.id}><span><b>{c.fullName}</b><small>{c.reason||"No reason"}</small></span><span>{c.email}<small>{c.phone||"—"}</small></span><span>{date(c.preferredAt)}</span><span><select value={c.status} onChange={e=>status(c.id,e.target.value)}><option>REQUESTED</option><option>CONFIRMED</option><option>RESCHEDULED</option><option>COMPLETED</option><option>CANCELLED</option></select></span></div>)}</div></>
+  return <><div className="toolbar"><p className="muted">Consultation and coaching call requests.</p><button className="btn ghost" onClick={()=>downloadExcel("jay-sthetics-calls.xlsx",[{name:"Calls",rows:exportRows}])}>↓ Download Excel</button></div><div className="dataTable"><div className="tr head"><span>Client</span><span>Contact</span><span>Requested time</span><span>Status</span></div>{items.map(c=><div className="tr" key={c.id}><span><b>{c.fullName}</b><small>{c.reason||"No reason"}</small></span><span>{c.email}<small>{c.phone||"—"}</small></span><span>{date(c.preferredAt)}</span><span><select value={c.status} onChange={e=>status(c.id,e.target.value)}><option>REQUESTED</option><option>CONFIRMED</option><option>RESCHEDULED</option><option>COMPLETED</option><option>CANCELLED</option></select></span></div>)}</div></>
 }
 
 function AdminMessages(){
@@ -651,7 +651,7 @@ function AdminPayments(){
   }));
 
   function downloadFullReport(){
-    downloadExcel(`jay-aesthetics-admin-report-${new Date().toISOString().slice(0,10)}.xlsx`,[
+    downloadExcel(`jay-sthetics-admin-report-${new Date().toISOString().slice(0,10)}.xlsx`,[
       {name:"Payments",rows:paymentRows},
       {name:"Clients",rows:clientRows},
       {name:"Calls",rows:callRows},
@@ -663,7 +663,7 @@ function AdminPayments(){
     <div className="paymentsHeader">
       <div><p className="eyebrow redText">FINANCIAL RECORDS</p><h2>Payments</h2><p className="muted">Download payment-only records or one complete Excel workbook containing key business data.</p></div>
       <div className="toolbarActions">
-        <button className="btn ghost" onClick={()=>downloadExcel("jay-aesthetics-payments.xlsx",[{name:"Payments",rows:paymentRows}])}>↓ Payments Excel</button>
+        <button className="btn ghost" onClick={()=>downloadExcel("jay-sthetics-payments.xlsx",[{name:"Payments",rows:paymentRows}])}>↓ Payments Excel</button>
         <button className="btn red" onClick={downloadFullReport}>↓ Full Admin Report</button>
       </div>
     </div>
@@ -714,7 +714,7 @@ function ClientPanel({user,logout}:{user:User;logout:()=>void}){
     await api("/client/check-ins",{method:"POST",body:JSON.stringify({weightKg:Number(f.get("weight"))||undefined,sleepHours:Number(f.get("sleep"))||undefined,energyLevel:Number(f.get("energy"))||undefined,dietAdherence:Number(f.get("adherence"))||undefined,trainingPerformance:f.get("performance")||undefined,stepsCardio:f.get("steps")||undefined,issues:f.get("issues")||undefined,questions:f.get("questions")||undefined,notes:f.get("notes")||undefined,photoUrls})});
     setNotice("Weekly check-in submitted.");form.reset()
   }catch(e:any){setNotice(e.message)}}
-  return <div className="appShell"><Sidebar items={tabs} tab={tab} setTab={setTab} logout={logout}/><main className="dash premiumDash"><div className="dashTop premiumTop"><div><small className="redText">JAY AESTHETICS · CLIENT</small><h1>{tab.toUpperCase()}</h1><p>Your coaching, progress and communication in one place.</p></div><div className="topRight"><div className="topStatus"><span></span>Active</div><div className="avatar premiumAvatar">{user.fullName?.split(" ").map((x:string)=>x[0]).join("").slice(0,2)}</div></div></div>{notice&&<div className="inlineNotice">{notice}</div>}
+  return <div className="appShell"><Sidebar items={tabs} tab={tab} setTab={setTab} logout={logout}/><main className="dash premiumDash"><div className="dashTop premiumTop"><div><small className="redText">jay.__sthetics · CLIENT</small><h1>{tab.toUpperCase()}</h1><p>Your coaching, progress and communication in one place.</p></div><div className="topRight"><div className="topStatus"><span></span>Active</div><div className="avatar premiumAvatar">{user.fullName?.split(" ").map((x:string)=>x[0]).join("").slice(0,2)}</div></div></div>{notice&&<div className="inlineNotice">{notice}</div>}
     {data?.error&&<Locked message={data.error}/>}
     {tab==="dashboard"&&!data?.error&&<ClientDashboard data={data}/>}
     {tab==="onboarding"&&!data?.error&&<div className="settingsCard onboardingCard"><h2>My Coaching Profile</h2><p className="muted">Complete these details so Jay can personalize your plan.</p><form onSubmit={onboarding}><div className="formGrid"><label>Date of birth<input name="dob" type="date" defaultValue={data?.clientProfile?.dateOfBirth?String(data.clientProfile.dateOfBirth).slice(0,10):""} required/></label><label>Contact number<input name="phone" defaultValue={data?.phone||""} required/></label></div><div className="formGrid"><label>Height (cm)<input name="height" type="number" step=".1" defaultValue={data?.clientProfile?.heightCm||""} required/></label><label>Weight (kg)<input name="weight" type="number" step=".1" defaultValue={data?.clientProfile?.currentWeightKg||""} required/></label></div><label>Goal<textarea name="goal" defaultValue={data?.clientProfile?.fitnessGoal||""} required/></label><label>Training experience<input name="experience" defaultValue={data?.clientProfile?.trainingExperience||data?.clientProfile?.experienceLevel||""} required/></label><button className="btn red">Save Details</button></form></div>}
@@ -848,7 +848,7 @@ function ProgramsPage({programs,user,chooseProgram}:{programs:Program[];user:Use
 
   return <div className="programsPage">
     <header className="simpleHeader">
-      <a className="brand" href="/"><b>JAY</b><span>AESTHETICS</span></a>
+      <a className="brand" href="/"><b>jay.</b><span>__sthetics</span></a>
       <div className="simpleHeaderActions">
         {user?.role==="CLIENT"?<a className="btn ghost" href="/dashboard">My Dashboard</a>:<a className="btn ghost" href="/dashboard">Client Login</a>}
         <a className="btn ghost" href="/">Home</a>
@@ -879,7 +879,7 @@ function SignupPage({program,register,login,notice}:{program:Program|null;regist
 
   return <div className="signupPage">
     <div className="signupBrandPanel">
-      <a className="brand" href="/"><b>JAY</b><span>AESTHETICS</span></a>
+      <a className="brand" href="/"><b>jay.</b><span>__sthetics</span></a>
       <div className="signupBrandContent">
         <p className="eyebrow">YOUR COACHING.<br/><i>ONE PLATFORM.</i></p>
         <h1>START<br/><span>STRONG.</span></h1>
@@ -889,7 +889,7 @@ function SignupPage({program,register,login,notice}:{program:Program|null;regist
 
     <div className="signupFormPanel">
       <div className="signupBox">
-        <a className="brand mobileAuthBrand" href="/"><b>JAY</b><span>AESTHETICS</span></a>
+        <a className="brand mobileAuthBrand" href="/"><b>jay.</b><span>__sthetics</span></a>
         {program?<div className="selectedProgramCheckout">
           <small>SELECTED PROGRAMME</small>
           <div><b>{program.name}</b><strong>{money(program.pricePaise)}</strong></div>
@@ -959,7 +959,7 @@ function CheckoutPage({user}:{user:User}){
         key:created.keyId,
         amount:created.order.amount,
         currency:created.order.currency,
-        name:"Jay Aesthetics",
+        name:"jay.__sthetics",
         description:program.name,
         order_id:created.order.id,
         prefill:{name:user.fullName,email:user.email},
@@ -1005,11 +1005,11 @@ function CheckoutPage({user}:{user:User}){
     }
   }
 
-  if(!program)return <div className="checkoutPage"><div className="checkoutCard"><div className="brand"><b>JAY</b><span>AESTHETICS</span></div><h2>Checkout</h2><p>{status||"Loading programme…"}</p><a className="btn ghost" href="/programs">Back to programmes</a></div></div>;
+  if(!program)return <div className="checkoutPage"><div className="checkoutCard"><div className="brand"><b>jay.</b><span>__sthetics</span></div><h2>Checkout</h2><p>{status||"Loading programme…"}</p><a className="btn ghost" href="/programs">Back to programmes</a></div></div>;
 
   return <div className="checkoutPage">
     <div className="checkoutShell">
-      <div className="checkoutBrand"><a className="brand" href="/"><b>JAY</b><span>AESTHETICS</span></a><a href="/dashboard">Dashboard</a></div>
+      <div className="checkoutBrand"><a className="brand" href="/"><b>jay.</b><span>__sthetics</span></a><a href="/dashboard">Dashboard</a></div>
       <div className="checkoutGrid">
         <section className="checkoutSummary">
           <p className="eyebrow redText">SECURE CHECKOUT</p>

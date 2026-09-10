@@ -3,9 +3,9 @@ import { config } from "../config.js";
 type CodePurpose = "EMAIL_VERIFY" | "PASSWORD_RESET" | "ADMIN_LOGIN";
 
 const purposeCopy: Record<CodePurpose, { subject: string; heading: string }> = {
-  EMAIL_VERIFY: { subject: "Verify your Jay Aesthetics account", heading: "Verify your account" },
-  PASSWORD_RESET: { subject: "Reset your Jay Aesthetics password", heading: "Reset your password" },
-  ADMIN_LOGIN: { subject: "Jay Aesthetics admin login code", heading: "Admin verification" }
+  EMAIL_VERIFY: { subject: "Verify your jay.__sthetics account", heading: "Verify your account" },
+  PASSWORD_RESET: { subject: "Reset your jay.__sthetics password", heading: "Reset your password" },
+  ADMIN_LOGIN: { subject: "jay.__sthetics admin login code", heading: "Admin verification" }
 };
 
 export async function sendAuthCode(email: string, code: string, purpose: CodePurpose) {
