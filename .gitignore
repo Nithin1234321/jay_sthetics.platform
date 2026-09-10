@@ -5,3 +5,4 @@ dist
 .DS_Store
 *.log
 apps/api/prisma/dev.db
+apps/web/tsconfig.tsbuildinfo
