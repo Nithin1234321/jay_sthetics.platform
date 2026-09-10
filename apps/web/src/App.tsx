@@ -76,6 +76,10 @@ export default function App(){
   const [notice,setNotice]=useState("");
   const [user,setUser]=useState<User|null>(loadUser());
   const [selectedProgram,setSelectedProgram]=useState<Program|null>(null);
+  const [admin2FA,setAdmin2FA]=useState<{
+    email:string;
+    password:string;
+  }|null>(null);
   const path=location.pathname;
 
   useEffect(()=>{api<Program[]>("/programs").then(setPrograms).catch(()=>{})},[]);
@@ -90,7 +94,14 @@ export default function App(){
     e.preventDefault(); const f=new FormData(e.currentTarget);
     try{
       const r=await api<{token?:string;user?:User;requires2FA?:boolean;requiresEmailVerification?:boolean;email?:string;devCode?:string;message?:string}>("/auth/login",{method:"POST",body:JSON.stringify({email:f.get("email"),password:f.get("password"),adminCode:f.get("adminCode")||undefined})});
-      if(r.requires2FA){setNotice(`${r.message||"Verification required"}${r.devCode?` Test code: ${r.devCode}`:""}`);return;}
+      if(r.requires2FA){
+        setAdmin2FA({
+          email:String(f.get("email")),
+          password:String(f.get("password"))
+        });
+        setNotice("Enter the 6-digit verification code sent to your email.");
+        return;
+      }
       if(r.requiresEmailVerification&&r.email){
         if(r.devCode)sessionStorage.setItem("devVerificationCode",r.devCode);
         const programId=new URLSearchParams(location.search).get("programId");
@@ -102,6 +113,43 @@ export default function App(){
       session(r.token,r.user,nextProgram&&r.user.role==="CLIENT"?`/checkout?programId=${nextProgram}`:undefined);
     }catch(e:any){setNotice(e.message)}
   }
+  async function verifyAdmin2FA(e:FormEvent<HTMLFormElement>){
+    e.preventDefault();
+
+    if(!admin2FA) return;
+
+    const f=new FormData(e.currentTarget);
+    const adminCode=String(f.get("adminCode")||"").trim();
+
+    if(!/^[0-9]{6}$/.test(adminCode)){
+      setNotice("Enter a valid 6-digit verification code.");
+      return;
+    }
+
+    try{
+      const r=await api<{
+        token?:string;
+        user?:User;
+      }>("/auth/login",{
+        method:"POST",
+        body:JSON.stringify({
+          email:admin2FA.email,
+          password:admin2FA.password,
+          adminCode
+        })
+      });
+
+      if(!r.token||!r.user){
+        throw new Error("Two-factor authentication could not be completed.");
+      }
+
+      setAdmin2FA(null);
+      session(r.token,r.user);
+    }catch(e:any){
+      setNotice(e.message);
+    }
+  }
+
   async function register(e:FormEvent<HTMLFormElement>){
     e.preventDefault(); const f=new FormData(e.currentTarget);
     try{
@@ -159,7 +207,62 @@ export default function App(){
   }
 
   if(path==="/coach-panel"){
-    if(!user||user.role!=="ADMIN") return <AccessGate title="Coach Access" login={login} notice={notice}/>;
+    if(!user||user.role!=="ADMIN"){
+      if(admin2FA){
+        return (
+          <div className="gate">
+            <div className="modalCard">
+              <div className="modalAuthHead">
+                <span>ADMIN SECURITY</span>
+                <h2>Two-Factor Authentication</h2>
+                <p>
+                  Enter the 6-digit verification code sent to
+                  <br/>
+                  <strong>{admin2FA.email}</strong>
+                </p>
+              </div>
+
+              {notice&&<div className="notice">{notice}</div>}
+
+              <form className="authForm compact" onSubmit={verifyAdmin2FA}>
+                <label>
+                  Verification code
+                  <input
+                    name="adminCode"
+                    type="text"
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    pattern="[0-9]{6}"
+                    maxLength={6}
+                    placeholder="Enter 6-digit code"
+                    autoFocus
+                    required
+                  />
+                </label>
+
+                <button className="btn red full authSubmit" type="submit">
+                  Verify & Sign In
+                </button>
+
+                <button
+                  type="button"
+                  className="btn ghost full"
+                  onClick={()=>{
+                    setAdmin2FA(null);
+                    setNotice("");
+                  }}
+                >
+                  Back to Login
+                </button>
+              </form>
+            </div>
+          </div>
+        );
+      }
+
+      return <AccessGate title="Coach Access" login={login} notice={notice}/>;
+    }
+
     return <CoachPanel user={user} logout={logout}/>;
   }
   if(path==="/dashboard"){
