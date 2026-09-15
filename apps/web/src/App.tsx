@@ -906,15 +906,38 @@ function ProtectedImage({src}:{src:string}){
 }
 
 function ClientChat(){
-  const [coach,setCoach]=useState<any|null>(null),[messages,setMessages]=useState<any[]>([]),[error,setError]=useState("");
-  async function load(){
-    try{const c=await api<any>("/client/coach");setCoach(c);setMessages(await api<any[]>(`/messages/${c.id}`));setError("")}
-    catch(e:any){setError(e.message)}
+  const [coach,setCoach]=useState<any|null>(null),[messages,setMessages]=useState<any[]>([]),[error,setError]=useState(""),[sending,setSending]=useState(false);
+  async function load(showError=true){
+    try{
+      const c=await api<any>("/client/coach");
+      setCoach(c);
+      setMessages(await api<any[]>(`/messages/${c.id}`));
+      setError("");
+    }catch(e:any){
+      if(showError && !coach) setError(e.message);
+    }
   }
-  useEffect(()=>{load();const id=setInterval(load,10000);return()=>clearInterval(id)},[]);
-  async function send(e:FormEvent<HTMLFormElement>){e.preventDefault();if(!coach)return;const f=new FormData(e.currentTarget);try{await api("/messages",{method:"POST",body:JSON.stringify({receiverId:coach.id,body:f.get("body")})});e.currentTarget.reset();load()}catch(e:any){setError(e.message)}}
-  if(error)return <Locked message={error}/>;
-  return <div className="clientChat"><div className="chatTitle"><b>{coach?`Chat with ${coach.fullName}`:"Loading coach…"}</b><small>Messages refresh automatically.</small></div><div className="messages">{messages.map(m=><div key={m.id} className={`bubble ${m.senderId===coach?.id?"theirs":"mine"}`}>{m.body}<small>{date(m.createdAt)}</small></div>)}</div><form className="chatForm" onSubmit={send}><input name="body" placeholder="Ask Jay about training, diet or your check-in…" required/><button className="btn red">Send</button></form></div>;
+  useEffect(()=>{load();const id=setInterval(()=>load(false),10000);return()=>clearInterval(id)},[]);
+  async function send(e:FormEvent<HTMLFormElement>){
+    e.preventDefault();
+    if(!coach||sending)return;
+    const form=e.currentTarget;
+    const f=new FormData(form);
+    const body=String(f.get("body")||"").trim();
+    if(!body)return;
+    try{
+      setSending(true);
+      await api("/messages",{method:"POST",body:JSON.stringify({receiverId:coach.id,body})});
+      form.reset();
+      await load(false);
+    }catch(e:any){
+      setError(e.message);
+    }finally{
+      setSending(false);
+    }
+  }
+  if(error && !coach)return <Locked message={error}/>;
+  return <div className="clientChat"><div className="chatTitle"><b>{coach?`Chat with ${coach.fullName}`:"Loading coach…"}</b><small>Messages refresh automatically.</small></div><div className="messages">{messages.map(m=><div key={m.id} className={`bubble ${m.senderId===coach?.id?"theirs":"mine"}`}>{m.body}<small>{date(m.createdAt)}</small></div>)}</div><form className="chatForm" onSubmit={send}><input name="body" placeholder="Ask Jay about training, diet or your check-in…" required/><button className="btn red" disabled={sending}>{sending?"Sending…":"Send"}</button></form></div>;
 }
 
 function ClientCalls(){
