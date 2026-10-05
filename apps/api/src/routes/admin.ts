@@ -423,13 +423,32 @@ adminRouter.patch("/appointments/:id", async (req, res) => {
 });
 
 // MESSAGES
-adminRouter.get("/conversations", async (_req, res) => {
+adminRouter.get("/conversations", async (req, res) => {
   const clients = await prisma.user.findMany({
     where: { role: "CLIENT" },
     select: { id: true, fullName: true, email: true },
     orderBy: { fullName: "asc" }
   });
-  res.json(clients);
+
+  const unread = await prisma.message.groupBy({
+    by: ["senderId"],
+    where: {
+      receiverId: req.auth!.sub,
+      readAt: null
+    },
+    _count: { _all: true }
+  });
+
+  const unreadMap = new Map(
+    unread.map(x => [x.senderId, x._count._all])
+  );
+
+  res.json(
+    clients.map(c => ({
+      ...c,
+      unreadCount: unreadMap.get(c.id) || 0
+    }))
+  );
 });
 
 // PAYMENTS

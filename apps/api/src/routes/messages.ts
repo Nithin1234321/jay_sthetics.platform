@@ -17,6 +17,17 @@ async function canTalk(meId:string, meRole:"ADMIN"|"CLIENT", otherId:string){
   return !!sub;
 }
 
+messagesRouter.get("/unread-count", async (req, res) => {
+  const count = await prisma.message.count({
+    where: {
+      receiverId: req.auth!.sub,
+      readAt: null
+    }
+  });
+
+  res.json({ count });
+});
+
 messagesRouter.get("/:otherUserId", async (req, res) => {
   const me = req.auth!.sub;
   const other = req.params.otherUserId;
