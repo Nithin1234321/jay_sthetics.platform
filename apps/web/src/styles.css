@@ -160,3 +160,62 @@ button.tr{width:100%;color:inherit;border:0;text-align:left;cursor:pointer}
 
 /* Master security flows */
 .authResend{display:block;width:100%;margin-top:14px;padding:9px;border:0;background:transparent;color:#8c8c91;font-size:11px;cursor:pointer}.authResend:hover{color:#fff}.authHeader b{color:#d8d8da}
+
+/* V13 — mobile chat scrolling/composer fix */
+.clientChat{
+  min-height:0;
+}
+
+.clientChat .messages{
+  min-height:0;
+  flex:1 1 auto;
+  overflow-y:auto;
+  overflow-x:hidden;
+  -webkit-overflow-scrolling:touch;
+  overscroll-behavior:contain;
+}
+
+.clientChat .chatForm{
+  flex:0 0 auto;
+  min-width:0;
+  background:#0d0d0e;
+  position:relative;
+  z-index:3;
+}
+
+.clientChat .chatForm input{
+  min-width:0;
+  width:100%;
+}
+
+.clientChat .chatForm button{
+  flex:0 0 auto;
+}
+
+@media(max-width:800px){
+  .clientChat{
+    height:calc(100dvh - 230px);
+    min-height:420px;
+    max-height:720px;
+  }
+
+  .clientChat .chatTitle{
+    flex:0 0 auto;
+    gap:8px;
+  }
+
+  .clientChat .chatTitle small{
+    display:none;
+  }
+
+  .clientChat .messages{
+    padding:14px;
+  }
+
+  .clientChat .chatForm{
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr) auto!important;
+    gap:8px;
+    padding:10px;
+  }
+}
