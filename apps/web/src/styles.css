@@ -219,3 +219,44 @@ button.tr{width:100%;color:inherit;border:0;text-align:left;cursor:pointer}
     padding:10px;
   }
 }
+
+/* V14 — fix coach/admin chat scrolling */
+.chatLayout{
+  min-height:0;
+}
+
+.chatPanel{
+  min-height:0;
+  overflow:hidden;
+}
+
+.chatPanel .chatTitle{
+  flex:0 0 auto;
+}
+
+.chatPanel .messages{
+  min-height:0;
+  flex:1 1 0;
+  overflow-y:auto;
+  overflow-x:hidden;
+  -webkit-overflow-scrolling:touch;
+  overscroll-behavior:contain;
+}
+
+.chatPanel .chatForm{
+  flex:0 0 auto;
+  position:relative;
+  z-index:5;
+  background:#0d0d0e;
+}
+
+@media(max-width:800px){
+  .chatLayout{
+    height:calc(100dvh - 190px);
+    min-height:520px;
+  }
+
+  .chatPanel{
+    min-height:0;
+  }
+}
