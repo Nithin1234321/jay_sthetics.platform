@@ -7,11 +7,7 @@ export async function api<T>(path: string, options: RequestInit = {}): Promise<T
   if (!(options.body instanceof FormData)) headers.set("Content-Type", "application/json");
   if (token) headers.set("Authorization", `Bearer ${token}`);
 
-  const response = await fetch(`${API_URL}${path}`, {
-    ...options,
-    headers,
-    cache: "no-store"
-  });
+  const response = await fetch(`${API_URL}${path}`, { ...options, headers });
   const data = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(data.error ?? "Request failed");
   return data as T;
@@ -22,10 +18,7 @@ export async function apiBlob(path:string):Promise<Blob>{
   const token=localStorage.getItem("token");
   const headers=new Headers();
   if(token)headers.set("Authorization",`Bearer ${token}`);
-  const response=await fetch(`${API_URL}${path}`,{
-    headers,
-    cache:"no-store"
-  });
+  const response=await fetch(`${API_URL}${path}`,{headers});
   if(!response.ok){
     const data=await response.json().catch(()=>({}));
     throw new Error(data.error??"Media request failed");

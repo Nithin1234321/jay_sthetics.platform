@@ -1,4 +1,4 @@
-import { ChangeEvent, FormEvent, useEffect, useRef, useState } from "react";
+import { ChangeEvent, FormEvent, useEffect, useState } from "react";
 import { api, apiBlob } from "./lib/api";
 import { downloadExcel } from "./lib/excel";
 
@@ -413,32 +413,8 @@ const adminTabs=["overview","clients","leads","programs","exercise library","wor
 function CoachPanel({user,logout}:{user:User;logout:()=>void}){
   const [tab,setTab]=useState("overview");
   const [notice,setNotice]=useState("");
-  const [unreadMessages,setUnreadMessages]=useState(0);
-
-  useEffect(()=>{
-    let active=true;
-
-    async function refreshUnread(){
-      try{
-        const rows=await api<any[]>("/admin/conversations");
-        if(active){
-          setUnreadMessages(
-            rows.reduce((sum:number,x:any)=>sum+(x.unreadCount||0),0)
-          );
-        }
-      }catch{}
-    }
-
-    refreshUnread();
-    const id=setInterval(refreshUnread,3000);
-
-    return()=>{
-      active=false;
-      clearInterval(id);
-    };
-  },[]);
   return <div className="appShell">
-    <Sidebar items={adminTabs} tab={tab} setTab={setTab} logout={logout} badges={{messages:unreadMessages}}/>
+    <Sidebar items={adminTabs} tab={tab} setTab={setTab} logout={logout}/>
     <main className="dash premiumDash">
       <div className="dashTop premiumTop"><div><small className="redText">jay.__sthetics · ADMIN</small><h1>{tab.toUpperCase()}</h1><p>Manage coaching operations from one place.</p></div><div className="topRight"><div className="topStatus"><span></span>Online</div><div className="avatar premiumAvatar">{user.fullName?.split(" ").map((x:string)=>x[0]).join("").slice(0,2)}</div></div></div>
       {notice&&<div className="inlineNotice">{notice}</div>}
@@ -458,52 +434,15 @@ function CoachPanel({user,logout}:{user:User;logout:()=>void}){
   </div>
 }
 
-function Sidebar({
-  items,
-  tab,
-  setTab,
-  logout,
-  badges={}
-}:{
-  items:string[];
-  tab:string;
-  setTab:(x:string)=>void;
-  logout:()=>void;
-  badges?:Record<string,number>;
-}){
+function Sidebar({items,tab,setTab,logout}:{items:string[];tab:string;setTab:(x:string)=>void;logout:()=>void}){
   const icon=(x:string)=>({
-    overview:"◫",clients:"◉",leads:"◎",programs:"▦",
-    "exercise library":"✦","workout plans":"⌁",nutrition:"◇",
-    "check-ins":"✓",calls:"☎",messages:"✉",payments:"▣",settings:"⚙",
-    dashboard:"◫",onboarding:"◎",training:"⌁",progress:"↗",
-    "weekly check-in":"✓",chat:"✉"
+    overview:"◫",clients:"◉",leads:"◎",programs:"▦","exercise library":"✦","workout plans":"⌁",nutrition:"◇","check-ins":"✓",calls:"☎",messages:"✉",payments:"▣",settings:"⚙",
+    dashboard:"◫",onboarding:"◎",training:"⌁",progress:"↗","weekly check-in":"✓",chat:"✉"
   } as Record<string,string>)[x]||"•";
-
   return <aside className="sidebar premiumSidebar">
-    <div className="sidebarBrandWrap">
-      <div className="brand"><b>jay.</b><span>__sthetics</span></div>
-      <small>COACHING PLATFORM</small>
-    </div>
-
-    <div className="sidebarNav">
-      {items.map(x=>
-        <button
-          key={x}
-          className={tab===x?"sideActive":""}
-          onClick={()=>setTab(x)}
-        >
-          <span className="sideIcon">{icon(x)}</span>
-          <span>{x}</span>
-          {!!badges[x]&&<span className="messageBadge">{badges[x]>99?"99+":badges[x]}</span>}
-        </button>
-      )}
-    </div>
-
-    <div className="sidebarFooter">
-      <button className="logoutBtn" onClick={logout}>
-        <span>↪</span><span>Logout</span>
-      </button>
-    </div>
+    <div className="sidebarBrandWrap"><div className="brand"><b>jay.</b><span>__sthetics</span></div><small>COACHING PLATFORM</small></div>
+    <div className="sidebarNav">{items.map(x=><button key={x} className={tab===x?"sideActive":""} onClick={()=>setTab(x)}><span className="sideIcon">{icon(x)}</span><span>{x}</span></button>)}</div>
+    <div className="sidebarFooter"><button className="logoutBtn" onClick={logout}><span>↪</span><span>Logout</span></button></div>
   </aside>
 }
 
@@ -752,152 +691,11 @@ function AdminCalls({setNotice}:{setNotice:(s:string)=>void}){
 }
 
 function AdminMessages(){
-  const [clients,setClients]=useState<any[]>([]);
-  const [selected,setSelected]=useState<any|null>(null);
-  const [messages,setMessages]=useState<any[]>([]);
-  const [sending,setSending]=useState(false);
-  const messagesRef=useRef<HTMLDivElement|null>(null);
-
-  function scrollBottom(){
-    requestAnimationFrame(()=>{
-      if(messagesRef.current){
-        messagesRef.current.scrollTop=messagesRef.current.scrollHeight;
-      }
-    });
-  }
-
-  async function refreshClients(){
-    try{
-      setClients(await api<any[]>("/admin/conversations"));
-    }catch{}
-  }
-
-  async function refreshConversation(client:any,scroll=false){
-    if(!client)return;
-
-    try{
-      const rows=await api<any[]>(`/messages/${client.id}`);
-      setMessages(rows);
-
-      if(scroll)scrollBottom();
-
-      await refreshClients();
-    }catch{}
-  }
-
-  async function open(client:any){
-    setSelected(client);
-
-    try{
-      const rows=await api<any[]>(`/messages/${client.id}`);
-      setMessages(rows);
-      await refreshClients();
-      scrollBottom();
-    }catch{}
-  }
-
-  useEffect(()=>{
-    refreshClients();
-    const id=setInterval(refreshClients,3000);
-    return()=>clearInterval(id);
-  },[]);
-
-  useEffect(()=>{
-    if(!selected)return;
-
-    refreshConversation(selected,true);
-
-    const id=setInterval(()=>{
-      refreshConversation(selected,false);
-    },3000);
-
-    return()=>clearInterval(id);
-  },[selected?.id]);
-
-  useEffect(()=>{
-    scrollBottom();
-  },[messages.length]);
-
-  async function send(e:FormEvent<HTMLFormElement>){
-    e.preventDefault();
-
-    if(!selected||sending)return;
-
-    const form=e.currentTarget;
-    const f=new FormData(form);
-    const body=String(f.get("body")||"").trim();
-
-    if(!body)return;
-
-    try{
-      setSending(true);
-
-      await api("/messages",{
-        method:"POST",
-        body:JSON.stringify({
-          receiverId:selected.id,
-          body
-        })
-      });
-
-      form.reset();
-
-      await refreshConversation(selected,true);
-    }finally{
-      setSending(false);
-    }
-  }
-
-  return <div className="chatLayout">
-    <div className="conversationList">
-      {clients.map(c=>
-        <button
-          key={c.id}
-          className={selected?.id===c.id?"selected":""}
-          onClick={()=>open(c)}
-        >
-          <div className="conversationName">
-            <b>{c.fullName}</b>
-            {!!c.unreadCount&&<span className="messageBadge">{c.unreadCount}</span>}
-          </div>
-          <small>{c.email}</small>
-        </button>
-      )}
-    </div>
-
-    <div className="chatPanel">
-      {selected?<>
-        <div className="chatTitle">
-          <b>{selected.fullName}</b>
-          <small>Updates automatically</small>
-        </div>
-
-        <div className="messages" ref={messagesRef}>
-          {messages.map(m=>
-            <div
-              key={m.id}
-              className={`bubble ${m.senderId===selected.id?"theirs":"mine"}`}
-            >
-              {m.body}
-              <small>{date(m.createdAt)}</small>
-            </div>
-          )}
-        </div>
-
-        <form className="chatForm" onSubmit={send}>
-          <input
-            name="body"
-            placeholder="Message client…"
-            autoComplete="off"
-            required
-          />
-          <button className="btn red" disabled={sending}>
-            {sending?"Sending…":"Send"}
-          </button>
-        </form>
-      </>:<Empty text="Choose a client to open the conversation."/>}
-    </div>
-  </div>;
+  const [clients,setClients]=useState<any[]>([]),[selected,setSelected]=useState<any|null>(null),[messages,setMessages]=useState<any[]>([]);
+  useEffect(()=>{api<any[]>("/admin/conversations").then(setClients)},[]);
+  async function open(c:any){setSelected(c);setMessages(await api<any[]>(`/messages/${c.id}`))}
+  async function send(e:FormEvent<HTMLFormElement>){e.preventDefault();if(!selected)return;const f=new FormData(e.currentTarget);await api("/messages",{method:"POST",body:JSON.stringify({receiverId:selected.id,body:f.get("body")})});(e.currentTarget as HTMLFormElement).reset();open(selected)}
+  return <div className="chatLayout"><div className="conversationList">{clients.map(c=><button key={c.id} className={selected?.id===c.id?"selected":""} onClick={()=>open(c)}><b>{c.fullName}</b><small>{c.email}</small></button>)}</div><div className="chatPanel">{selected?<><div className="chatTitle"><b>{selected.fullName}</b></div><div className="messages">{messages.map(m=><div key={m.id} className={`bubble ${m.senderId===selected.id?"theirs":"mine"}`}>{m.body}<small>{date(m.createdAt)}</small></div>)}</div><form className="chatForm" onSubmit={send}><input name="body" placeholder="Message client…" required/><button className="btn red">Send</button></form></>:<Empty text="Choose a client to open the conversation."/>}</div></div>
 }
 
 function AdminPayments(){
@@ -1008,26 +806,6 @@ function AdminSettings({setNotice}:{setNotice:(s:string)=>void}){
 function ClientPanel({user,logout}:{user:User;logout:()=>void}){
   const tabs=["dashboard","onboarding","training","nutrition","progress","weekly check-in","chat","calls"];
   const [tab,setTab]=useState("dashboard"),[data,setData]=useState<any>(null),[notice,setNotice]=useState("");
-  const [unreadChat,setUnreadChat]=useState(0);
-
-  useEffect(()=>{
-    let active=true;
-
-    async function refreshUnread(){
-      try{
-        const r=await api<{count:number}>("/messages/unread-count");
-        if(active)setUnreadChat(r.count||0);
-      }catch{}
-    }
-
-    refreshUnread();
-    const id=setInterval(refreshUnread,3000);
-
-    return()=>{
-      active=false;
-      clearInterval(id);
-    };
-  },[]);
   useEffect(()=>{load()},[tab]);
   async function load(){try{
     if(tab==="dashboard")setData(await api("/client/dashboard"));
@@ -1050,7 +828,7 @@ function ClientPanel({user,logout}:{user:User;logout:()=>void}){
     await api("/client/check-ins",{method:"POST",body:JSON.stringify({weightKg:Number(f.get("weight"))||undefined,sleepHours:Number(f.get("sleep"))||undefined,energyLevel:Number(f.get("energy"))||undefined,dietAdherence:Number(f.get("adherence"))||undefined,trainingPerformance:f.get("performance")||undefined,stepsCardio:f.get("steps")||undefined,issues:f.get("issues")||undefined,questions:f.get("questions")||undefined,notes:f.get("notes")||undefined,photoUrls})});
     setNotice("Weekly check-in submitted.");form.reset()
   }catch(e:any){setNotice(e.message)}}
-  return <div className="appShell"><Sidebar items={tabs} tab={tab} setTab={setTab} logout={logout} badges={{chat:unreadChat}}/><main className="dash premiumDash"><div className="dashTop premiumTop"><div><small className="redText">jay.__sthetics · CLIENT</small><h1>{tab.toUpperCase()}</h1><p>Your coaching, progress and communication in one place.</p></div><div className="topRight"><div className="topStatus"><span></span>Active</div><div className="avatar premiumAvatar">{user.fullName?.split(" ").map((x:string)=>x[0]).join("").slice(0,2)}</div></div></div>{notice&&<div className="inlineNotice">{notice}</div>}
+  return <div className="appShell"><Sidebar items={tabs} tab={tab} setTab={setTab} logout={logout}/><main className="dash premiumDash"><div className="dashTop premiumTop"><div><small className="redText">jay.__sthetics · CLIENT</small><h1>{tab.toUpperCase()}</h1><p>Your coaching, progress and communication in one place.</p></div><div className="topRight"><div className="topStatus"><span></span>Active</div><div className="avatar premiumAvatar">{user.fullName?.split(" ").map((x:string)=>x[0]).join("").slice(0,2)}</div></div></div>{notice&&<div className="inlineNotice">{notice}</div>}
     {data?.error&&<Locked message={data.error}/>}
     {tab==="dashboard"&&!data?.error&&<ClientDashboard data={data}/>}
     {tab==="onboarding"&&!data?.error&&<div className="settingsCard onboardingCard"><h2>My Coaching Profile</h2><p className="muted">Complete these details so Jay can personalize your plan.</p><form onSubmit={onboarding}><div className="formGrid"><label>Date of birth<input name="dob" type="date" defaultValue={data?.clientProfile?.dateOfBirth?String(data.clientProfile.dateOfBirth).slice(0,10):""} required/></label><label>Contact number<input name="phone" defaultValue={data?.phone||""} required/></label></div><div className="formGrid"><label>Height (cm)<input name="height" type="number" step=".1" defaultValue={data?.clientProfile?.heightCm||""} required/></label><label>Weight (kg)<input name="weight" type="number" step=".1" defaultValue={data?.clientProfile?.currentWeightKg||""} required/></label></div><label>Goal<textarea name="goal" defaultValue={data?.clientProfile?.fitnessGoal||""} required/></label><label>Training experience<input name="experience" defaultValue={data?.clientProfile?.trainingExperience||data?.clientProfile?.experienceLevel||""} required/></label><button className="btn red">Save Details</button></form></div>}
@@ -1128,115 +906,38 @@ function ProtectedImage({src}:{src:string}){
 }
 
 function ClientChat(){
-  const [coach,setCoach]=useState<any|null>(null);
-  const [messages,setMessages]=useState<any[]>([]);
-  const [error,setError]=useState("");
-  const [sending,setSending]=useState(false);
-  const messagesRef=useRef<HTMLDivElement|null>(null);
-
-  function scrollBottom(){
-    requestAnimationFrame(()=>{
-      if(messagesRef.current){
-        messagesRef.current.scrollTop=messagesRef.current.scrollHeight;
-      }
-    });
-  }
-
-  async function load(showError=true,scroll=false){
+  const [coach,setCoach]=useState<any|null>(null),[messages,setMessages]=useState<any[]>([]),[error,setError]=useState(""),[sending,setSending]=useState(false);
+  async function load(showError=true){
     try{
-      const c=coach||await api<any>("/client/coach");
-
-      if(!coach)setCoach(c);
-
-      const rows=await api<any[]>(`/messages/${c.id}`);
-      setMessages(rows);
+      const c=await api<any>("/client/coach");
+      setCoach(c);
+      setMessages(await api<any[]>(`/messages/${c.id}`));
       setError("");
-
-      if(scroll)scrollBottom();
     }catch(e:any){
-      if(showError&&!coach)setError(e.message);
+      if(showError && !coach) setError(e.message);
     }
   }
-
-  useEffect(()=>{
-    load(true,true);
-
-    const id=setInterval(()=>{
-      load(false,false);
-    },3000);
-
-    return()=>clearInterval(id);
-  },[]);
-
-  useEffect(()=>{
-    scrollBottom();
-  },[messages.length]);
-
+  useEffect(()=>{load();const id=setInterval(()=>load(false),10000);return()=>clearInterval(id)},[]);
   async function send(e:FormEvent<HTMLFormElement>){
     e.preventDefault();
-
     if(!coach||sending)return;
-
     const form=e.currentTarget;
     const f=new FormData(form);
     const body=String(f.get("body")||"").trim();
-
     if(!body)return;
-
     try{
       setSending(true);
-
-      await api("/messages",{
-        method:"POST",
-        body:JSON.stringify({
-          receiverId:coach.id,
-          body
-        })
-      });
-
+      await api("/messages",{method:"POST",body:JSON.stringify({receiverId:coach.id,body})});
       form.reset();
-
-      await load(false,true);
+      await load(false);
     }catch(e:any){
       setError(e.message);
     }finally{
       setSending(false);
     }
   }
-
-  if(error&&!coach)return <Locked message={error}/>;
-
-  return <div className="clientChat">
-    <div className="chatTitle">
-      <b>{coach?`Chat with ${coach.fullName}`:"Loading coach…"}</b>
-      <small>Updates automatically</small>
-    </div>
-
-    <div className="messages" ref={messagesRef}>
-      {messages.map(m=>
-        <div
-          key={m.id}
-          className={`bubble ${m.senderId===coach?.id?"theirs":"mine"}`}
-        >
-          {m.body}
-          <small>{date(m.createdAt)}</small>
-        </div>
-      )}
-    </div>
-
-    <form className="chatForm" onSubmit={send}>
-      <input
-        name="body"
-        placeholder="Ask Jay about training, diet or your check-in…"
-        autoComplete="off"
-        required
-      />
-
-      <button className="btn red" disabled={sending||!coach}>
-        {sending?"Sending…":"Send"}
-      </button>
-    </form>
-  </div>;
+  if(error && !coach)return <Locked message={error}/>;
+  return <div className="clientChat"><div className="chatTitle"><b>{coach?`Chat with ${coach.fullName}`:"Loading coach…"}</b><small>Messages refresh automatically.</small></div><div className="messages">{messages.map(m=><div key={m.id} className={`bubble ${m.senderId===coach?.id?"theirs":"mine"}`}>{m.body}<small>{date(m.createdAt)}</small></div>)}</div><form className="chatForm" onSubmit={send}><input name="body" placeholder="Ask Jay about training, diet or your check-in…" required/><button className="btn red" disabled={sending}>{sending?"Sending…":"Send"}</button></form></div>;
 }
 
 function ClientCalls(){
