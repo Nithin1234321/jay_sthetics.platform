@@ -413,8 +413,32 @@ const adminTabs=["overview","clients","leads","programs","exercise library","wor
 function CoachPanel({user,logout}:{user:User;logout:()=>void}){
   const [tab,setTab]=useState("overview");
   const [notice,setNotice]=useState("");
+  const [adminUnread,setAdminUnread]=useState(0);
+
+  useEffect(()=>{
+    async function refreshUnread(){
+      try{
+        const rows=await api<any[]>("/admin/conversations");
+        setAdminUnread(
+          rows.reduce((sum:number,c:any)=>sum+(c.unreadCount||0),0)
+        );
+      }catch{}
+    }
+
+    refreshUnread();
+    const id=setInterval(refreshUnread,3000);
+
+    return()=>clearInterval(id);
+  },[]);
+
   return <div className="appShell">
-    <Sidebar items={adminTabs} tab={tab} setTab={setTab} logout={logout}/>
+    <Sidebar
+      items={adminTabs}
+      tab={tab}
+      setTab={setTab}
+      logout={logout}
+      badges={{messages:adminUnread}}
+    />
     <main className="dash premiumDash">
       <div className="dashTop premiumTop"><div><small className="redText">jay.__sthetics · ADMIN</small><h1>{tab.toUpperCase()}</h1><p>Manage coaching operations from one place.</p></div><div className="topRight"><div className="topStatus"><span></span>Online</div><div className="avatar premiumAvatar">{user.fullName?.split(" ").map((x:string)=>x[0]).join("").slice(0,2)}</div></div></div>
       {notice&&<div className="inlineNotice">{notice}</div>}
@@ -434,15 +458,56 @@ function CoachPanel({user,logout}:{user:User;logout:()=>void}){
   </div>
 }
 
-function Sidebar({items,tab,setTab,logout}:{items:string[];tab:string;setTab:(x:string)=>void;logout:()=>void}){
+function Sidebar({
+  items,
+  tab,
+  setTab,
+  logout,
+  badges={}
+}:{
+  items:string[];
+  tab:string;
+  setTab:(x:string)=>void;
+  logout:()=>void;
+  badges?:Record<string,number>;
+}){
   const icon=(x:string)=>({
-    overview:"◫",clients:"◉",leads:"◎",programs:"▦","exercise library":"✦","workout plans":"⌁",nutrition:"◇","check-ins":"✓",calls:"☎",messages:"✉",payments:"▣",settings:"⚙",
-    dashboard:"◫",onboarding:"◎",training:"⌁",progress:"↗","weekly check-in":"✓",chat:"✉"
+    overview:"◫",clients:"◉",leads:"◎",programs:"▦",
+    "exercise library":"✦","workout plans":"⌁",nutrition:"◇",
+    "check-ins":"✓",calls:"☎",messages:"✉",payments:"▣",settings:"⚙",
+    dashboard:"◫",onboarding:"◎",training:"⌁",progress:"↗",
+    "weekly check-in":"✓",chat:"✉"
   } as Record<string,string>)[x]||"•";
+
   return <aside className="sidebar premiumSidebar">
-    <div className="sidebarBrandWrap"><div className="brand"><b>jay.</b><span>__sthetics</span></div><small>COACHING PLATFORM</small></div>
-    <div className="sidebarNav">{items.map(x=><button key={x} className={tab===x?"sideActive":""} onClick={()=>setTab(x)}><span className="sideIcon">{icon(x)}</span><span>{x}</span></button>)}</div>
-    <div className="sidebarFooter"><button className="logoutBtn" onClick={logout}><span>↪</span><span>Logout</span></button></div>
+    <div className="sidebarBrandWrap">
+      <div className="brand"><b>jay.</b><span>__sthetics</span></div>
+      <small>COACHING PLATFORM</small>
+    </div>
+
+    <div className="sidebarNav">
+      {items.map(x=>
+        <button
+          key={x}
+          className={tab===x?"sideActive":""}
+          onClick={()=>setTab(x)}
+        >
+          <span className="sideIcon">{icon(x)}</span>
+          <span>{x}</span>
+          {!!badges[x]&&
+            <span className="messageBadge">
+              {badges[x]>99?"99+":badges[x]}
+            </span>
+          }
+        </button>
+      )}
+    </div>
+
+    <div className="sidebarFooter">
+      <button className="logoutBtn" onClick={logout}>
+        <span>↪</span><span>Logout</span>
+      </button>
+    </div>
   </aside>
 }
 
@@ -691,11 +756,145 @@ function AdminCalls({setNotice}:{setNotice:(s:string)=>void}){
 }
 
 function AdminMessages(){
-  const [clients,setClients]=useState<any[]>([]),[selected,setSelected]=useState<any|null>(null),[messages,setMessages]=useState<any[]>([]);
-  useEffect(()=>{api<any[]>("/admin/conversations").then(setClients)},[]);
-  async function open(c:any){setSelected(c);setMessages(await api<any[]>(`/messages/${c.id}`))}
-  async function send(e:FormEvent<HTMLFormElement>){e.preventDefault();if(!selected)return;const f=new FormData(e.currentTarget);await api("/messages",{method:"POST",body:JSON.stringify({receiverId:selected.id,body:f.get("body")})});(e.currentTarget as HTMLFormElement).reset();open(selected)}
-  return <div className="chatLayout"><div className="conversationList">{clients.map(c=><button key={c.id} className={selected?.id===c.id?"selected":""} onClick={()=>open(c)}><b>{c.fullName}</b><small>{c.email}</small></button>)}</div><div className="chatPanel">{selected?<><div className="chatTitle"><b>{selected.fullName}</b></div><div className="messages">{messages.map(m=><div key={m.id} className={`bubble ${m.senderId===selected.id?"theirs":"mine"}`}>{m.body}<small>{date(m.createdAt)}</small></div>)}</div><form className="chatForm" onSubmit={send}><input name="body" placeholder="Message client…" required/><button className="btn red">Send</button></form></>:<Empty text="Choose a client to open the conversation."/>}</div></div>
+  const [clients,setClients]=useState<any[]>([]);
+  const [selected,setSelected]=useState<any|null>(null);
+  const [messages,setMessages]=useState<any[]>([]);
+  const [sending,setSending]=useState(false);
+
+  async function refreshClients(){
+    try{
+      setClients(await api<any[]>("/admin/conversations"));
+    }catch{}
+  }
+
+  async function refreshMessages(client:any){
+    if(!client)return;
+
+    try{
+      const rows=await api<any[]>(`/messages/${client.id}`);
+      setMessages(rows);
+    }catch{}
+  }
+
+  useEffect(()=>{
+    refreshClients();
+
+    const id=setInterval(()=>{
+      refreshClients();
+    },3000);
+
+    return()=>clearInterval(id);
+  },[]);
+
+  useEffect(()=>{
+    if(!selected)return;
+
+    refreshMessages(selected);
+
+    const id=setInterval(()=>{
+      refreshMessages(selected);
+    },3000);
+
+    return()=>clearInterval(id);
+  },[selected?.id]);
+
+  async function open(c:any){
+    setSelected(c);
+    await refreshMessages(c);
+    await refreshClients();
+  }
+
+  async function send(e:FormEvent<HTMLFormElement>){
+    e.preventDefault();
+
+    if(!selected||sending)return;
+
+    const form=e.currentTarget;
+    const f=new FormData(form);
+    const body=String(f.get("body")||"").trim();
+
+    if(!body)return;
+
+    try{
+      setSending(true);
+
+      const created=await api<any>("/messages",{
+        method:"POST",
+        body:JSON.stringify({
+          receiverId:selected.id,
+          body
+        })
+      });
+
+      form.reset();
+
+      setMessages(prev=>[
+        ...prev.filter(m=>m.id!==created.id),
+        created
+      ]);
+
+      await refreshClients();
+    }catch(e:any){
+      alert(e.message);
+    }finally{
+      setSending(false);
+    }
+  }
+
+  return <div className="chatLayout">
+    <div className="conversationList">
+      {clients.map(c=>
+        <button
+          key={c.id}
+          className={selected?.id===c.id?"selected":""}
+          onClick={()=>open(c)}
+        >
+          <div className="conversationName">
+            <b>{c.fullName}</b>
+            {!!c.unreadCount&&
+              <span className="messageBadge">{c.unreadCount}</span>
+            }
+          </div>
+
+          <small>{c.email}</small>
+        </button>
+      )}
+    </div>
+
+    <div className="chatPanel">
+      {selected?<>
+        <div className="chatTitle">
+          <b>{selected.fullName}</b>
+          <small>Updates automatically</small>
+        </div>
+
+        <div className="messages">
+          {messages.map(m=>
+            <div
+              key={m.id}
+              className={`bubble ${m.senderId===selected.id?"theirs":"mine"}`}
+            >
+              {m.body}
+              <small>{date(m.createdAt)}</small>
+            </div>
+          )}
+        </div>
+
+        <form className="chatForm" onSubmit={send}>
+          <input
+            name="body"
+            placeholder="Message client…"
+            autoComplete="off"
+            required
+          />
+
+          <button className="btn red" disabled={sending}>
+            {sending?"Sending…":"Send"}
+          </button>
+        </form>
+      </>:<Empty text="Choose a client to open the conversation."/>}
+    </div>
+  </div>;
 }
 
 function AdminPayments(){
