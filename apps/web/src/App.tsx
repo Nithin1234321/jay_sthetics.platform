@@ -12,7 +12,7 @@ const fallback:Program[]=[
 {id:"e3",slug:"enhanced-3-months",name:"Enhanced Training — 3 Months",description:"Detailed training, nutrition and progress management.",pricePaise:1200000,durationDays:90,isActive:true},
 {id:"e6",slug:"enhanced-6-months",name:"Enhanced Training — 6 Months",description:"Complete six-month coaching and progress support.",pricePaise:2000000,durationDays:180,isActive:true}
 ];
-const loadUser=()=>{try{return JSON.parse(localStorage.getItem("user")||"null") as User|null}catch{return null}};
+const loadUser=()=>{try{return JSON.parse(sessionStorage.getItem("user")||"null") as User|null}catch{return null}};
 const money=(paise:number)=>`₹${(paise/100).toLocaleString("en-IN")}`;
 const date=(v:string)=>new Date(v).toLocaleString();
 
@@ -85,8 +85,14 @@ export default function App(){
   useEffect(()=>{api<Program[]>("/programs").then(setPrograms).catch(()=>{})},[]);
 
   function session(token:string,u:User,next?:string){
-    localStorage.setItem("token",token);
-    localStorage.setItem("user",JSON.stringify(u));
+    // Remove legacy shared login values.
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+
+    // Keep each browser tab logged into its own account.
+    sessionStorage.setItem("token",token);
+    sessionStorage.setItem("user",JSON.stringify(u));
+
     setUser(u);
     location.href=next||(u.role==="ADMIN"?"/coach-panel":"/dashboard");
   }
@@ -185,7 +191,16 @@ export default function App(){
     catch(e:any){setNotice(e.message)}
   }
 
-  function logout(){localStorage.clear();location.href="/"}
+  function logout(){
+    sessionStorage.removeItem("token");
+    sessionStorage.removeItem("user");
+
+    // Clean old authentication values if they still exist.
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+
+    location.href="/";
+  }
 
   if(path==="/forgot-password") return <ForgotPassword/>;
   if(path==="/verify-email") return <VerifyEmail session={session}/>;
@@ -1005,7 +1020,24 @@ function AdminSettings({setNotice}:{setNotice:(s:string)=>void}){
 function ClientPanel({user,logout}:{user:User;logout:()=>void}){
   const tabs=["dashboard","onboarding","training","nutrition","progress","weekly check-in","chat","calls"];
   const [tab,setTab]=useState("dashboard"),[data,setData]=useState<any>(null),[notice,setNotice]=useState("");
+  const [clientUnread,setClientUnread]=useState(0);
+
   useEffect(()=>{load()},[tab]);
+
+  useEffect(()=>{
+    async function refreshUnread(){
+      try{
+        const r=await api<{count:number}>("/messages/unread-count");
+        setClientUnread(r.count||0);
+      }catch{}
+    }
+
+    refreshUnread();
+
+    const id=setInterval(refreshUnread,3000);
+
+    return()=>clearInterval(id);
+  },[]);
   async function load(){try{
     if(tab==="dashboard")setData(await api("/client/dashboard"));
     if(tab==="onboarding")setData(await api("/client/onboarding"));
@@ -1027,7 +1059,7 @@ function ClientPanel({user,logout}:{user:User;logout:()=>void}){
     await api("/client/check-ins",{method:"POST",body:JSON.stringify({weightKg:Number(f.get("weight"))||undefined,sleepHours:Number(f.get("sleep"))||undefined,energyLevel:Number(f.get("energy"))||undefined,dietAdherence:Number(f.get("adherence"))||undefined,trainingPerformance:f.get("performance")||undefined,stepsCardio:f.get("steps")||undefined,issues:f.get("issues")||undefined,questions:f.get("questions")||undefined,notes:f.get("notes")||undefined,photoUrls})});
     setNotice("Weekly check-in submitted.");form.reset()
   }catch(e:any){setNotice(e.message)}}
-  return <div className="appShell"><Sidebar items={tabs} tab={tab} setTab={setTab} logout={logout}/><main className="dash premiumDash"><div className="dashTop premiumTop"><div><small className="redText">jay.__sthetics · CLIENT</small><h1>{tab.toUpperCase()}</h1><p>Your coaching, progress and communication in one place.</p></div><div className="topRight"><div className="topStatus"><span></span>Active</div><div className="avatar premiumAvatar">{user.fullName?.split(" ").map((x:string)=>x[0]).join("").slice(0,2)}</div></div></div>{notice&&<div className="inlineNotice">{notice}</div>}
+  return <div className="appShell"><Sidebar items={tabs} tab={tab} setTab={setTab} logout={logout} badges={{chat:clientUnread}}/><main className="dash premiumDash"><div className="dashTop premiumTop"><div><small className="redText">jay.__sthetics · CLIENT</small><h1>{tab.toUpperCase()}</h1><p>Your coaching, progress and communication in one place.</p></div><div className="topRight"><div className="topStatus"><span></span>Active</div><div className="avatar premiumAvatar">{user.fullName?.split(" ").map((x:string)=>x[0]).join("").slice(0,2)}</div></div></div>{notice&&<div className="inlineNotice">{notice}</div>}
     {data?.error&&<Locked message={data.error}/>}
     {tab==="dashboard"&&!data?.error&&<ClientDashboard data={data}/>}
     {tab==="onboarding"&&!data?.error&&<div className="settingsCard onboardingCard"><h2>My Coaching Profile</h2><p className="muted">Complete these details so Jay can personalize your plan.</p><form onSubmit={onboarding}><div className="formGrid"><label>Date of birth<input name="dob" type="date" defaultValue={data?.clientProfile?.dateOfBirth?String(data.clientProfile.dateOfBirth).slice(0,10):""} required/></label><label>Contact number<input name="phone" defaultValue={data?.phone||""} required/></label></div><div className="formGrid"><label>Height (cm)<input name="height" type="number" step=".1" defaultValue={data?.clientProfile?.heightCm||""} required/></label><label>Weight (kg)<input name="weight" type="number" step=".1" defaultValue={data?.clientProfile?.currentWeightKg||""} required/></label></div><label>Goal<textarea name="goal" defaultValue={data?.clientProfile?.fitnessGoal||""} required/></label><label>Training experience<input name="experience" defaultValue={data?.clientProfile?.trainingExperience||data?.clientProfile?.experienceLevel||""} required/></label><button className="btn red">Save Details</button></form></div>}
