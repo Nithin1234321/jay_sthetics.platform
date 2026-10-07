@@ -27,16 +27,29 @@ async function activatePayment(orderId:string,paymentId:string) {
     ? new Date(startsAt.getTime()+subscription.program.durationDays*86400000)
     : null;
 
-  await prisma.$transaction([
-    prisma.payment.update({
+  await prisma.$transaction(async tx => {
+    await tx.payment.update({
       where:{id:payment.id},
       data:{status:"SUCCESS",razorpayPaymentId:paymentId}
-    }),
-    ...(payment.subscriptionId ? [prisma.subscription.update({
-      where:{id:payment.subscriptionId},
-      data:{status:"ACTIVE",startsAt,endsAt}
-    })] : [])
-  ]);
+    });
+
+    if(payment.subscriptionId){
+      // Cancel any other active programme before activating this one.
+      await tx.subscription.updateMany({
+        where:{
+          userId:payment.userId,
+          status:"ACTIVE",
+          id:{not:payment.subscriptionId}
+        },
+        data:{status:"CANCELLED"}
+      });
+
+      await tx.subscription.update({
+        where:{id:payment.subscriptionId},
+        data:{status:"ACTIVE",startsAt,endsAt}
+      });
+    }
+  });
   return payment;
 }
 

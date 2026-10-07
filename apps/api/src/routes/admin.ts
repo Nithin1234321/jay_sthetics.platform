@@ -207,15 +207,30 @@ adminRouter.post("/clients/:id/subscription", async (req, res) => {
     ? new Date(startsAt.getTime() + program.durationDays * 86400000)
     : null;
 
-  const sub = await prisma.subscription.create({
-    data: {
-      userId: req.params.id,
-      programId: program.id,
-      status: parsed.data.status,
-      startsAt,
-      endsAt
-    },
-    include: { program: true }
+  const sub = await prisma.$transaction(async tx => {
+    // A client may only have one ACTIVE coaching subscription.
+    if (parsed.data.status === "ACTIVE") {
+      await tx.subscription.updateMany({
+        where: {
+          userId: req.params.id,
+          status: "ACTIVE"
+        },
+        data: {
+          status: "CANCELLED"
+        }
+      });
+    }
+
+    return tx.subscription.create({
+      data: {
+        userId: req.params.id,
+        programId: program.id,
+        status: parsed.data.status,
+        startsAt,
+        endsAt
+      },
+      include: { program: true }
+    });
   });
   await audit(req.auth!.sub, "ASSIGN", "SUBSCRIPTION", sub.id, { clientId: req.params.id });
   res.status(201).json(sub);
