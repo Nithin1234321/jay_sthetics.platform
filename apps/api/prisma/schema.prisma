@@ -20,6 +20,12 @@ enum SubscriptionStatus {
   CANCELLED
 }
 
+enum ExerciseAudience {
+  NATURAL
+  ENHANCED
+  BOTH
+}
+
 enum PaymentStatus {
   CREATED
   PENDING
@@ -252,6 +258,7 @@ model Exercise {
   formCues String[]
   videoUrl String?
   thumbnailUrl String?
+  audience ExerciseAudience @default(BOTH)
   isActive Boolean @default(true)
   alternatives ExerciseAlternative[] @relation("PrimaryExercise")
   alternativeTo ExerciseAlternative[] @relation("AlternativeExercise")

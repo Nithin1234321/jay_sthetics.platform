@@ -261,7 +261,8 @@ adminRouter.post("/exercises", async (req, res) => {
     instructions: z.string().min(2),
     formCues: z.array(z.string()).default([]),
     videoUrl: z.string().optional(),
-    thumbnailUrl: z.string().optional()
+    thumbnailUrl: z.string().optional(),
+    audience: z.enum(["NATURAL","ENHANCED","BOTH"]).default("BOTH")
   }).safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: "Invalid input", details: parsed.error.flatten() });
   const item = await prisma.exercise.create({ data: parsed.data });
@@ -276,6 +277,7 @@ adminRouter.patch("/exercises/:id", async (req, res) => {
     instructions: z.string().min(2).optional(),
     formCues: z.array(z.string()).optional(),
     videoUrl: z.string().nullable().optional(),
+    audience: z.enum(["NATURAL","ENHANCED","BOTH"]).optional(),
     isActive: z.boolean().optional()
   }).safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: "Invalid input" });

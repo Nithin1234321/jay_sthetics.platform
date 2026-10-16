@@ -722,11 +722,60 @@ function AdminExercises({setNotice}:{setNotice:(s:string)=>void}){
   async function load(){setItems(await api<any[]>("/admin/exercises"))}
   useEffect(()=>{load().catch(e=>setNotice(e.message))},[]);
   async function uploadVideo(file:File){setUploading(true);try{const fd=new FormData();fd.append("video",file);const r=await api<any>("/admin/exercise-video",{method:"POST",body:fd});setVideoUrl(r.videoUrl);setNotice("Video uploaded for local development.")}catch(e:any){setNotice(e.message)}finally{setUploading(false)}}
-  async function create(e:FormEvent<HTMLFormElement>){e.preventDefault();const f=new FormData(e.currentTarget);try{await api("/admin/exercises",{method:"POST",body:JSON.stringify({name:f.get("name"),muscleGroup:f.get("muscleGroup"),instructions:f.get("instructions"),formCues:String(f.get("formCues")||"").split("\n").map(x=>x.trim()).filter(Boolean),videoUrl:videoUrl||String(f.get("videoUrl")||"")||undefined})});setShow(false);setVideoUrl("");setNotice("Exercise added.");load()}catch(e:any){setNotice(e.message)}}
+  async function create(e:FormEvent<HTMLFormElement>){e.preventDefault();const f=new FormData(e.currentTarget);try{await api("/admin/exercises",{method:"POST",body:JSON.stringify({name:f.get("name"),muscleGroup:f.get("muscleGroup"),instructions:f.get("instructions"),formCues:String(f.get("formCues")||"").split("\n").map(x=>x.trim()).filter(Boolean),videoUrl:videoUrl||String(f.get("videoUrl")||"")||undefined,audience:f.get("audience")||"BOTH"})});setShow(false);setVideoUrl("");setNotice("Exercise added.");load()}catch(e:any){setNotice(e.message)}}
   async function alternative(id:string,alt:string){if(!alt)return;try{await api(`/admin/exercises/${id}/alternatives`,{method:"POST",body:JSON.stringify({alternativeExerciseId:alt})});setNotice("Alternative added.");load()}catch(e:any){setNotice(e.message)}}
-  return <><div className="toolbar"><p className="muted">Videos uploaded here are local-dev files. Production should use Cloudinary/S3/R2.</p><button className="btn red" onClick={()=>setShow(true)}>+ Add Exercise</button></div>
-    <div className="libraryGrid">{items.map(ex=><article className="exerciseCard" key={ex.id}><div className="videoBox">{ex.videoUrl?<ProtectedVideo src={ex.videoUrl}/>:<span>No video</span>}</div><div className="exerciseBody"><div className="pill">{ex.muscleGroup}</div><h3>{ex.name}</h3><p>{ex.instructions}</p><ul>{ex.formCues?.map((c:string)=><li key={c}>{c}</li>)}</ul><small>Alternatives: {ex.alternatives?.map((a:any)=>a.alternativeExercise.name).join(", ")||"None"}</small><select defaultValue="" onChange={e=>alternative(ex.id,e.target.value)}><option value="" disabled>Add alternative…</option>{items.filter(a=>a.id!==ex.id).map(a=><option value={a.id} key={a.id}>{a.name}</option>)}</select></div></article>)}</div>
-    {show&&<Dialog title="Add Exercise" wide close={()=>setShow(false)}><form onSubmit={create}><div className="formGrid"><input name="name" placeholder="Exercise name" required/><input name="muscleGroup" placeholder="Muscle group" required/></div><textarea name="instructions" placeholder="Exercise instructions" required/><textarea name="formCues" placeholder={"Form cues — one per line\nExample: Keep shoulder blades retracted"}/><label className="uploadLabel">Upload demo video<input type="file" accept="video/mp4,video/quicktime,video/webm" onChange={e=>e.target.files?.[0]&&uploadVideo(e.target.files[0])}/></label>{uploading&&<small>Uploading…</small>}{videoUrl&&<small className="successText">Video ready ✓</small>}<input name="videoUrl" placeholder="Or paste external video URL"/><button className="btn red full">Save Exercise</button></form></Dialog>}
+  async function changeAudience(id:string,audience:string){
+    try{
+      await api(`/admin/exercises/${id}`,{
+        method:"PATCH",
+        body:JSON.stringify({audience})
+      });
+      setNotice("Exercise audience updated.");
+      load();
+    }catch(e:any){
+      setNotice(e.message);
+    }
+  }
+  return <><div className="toolbar"><p className="muted">Build the exercise video library available to your coaching clients.</p><button className="btn red" onClick={()=>setShow(true)}>+ Add Exercise</button></div>
+    <div className="libraryGrid">{items.map(ex=><article className="exerciseCard" key={ex.id}><div className="videoBox">{ex.videoUrl?<ProtectedVideo src={ex.videoUrl}/>:<span>No video</span>}</div><div className="exerciseBody">
+  <div style={{display:"flex",gap:"8px",flexWrap:"wrap"}}>
+    <div className="pill">{ex.muscleGroup}</div>
+    <div className="pill">
+      {ex.audience==="NATURAL"?"Natural":ex.audience==="ENHANCED"?"Enhanced":"All Subscribers"}
+    </div>
+  </div>
+
+  <h3>{ex.name}</h3>
+  <p>{ex.instructions}</p>
+
+  <ul>
+    {ex.formCues?.map((c:string)=><li key={c}>{c}</li>)}
+  </ul>
+
+  <small>
+    Alternatives: {ex.alternatives?.map((a:any)=>a.alternativeExercise.name).join(", ")||"None"}
+  </small>
+
+  <label>
+    Client visibility
+    <select
+      value={ex.audience||"BOTH"}
+      onChange={e=>changeAudience(ex.id,e.target.value)}
+    >
+      <option value="BOTH">All subscribers</option>
+      <option value="NATURAL">Natural clients only</option>
+      <option value="ENHANCED">Enhanced clients only</option>
+    </select>
+  </label>
+
+  <select defaultValue="" onChange={e=>alternative(ex.id,e.target.value)}>
+    <option value="" disabled>Add alternative…</option>
+    {items.filter(a=>a.id!==ex.id).map(a=>
+      <option value={a.id} key={a.id}>{a.name}</option>
+    )}
+  </select>
+</div></article>)}</div>
+    {show&&<Dialog title="Add Exercise" wide close={()=>setShow(false)}><form onSubmit={create}><div className="formGrid"><input name="name" placeholder="Exercise name" required/><input name="muscleGroup" placeholder="Muscle group" required/></div><textarea name="instructions" placeholder="Exercise instructions" required/><textarea name="formCues" placeholder={"Form cues — one per line\nExample: Keep shoulder blades retracted"}/><label>Client visibility<select name="audience" defaultValue="BOTH"><option value="BOTH">All subscribers</option><option value="NATURAL">Natural clients only</option><option value="ENHANCED">Enhanced clients only</option></select></label><label className="uploadLabel">Upload demo video<input type="file" accept="video/mp4,video/quicktime,video/webm" onChange={e=>e.target.files?.[0]&&uploadVideo(e.target.files[0])}/></label>{uploading&&<small>Uploading…</small>}{videoUrl&&<small className="successText">Video ready ✓</small>}<input name="videoUrl" placeholder="Or paste external video URL"/><button className="btn red full">Save Exercise</button></form></Dialog>}
   </>
 }
 
@@ -1063,7 +1112,10 @@ function ClientPanel({user,logout}:{user:User;logout:()=>void}){
     {data?.error&&<Locked message={data.error}/>}
     {tab==="dashboard"&&!data?.error&&<ClientDashboard data={data}/>}
     {tab==="onboarding"&&!data?.error&&<div className="settingsCard onboardingCard"><h2>My Coaching Profile</h2><p className="muted">Complete these details so Jay can personalize your plan.</p><form onSubmit={onboarding}><div className="formGrid"><label>Date of birth<input name="dob" type="date" defaultValue={data?.clientProfile?.dateOfBirth?String(data.clientProfile.dateOfBirth).slice(0,10):""} required/></label><label>Contact number<input name="phone" defaultValue={data?.phone||""} required/></label></div><div className="formGrid"><label>Height (cm)<input name="height" type="number" step=".1" defaultValue={data?.clientProfile?.heightCm||""} required/></label><label>Weight (kg)<input name="weight" type="number" step=".1" defaultValue={data?.clientProfile?.currentWeightKg||""} required/></label></div><label>Goal<textarea name="goal" defaultValue={data?.clientProfile?.fitnessGoal||""} required/></label><label>Training experience<input name="experience" defaultValue={data?.clientProfile?.trainingExperience||data?.clientProfile?.experienceLevel||""} required/></label><button className="btn red">Save Details</button></form></div>}
-    {tab==="training"&&!data?.error&&<ClientTraining data={data}/>}
+    {tab==="training"&&!data?.error&&<>
+      <ClientTraining data={data}/>
+      <ClientExerciseLibrary/>
+    </>}
     {tab==="nutrition"&&!data?.error&&<ClientNutrition data={data}/>}
     {tab==="progress"&&!data?.error&&<ClientProgress data={data}/>}
     {tab==="weekly check-in"&&<div className="settingsCard"><h2>Weekly Check-In</h2><form onSubmit={checkin}><div className="formGrid"><input name="weight" type="number" step=".1" placeholder="Current weight kg"/><select name="performance" defaultValue=""><option value="" disabled>Training performance</option><option value="BETTER">Better</option><option value="SAME">Same</option><option value="WORSE">Worse</option></select></div><div className="formGrid"><input name="adherence" type="number" min="0" max="100" placeholder="Diet adherence %"/><input name="energy" type="number" min="1" max="10" placeholder="Energy 1–10"/></div><div className="formGrid"><input name="sleep" type="number" step=".1" placeholder="Average sleep hours"/><input name="steps" placeholder="Steps / cardio completed"/></div><textarea name="issues" placeholder="Any problems with training or diet?"/><textarea name="questions" placeholder="Anything you want Jay to know or ask?"/><label className="uploadLabel">Progress photos — front / side / back<input name="photos" type="file" accept="image/jpeg,image/png,image/webp" multiple/></label><textarea name="notes" placeholder="Other weekly notes (optional)"/><button className="btn red">Submit Check-In</button></form></div>}
@@ -1093,6 +1145,82 @@ function ClientDashboard({data}:any){
   </div>;
 }
 function ClientTraining({data}:any){return <div className="planGrid">{data?.length?data.map((a:any)=><div className="planCard" key={a.id}><h2>{a.workoutPlan.name}</h2>{a.workoutPlan.exercises.map((x:any)=><div className="clientExercise" key={x.id}><div><span className="pill">{x.dayLabel}</span><h3>{x.exercise.name}</h3><p>{x.sets||"—"} sets × {x.reps||"—"} · Rest {x.restSeconds||"—"} sec</p><p>{x.exercise.instructions}</p><ul>{x.exercise.formCues.map((c:string)=><li key={c}>{c}</li>)}</ul>{x.exercise.alternatives?.length>0&&<small>Alternatives: {x.exercise.alternatives.map((alt:any)=>alt.alternativeExercise.name).join(", ")}</small>}</div>{x.exercise.videoUrl&&<ProtectedVideo src={x.exercise.videoUrl}/>}</div>)}</div>):<Empty text="Jay hasn't assigned a workout plan yet."/>}</div>}
+function ClientExerciseLibrary(){
+  const [items,setItems]=useState<any[]>([]);
+  const [loading,setLoading]=useState(true);
+  const [error,setError]=useState("");
+
+  useEffect(()=>{
+    api<any[]>("/client/exercise-library")
+      .then(rows=>{
+        setItems(rows);
+        setError("");
+      })
+      .catch(e=>setError(e.message))
+      .finally(()=>setLoading(false));
+  },[]);
+
+  return <div style={{marginTop:"32px"}}>
+    <div style={{marginBottom:"16px"}}>
+      <small className="redText">COACHING LIBRARY</small>
+      <h2>Exercise Video Library</h2>
+      <p className="muted">
+        Browse exercise demonstrations and coaching cues included with your programme.
+      </p>
+    </div>
+
+    {loading&&<p className="muted">Loading exercise library…</p>}
+
+    {!loading&&error&&<Locked message={error}/>}
+
+    {!loading&&!error&&(
+      items.length?
+      <div className="libraryGrid">
+        {items.map(ex=>
+          <article className="exerciseCard" key={ex.id}>
+            <div className="videoBox">
+              {ex.videoUrl?
+                <ProtectedVideo src={ex.videoUrl}/>
+                :
+                <span>No video</span>
+              }
+            </div>
+
+            <div className="exerciseBody">
+              <div className="pill">{ex.muscleGroup}</div>
+
+              <h3>{ex.name}</h3>
+
+              <p>{ex.instructions}</p>
+
+              {!!ex.formCues?.length&&
+                <ul>
+                  {ex.formCues.map((cue:string)=>
+                    <li key={cue}>{cue}</li>
+                  )}
+                </ul>
+              }
+
+              {!!ex.alternatives?.length&&
+                <small>
+                  Alternatives: {
+                    ex.alternatives
+                      .map((a:any)=>a.alternativeExercise?.name)
+                      .filter(Boolean)
+                      .join(", ")
+                  }
+                </small>
+              }
+            </div>
+          </article>
+        )}
+      </div>
+      :
+      <Empty text="No exercise videos are available for your programme yet."/>
+    )}
+  </div>;
+}
+
 function ClientNutrition({data}:any){return <div className="planGrid">{data?.length?data.map((a:any)=><div className="planCard" key={a.id}><h2>{a.nutritionPlan.name}</h2><div className="macroRow"><span>{a.nutritionPlan.calories} kcal</span><span>P {a.nutritionPlan.proteinG}g</span><span>C {a.nutritionPlan.carbsG}g</span><span>F {a.nutritionPlan.fatsG}g</span></div>{a.nutritionPlan.mealOptions.map((m:any)=><div className="mealRow" key={m.id}><b>{m.mealLabel} · {m.optionLabel}</b><small>{Array.isArray(m.foods)?m.foods.join(" + "):""}</small><span>{m.calories||"—"} kcal · P {m.proteinG||"—"} · C {m.carbsG||"—"} · F {m.fatsG||"—"}</span></div>)}</div>):<Empty text="Jay hasn't assigned a nutrition plan yet."/>}</div>}
 function ClientProgress({data}:any){
   const weighted=(data?.checkIns||[]).filter((c:any)=>c.weightKg).map((c:any)=>({date:new Date(c.createdAt),weight:Number(c.weightKg)}));

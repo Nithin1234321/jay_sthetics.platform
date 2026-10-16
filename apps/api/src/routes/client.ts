@@ -70,6 +70,52 @@ clientRouter.patch("/onboarding", async (req,res) => {
 // All routes below require an active paid/manual coaching subscription.
 clientRouter.use(requireActiveSubscription);
 
+clientRouter.get("/exercise-library", async (req,res) => {
+  const subscription = await prisma.subscription.findFirst({
+    where:{
+      userId:req.auth!.sub,
+      status:"ACTIVE",
+      OR:[
+        {endsAt:null},
+        {endsAt:{gt:new Date()}}
+      ]
+    },
+    include:{program:true},
+    orderBy:{createdAt:"desc"}
+  });
+
+  if(!subscription){
+    return res.status(403).json({error:"Active coaching subscription required"});
+  }
+
+  const name = subscription.program.name.toLowerCase();
+
+  const audience =
+    name.includes("enhanced")
+      ? "ENHANCED"
+      : "NATURAL";
+
+  const exercises = await prisma.exercise.findMany({
+    where:{
+      isActive:true,
+      audience:{in:[audience,"BOTH"]}
+    },
+    include:{
+      alternatives:{
+        include:{
+          alternativeExercise:true
+        }
+      }
+    },
+    orderBy:[
+      {muscleGroup:"asc"},
+      {name:"asc"}
+    ]
+  });
+
+  res.json(exercises);
+});
+
 clientRouter.get("/training", async (req,res) => {
   res.json(await prisma.workoutAssignment.findMany({
     where:{userId:req.auth!.sub},
