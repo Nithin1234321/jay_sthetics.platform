@@ -173,6 +173,7 @@ model NutritionPlan {
   proteinG    Int?
   carbsG      Int?
   fatsG       Int?
+  pdfUrl      String?
   content     Json
   isTemplate  Boolean  @default(true)
   assignments NutritionAssignment[]

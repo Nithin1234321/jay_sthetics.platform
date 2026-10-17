@@ -20,6 +20,14 @@ const upload = multer({
   }
 });
 
+const pdfUpload = multer({
+  dest: uploadDir,
+  limits: { fileSize: 20 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    cb(null, file.mimetype === "application/pdf");
+  }
+});
+
 async function audit(adminId: string, action: string, entityType: string, entityId?: string, metadata?: object) {
   await prisma.adminAuditLog.create({
     data: { adminId, action, entityType, entityId, metadata }
@@ -478,6 +486,87 @@ adminRouter.post("/nutrition-plans", async (req, res) => {
     }
   });
   res.status(201).json(item);
+});
+
+adminRouter.post("/nutrition-plans/:id/pdf", pdfUpload.single("pdf"), async (req, res) => {
+  const planId = String(req.params.id);
+
+  if (!req.file) {
+    return res.status(400).json({ error: "PDF file required" });
+  }
+
+  const plan = await prisma.nutritionPlan.findUnique({
+    where: { id: planId },
+    select: { id: true, pdfUrl: true }
+  });
+
+  if (!plan) {
+    const uploadedPath = safeUploadPath(req.file.filename);
+    if (fs.existsSync(uploadedPath)) fs.unlinkSync(uploadedPath);
+    return res.status(404).json({ error: "Nutrition plan not found" });
+  }
+
+  const pdfUrl = `/api/media/${req.file.filename}`;
+
+  const updated = await prisma.nutritionPlan.update({
+    where: { id: planId },
+    data: { pdfUrl }
+  });
+
+  // Replacing an existing PDF should also clean up the old file.
+  if (plan.pdfUrl?.startsWith("/api/media/")) {
+    const oldFilename = plan.pdfUrl.split("/").pop();
+
+    if (oldFilename) {
+      const oldPath = safeUploadPath(oldFilename);
+      if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
+    }
+  }
+
+  await audit(
+    req.auth!.sub,
+    "UPLOAD_PDF",
+    "NUTRITION_PLAN",
+    planId
+  );
+
+  res.json(updated);
+});
+
+adminRouter.delete("/nutrition-plans/:id/pdf", async (req, res) => {
+  const planId = String(req.params.id);
+
+  const plan = await prisma.nutritionPlan.findUnique({
+    where: { id: planId },
+    select: { id: true, pdfUrl: true }
+  });
+
+  if (!plan) {
+    return res.status(404).json({ error: "Nutrition plan not found" });
+  }
+
+  if (plan.pdfUrl?.startsWith("/api/media/")) {
+    const filename = plan.pdfUrl.split("/").pop();
+
+    if (filename) {
+      const fullPath = safeUploadPath(filename);
+      if (fs.existsSync(fullPath)) fs.unlinkSync(fullPath);
+    }
+  }
+
+  await prisma.nutritionPlan.update({
+    where: { id: planId },
+    data: { pdfUrl: null }
+  });
+
+  await audit(
+    req.auth!.sub,
+    "REMOVE_PDF",
+    "NUTRITION_PLAN",
+    planId
+  );
+
+  res.json({ ok: true });
 });
 
 adminRouter.post("/nutrition-plans/:id/meal-options", async (req, res) => {

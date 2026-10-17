@@ -858,7 +858,66 @@ function AdminNutrition({setNotice}:{setNotice:(s:string)=>void}){
   useEffect(()=>{load().catch(e=>setNotice(e.message))},[]);
   async function create(e:FormEvent<HTMLFormElement>){e.preventDefault();const f=new FormData(e.currentTarget);try{await api("/admin/nutrition-plans",{method:"POST",body:JSON.stringify({name:f.get("name"),calories:Number(f.get("calories"))||undefined,proteinG:Number(f.get("protein"))||undefined,carbsG:Number(f.get("carbs"))||undefined,fatsG:Number(f.get("fats"))||undefined,notes:f.get("notes")})});setShow(false);setNotice("Nutrition plan created.");load()}catch(e:any){setNotice(e.message)}}
   async function meal(e:FormEvent<HTMLFormElement>){e.preventDefault();const f=new FormData(e.currentTarget);try{await api(`/admin/nutrition-plans/${mealFor.id}/meal-options`,{method:"POST",body:JSON.stringify({mealLabel:f.get("mealLabel"),optionLabel:f.get("optionLabel"),calories:Number(f.get("calories"))||undefined,proteinG:Number(f.get("protein"))||undefined,carbsG:Number(f.get("carbs"))||undefined,fatsG:Number(f.get("fats"))||undefined,foods:String(f.get("foods")).split("\n").map(x=>x.trim()).filter(Boolean)})});setMealFor(null);setNotice("Meal option added.");load()}catch(e:any){setNotice(e.message)}}
-  return <><div className="toolbar"><p className="muted">Create macro targets and several interchangeable food options.</p><button className="btn red" onClick={()=>setShow(true)}>+ New Nutrition Plan</button></div><div className="planGrid">{plans.map(p=><div className="planCard" key={p.id}><h3>{p.name}</h3><div className="macroRow"><span>{p.calories||"—"} kcal</span><span>P {p.proteinG||"—"}g</span><span>C {p.carbsG||"—"}g</span><span>F {p.fatsG||"—"}g</span></div>{p.mealOptions?.length?p.mealOptions.map((m:any)=><div className="mealRow" key={m.id}><b>{m.mealLabel} · {m.optionLabel}</b><small>{Array.isArray(m.foods)?m.foods.join(" + "):"Food option"}</small><span>P {m.proteinG||"—"} · C {m.carbsG||"—"} · F {m.fatsG||"—"}</span></div>):<Empty text="No meal alternatives yet."/>}<button className="btn ghost full" onClick={()=>setMealFor(p)}>+ Add Meal Option</button></div>)}</div>
+  async function uploadPdf(id:string,file:File){
+    try{
+      const fd=new FormData();
+      fd.append("pdf",file);
+
+      await api(`/admin/nutrition-plans/${id}/pdf`,{
+        method:"POST",
+        body:fd
+      });
+
+      setNotice("Diet plan PDF uploaded.");
+      load();
+    }catch(e:any){
+      setNotice(e.message);
+    }
+  }
+
+  async function removePdf(id:string){
+    if(!window.confirm("Remove this diet plan PDF? The nutrition plan and meal options will stay.")) return;
+
+    try{
+      await api(`/admin/nutrition-plans/${id}/pdf`,{
+        method:"DELETE"
+      });
+
+      setNotice("Diet plan PDF removed.");
+      load();
+    }catch(e:any){
+      setNotice(e.message);
+    }
+  }
+  return <><div className="toolbar"><p className="muted">Create macro targets and several interchangeable food options.</p><button className="btn red" onClick={()=>setShow(true)}>+ New Nutrition Plan</button></div><div className="planGrid">{plans.map(p=><div className="planCard" key={p.id}><h3>{p.name}</h3><div className="macroRow"><span>{p.calories||"—"} kcal</span><span>P {p.proteinG||"—"}g</span><span>C {p.carbsG||"—"}g</span><span>F {p.fatsG||"—"}g</span></div>{p.mealOptions?.length?p.mealOptions.map((m:any)=><div className="mealRow" key={m.id}><b>{m.mealLabel} · {m.optionLabel}</b><small>{Array.isArray(m.foods)?m.foods.join(" + "):"Food option"}</small><span>P {m.proteinG||"—"} · C {m.carbsG||"—"} · F {m.fatsG||"—"}</span></div>):<Empty text="No meal alternatives yet."/>}
+
+<div style={{display:"flex",gap:"10px",flexWrap:"wrap",marginTop:"14px"}}>
+  <label className="btn ghost" style={{cursor:"pointer"}}>
+    {p.pdfUrl ? "Replace Diet PDF" : "Upload Diet PDF"}
+    <input
+      type="file"
+      accept="application/pdf,.pdf"
+      style={{display:"none"}}
+      onChange={e=>{
+        const file=e.target.files?.[0];
+        if(file) uploadPdf(p.id,file);
+        e.currentTarget.value="";
+      }}
+    />
+  </label>
+
+  {p.pdfUrl&&
+    <button
+      type="button"
+      className="btn ghost"
+      onClick={()=>removePdf(p.id)}
+    >
+      Remove PDF
+    </button>
+  }
+</div>
+
+<button className="btn ghost full" onClick={()=>setMealFor(p)}>+ Add Meal Option</button></div>)}</div>
   {show&&<Dialog title="New Nutrition Plan" close={()=>setShow(false)}><form onSubmit={create}><input name="name" placeholder="Plan name" required/><div className="formGrid"><input name="calories" type="number" placeholder="Calories"/><input name="protein" type="number" placeholder="Protein g"/></div><div className="formGrid"><input name="carbs" type="number" placeholder="Carbs g"/><input name="fats" type="number" placeholder="Fats g"/></div><textarea name="notes" placeholder="Coach notes"/><button className="btn red full">Create</button></form></Dialog>}
   {mealFor&&<Dialog title={`Meal option · ${mealFor.name}`} close={()=>setMealFor(null)}><form onSubmit={meal}><div className="formGrid"><input name="mealLabel" placeholder="e.g. Breakfast" required/><input name="optionLabel" placeholder="Option A" required/></div><textarea name="foods" placeholder={"Foods — one per line\n60g oats\n1 scoop whey\n2 eggs"} required/><div className="formGrid four"><input name="calories" type="number" placeholder="kcal"/><input name="protein" type="number" placeholder="P"/><input name="carbs" type="number" placeholder="C"/><input name="fats" type="number" placeholder="F"/></div><button className="btn red full">Add Option</button></form></Dialog>}
   </>
@@ -1282,7 +1341,69 @@ function ClientExerciseLibrary(){
   </div>;
 }
 
-function ClientNutrition({data}:any){return <div className="planGrid">{data?.length?data.map((a:any)=><div className="planCard" key={a.id}><h2>{a.nutritionPlan.name}</h2><div className="macroRow"><span>{a.nutritionPlan.calories} kcal</span><span>P {a.nutritionPlan.proteinG}g</span><span>C {a.nutritionPlan.carbsG}g</span><span>F {a.nutritionPlan.fatsG}g</span></div>{a.nutritionPlan.mealOptions.map((m:any)=><div className="mealRow" key={m.id}><b>{m.mealLabel} · {m.optionLabel}</b><small>{Array.isArray(m.foods)?m.foods.join(" + "):""}</small><span>{m.calories||"—"} kcal · P {m.proteinG||"—"} · C {m.carbsG||"—"} · F {m.fatsG||"—"}</span></div>)}</div>):<Empty text="Jay hasn't assigned a nutrition plan yet."/>}</div>}
+function DietPdfButton({src}:{src:string}){
+  const [opening,setOpening]=useState(false);
+
+  async function openPdf(){
+    try{
+      setOpening(true);
+
+      const protectedSrc=src.startsWith("/uploads/")
+        ? `/api/media/${src.split("/").pop()}`
+        : src;
+
+      if(protectedSrc.startsWith("/api/")){
+        const blob=await apiBlob(protectedSrc.replace(/^\/api/,""));
+        const url=URL.createObjectURL(blob);
+        window.open(url,"_blank","noopener,noreferrer");
+        setTimeout(()=>URL.revokeObjectURL(url),60000);
+      }else{
+        window.open(protectedSrc,"_blank","noopener,noreferrer");
+      }
+    }finally{
+      setOpening(false);
+    }
+  }
+
+  return <button className="btn red" type="button" onClick={openPdf} disabled={opening}>
+    {opening?"Opening PDF…":"View Diet Plan PDF"}
+  </button>;
+}
+
+function ClientNutrition({data}:any){
+  return <div className="planGrid">
+    {data?.length?
+      data.map((a:any)=>
+        <div className="planCard" key={a.id}>
+          <h2>{a.nutritionPlan.name}</h2>
+
+          <div className="macroRow">
+            <span>{a.nutritionPlan.calories||"—"} kcal</span>
+            <span>P {a.nutritionPlan.proteinG||"—"}g</span>
+            <span>C {a.nutritionPlan.carbsG||"—"}g</span>
+            <span>F {a.nutritionPlan.fatsG||"—"}g</span>
+          </div>
+
+          {a.nutritionPlan.pdfUrl&&
+            <div style={{margin:"16px 0"}}>
+              <DietPdfButton src={a.nutritionPlan.pdfUrl}/>
+            </div>
+          }
+
+          {a.nutritionPlan.mealOptions.map((m:any)=>
+            <div className="mealRow" key={m.id}>
+              <b>{m.mealLabel} · {m.optionLabel}</b>
+              <small>{Array.isArray(m.foods)?m.foods.join(" + "):""}</small>
+              <span>{m.calories||"—"} kcal · P {m.proteinG||"—"} · C {m.carbsG||"—"} · F {m.fatsG||"—"}</span>
+            </div>
+          )}
+        </div>
+      )
+      :
+      <Empty text="Jay hasn't assigned a nutrition plan yet."/>
+    }
+  </div>;
+}
 function ClientProgress({data}:any){
   const weighted=(data?.checkIns||[]).filter((c:any)=>c.weightKg).map((c:any)=>({date:new Date(c.createdAt),weight:Number(c.weightKg)}));
   return <><h2>Progress History</h2><div className="metricGrid"><div className="metric"><small>MEASUREMENTS</small><b>{data?.measurements?.length||0}</b></div><div className="metric"><small>STRENGTH RECORDS</small><b>{data?.strength?.length||0}</b></div><div className="metric"><small>CHECK-INS</small><b>{data?.checkIns?.length||0}</b></div></div>
