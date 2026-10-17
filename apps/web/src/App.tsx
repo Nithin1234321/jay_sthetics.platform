@@ -299,12 +299,6 @@ export default function App(){
         <p className="muted">Personalized training, nutrition, weekly check-ins and direct coaching support in one platform.</p>
         <div className="heroButtons"><a className="btn red" href="/programs">View Coaching →</a><button className="btn ghost" onClick={()=>setModal("call")}>Schedule a Call</button></div>
       </div></section>
-      <section className="featureRow">
-        <div><b>🏋 Training</b><span>Workout splits, videos and alternatives.</span></div>
-        <div><b>🍎 Nutrition</b><span>Macros and flexible meal options.</span></div>
-        <div><b>📈 Progress</b><span>Weekly check-ins and strength tracking.</span></div>
-        <div><b>💬 Coaching</b><span>Private chat and designated call hours.</span></div>
-      </section>
       <section className="section" id="programs"><p className="eyebrow redText">COACHING PROGRAMMES</p><h2>CHOOSE YOUR PROGRAMME</h2>
         <div className="cards">{programs.filter(p=>p.isActive!==false).map((p,i)=><article className="card" key={p.id}>
           <img
