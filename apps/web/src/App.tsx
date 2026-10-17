@@ -736,24 +736,42 @@ function AdminExercises({setNotice}:{setNotice:(s:string)=>void}){
       setNotice(e.message);
     }
   }
-  async function removeVideo(id:string){
-    const confirmed=window.confirm(
-      "Remove this video? The exercise details will be kept, but the uploaded video file will be permanently deleted."
-    );
-
-    if(!confirmed)return;
-
+  async function replaceVideo(id:string,file:File){
     try{
+      const fd=new FormData();
+      fd.append("video",file);
+
       await api(`/admin/exercises/${id}/video`,{
-        method:"DELETE"
+        method:"POST",
+        body:fd
       });
 
-      setNotice("Exercise video removed.");
+      setNotice("Exercise video replaced.");
       load();
     }catch(e:any){
       setNotice(e.message);
     }
   }
+
+  async function deleteExercise(id:string){
+    const confirmed=window.confirm(
+      "Delete this entire exercise? This will also remove the uploaded video and remove the exercise from workout plans."
+    );
+
+    if(!confirmed)return;
+
+    try{
+      await api(`/admin/exercises/${id}`,{
+        method:"DELETE"
+      });
+
+      setNotice("Exercise deleted.");
+      load();
+    }catch(e:any){
+      setNotice(e.message);
+    }
+  }
+
   return <><div className="toolbar"><p className="muted">Build the exercise video library available to your coaching clients.</p><button className="btn red" onClick={()=>setShow(true)}>+ Add Exercise</button></div>
     <div className="libraryGrid">{items.map(ex=><article className="exerciseCard" key={ex.id}><div className="videoBox">{ex.videoUrl?<ProtectedVideo src={ex.videoUrl}/>:<span>No video</span>}</div><div className="exerciseBody">
   <div style={{display:"flex",gap:"8px",flexWrap:"wrap"}}>
@@ -765,16 +783,29 @@ function AdminExercises({setNotice}:{setNotice:(s:string)=>void}){
 
   <h3>{ex.name}</h3>
 
-  {ex.videoUrl&&
+  <div style={{display:"flex",gap:"10px",flexWrap:"wrap",marginBottom:"10px"}}>
+    <label className="btn ghost" style={{cursor:"pointer"}}>
+      Replace Video
+      <input
+        type="file"
+        accept="video/mp4,video/quicktime,video/webm"
+        style={{display:"none"}}
+        onChange={e=>{
+          const file=e.target.files?.[0];
+          if(file) replaceVideo(ex.id,file);
+          e.currentTarget.value="";
+        }}
+      />
+    </label>
+
     <button
       type="button"
       className="btn ghost"
-      onClick={()=>removeVideo(ex.id)}
-      style={{marginBottom:"10px"}}
+      onClick={()=>deleteExercise(ex.id)}
     >
-      Remove Video
+      Delete Exercise
     </button>
-  }
+  </div>
 
   <p>{ex.instructions}</p>
 

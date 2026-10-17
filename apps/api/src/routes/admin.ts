@@ -287,9 +287,57 @@ adminRouter.patch("/exercises/:id", async (req, res) => {
   res.json(item);
 });
 
-adminRouter.delete("/exercises/:id/video", async (req, res) => {
+adminRouter.post("/exercises/:id/video", upload.single("video"), async (req, res) => {
+  const exerciseId = String(req.params.id);
+
+  if(!req.file){
+    return res.status(400).json({error:"Video file required (.mp4/.mov/.webm)"});
+  }
+
   const exercise = await prisma.exercise.findUnique({
-    where:{id:req.params.id},
+    where:{id:exerciseId},
+    select:{id:true,videoUrl:true}
+  });
+
+  if(!exercise){
+    const newPath = safeUploadPath(req.file.filename);
+    if(fs.existsSync(newPath)) fs.unlinkSync(newPath);
+    return res.status(404).json({error:"Exercise not found"});
+  }
+
+  const newVideoUrl = `/api/media/${req.file.filename}`;
+
+  const updated = await prisma.exercise.update({
+    where:{id:exercise.id},
+    data:{videoUrl:newVideoUrl}
+  });
+
+  if(exercise.videoUrl?.startsWith("/api/media/")){
+    const oldFilename = exercise.videoUrl.split("/").pop();
+
+    if(oldFilename){
+      const oldPath = safeUploadPath(oldFilename);
+      if(fs.existsSync(oldPath)){
+        fs.unlinkSync(oldPath);
+      }
+    }
+  }
+
+  await audit(
+    req.auth!.sub,
+    "REPLACE_VIDEO",
+    "EXERCISE",
+    exercise.id
+  );
+
+  res.json(updated);
+});
+
+adminRouter.delete("/exercises/:id", async (req, res) => {
+  const exerciseId = String(req.params.id);
+
+  const exercise = await prisma.exercise.findUnique({
+    where:{id:exerciseId},
     select:{id:true,videoUrl:true}
   });
 
@@ -297,12 +345,26 @@ adminRouter.delete("/exercises/:id/video", async (req, res) => {
     return res.status(404).json({error:"Exercise not found"});
   }
 
-  if(!exercise.videoUrl){
-    return res.json({ok:true});
-  }
+  await prisma.$transaction(async tx=>{
+    await tx.workoutExercise.deleteMany({
+      where:{exerciseId:exercise.id}
+    });
 
-  // Only delete files that belong to our own protected media storage.
-  if(exercise.videoUrl.startsWith("/api/media/")){
+    await tx.exerciseAlternative.deleteMany({
+      where:{
+        OR:[
+          {exerciseId:exercise.id},
+          {alternativeExerciseId:exercise.id}
+        ]
+      }
+    });
+
+    await tx.exercise.delete({
+      where:{id:exercise.id}
+    });
+  });
+
+  if(exercise.videoUrl?.startsWith("/api/media/")){
     const filename = exercise.videoUrl.split("/").pop();
 
     if(filename){
@@ -314,14 +376,9 @@ adminRouter.delete("/exercises/:id/video", async (req, res) => {
     }
   }
 
-  await prisma.exercise.update({
-    where:{id:exercise.id},
-    data:{videoUrl:null}
-  });
-
   await audit(
     req.auth!.sub,
-    "REMOVE_VIDEO",
+    "DELETE",
     "EXERCISE",
     exercise.id
   );
