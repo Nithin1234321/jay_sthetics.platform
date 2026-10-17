@@ -721,7 +721,7 @@ function AdminExercises({setNotice}:{setNotice:(s:string)=>void}){
   const [items,setItems]=useState<any[]>([]),[show,setShow]=useState(false),[uploading,setUploading]=useState(false),[videoUrl,setVideoUrl]=useState("");
   async function load(){setItems(await api<any[]>("/admin/exercises"))}
   useEffect(()=>{load().catch(e=>setNotice(e.message))},[]);
-  async function uploadVideo(file:File){setUploading(true);try{const fd=new FormData();fd.append("video",file);const r=await api<any>("/admin/exercise-video",{method:"POST",body:fd});setVideoUrl(r.videoUrl);setNotice("Video uploaded for local development.")}catch(e:any){setNotice(e.message)}finally{setUploading(false)}}
+  async function uploadVideo(file:File){setUploading(true);try{const fd=new FormData();fd.append("video",file);const r=await api<any>("/admin/exercise-video",{method:"POST",body:fd});setVideoUrl(r.videoUrl);setNotice("Video uploaded. Save the exercise to finish.")}catch(e:any){setNotice(e.message)}finally{setUploading(false)}}
   async function create(e:FormEvent<HTMLFormElement>){e.preventDefault();const f=new FormData(e.currentTarget);try{await api("/admin/exercises",{method:"POST",body:JSON.stringify({name:f.get("name"),muscleGroup:f.get("muscleGroup"),instructions:f.get("instructions"),formCues:String(f.get("formCues")||"").split("\n").map(x=>x.trim()).filter(Boolean),videoUrl:videoUrl||String(f.get("videoUrl")||"")||undefined,audience:f.get("audience")||"BOTH"})});setShow(false);setVideoUrl("");setNotice("Exercise added.");load()}catch(e:any){setNotice(e.message)}}
   async function alternative(id:string,alt:string){if(!alt)return;try{await api(`/admin/exercises/${id}/alternatives`,{method:"POST",body:JSON.stringify({alternativeExerciseId:alt})});setNotice("Alternative added.");load()}catch(e:any){setNotice(e.message)}}
   async function changeAudience(id:string,audience:string){
@@ -731,6 +731,24 @@ function AdminExercises({setNotice}:{setNotice:(s:string)=>void}){
         body:JSON.stringify({audience})
       });
       setNotice("Exercise audience updated.");
+      load();
+    }catch(e:any){
+      setNotice(e.message);
+    }
+  }
+  async function removeVideo(id:string){
+    const confirmed=window.confirm(
+      "Remove this video? The exercise details will be kept, but the uploaded video file will be permanently deleted."
+    );
+
+    if(!confirmed)return;
+
+    try{
+      await api(`/admin/exercises/${id}/video`,{
+        method:"DELETE"
+      });
+
+      setNotice("Exercise video removed.");
       load();
     }catch(e:any){
       setNotice(e.message);
@@ -746,6 +764,18 @@ function AdminExercises({setNotice}:{setNotice:(s:string)=>void}){
   </div>
 
   <h3>{ex.name}</h3>
+
+  {ex.videoUrl&&
+    <button
+      type="button"
+      className="btn ghost"
+      onClick={()=>removeVideo(ex.id)}
+      style={{marginBottom:"10px"}}
+    >
+      Remove Video
+    </button>
+  }
+
   <p>{ex.instructions}</p>
 
   <ul>

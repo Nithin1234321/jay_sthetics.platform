@@ -2,9 +2,10 @@ import { Router } from "express";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
 import multer from "multer";
+import fs from "fs";
 import { prisma } from "../db.js";
 import { requireAdmin, requireAuth } from "../middleware/auth.js";
-import { uploadDir } from "../utils/uploads.js";
+import { uploadDir, safeUploadPath } from "../utils/uploads.js";
 
 export const adminRouter = Router();
 adminRouter.use(requireAuth, requireAdmin);
@@ -284,6 +285,48 @@ adminRouter.patch("/exercises/:id", async (req, res) => {
   const item = await prisma.exercise.update({ where: { id: req.params.id }, data: parsed.data });
   await audit(req.auth!.sub, "UPDATE", "EXERCISE", item.id);
   res.json(item);
+});
+
+adminRouter.delete("/exercises/:id/video", async (req, res) => {
+  const exercise = await prisma.exercise.findUnique({
+    where:{id:req.params.id},
+    select:{id:true,videoUrl:true}
+  });
+
+  if(!exercise){
+    return res.status(404).json({error:"Exercise not found"});
+  }
+
+  if(!exercise.videoUrl){
+    return res.json({ok:true});
+  }
+
+  // Only delete files that belong to our own protected media storage.
+  if(exercise.videoUrl.startsWith("/api/media/")){
+    const filename = exercise.videoUrl.split("/").pop();
+
+    if(filename){
+      const fullPath = safeUploadPath(filename);
+
+      if(fs.existsSync(fullPath)){
+        fs.unlinkSync(fullPath);
+      }
+    }
+  }
+
+  await prisma.exercise.update({
+    where:{id:exercise.id},
+    data:{videoUrl:null}
+  });
+
+  await audit(
+    req.auth!.sub,
+    "REMOVE_VIDEO",
+    "EXERCISE",
+    exercise.id
+  );
+
+  res.json({ok:true});
 });
 
 adminRouter.post("/exercises/:id/alternatives", async (req, res) => {
