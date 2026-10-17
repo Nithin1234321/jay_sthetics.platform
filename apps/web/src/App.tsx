@@ -576,7 +576,42 @@ function AdminClients({setNotice}:{setNotice:(s:string)=>void}){
       {clientTab==="workout"&&<div className="clientSection"><h3>Workout</h3><select className="largeSelect" defaultValue="" onChange={e=>assignWorkout(e.target.value)}><option value="" disabled>Assign workout plan…</option>{workouts.map(x=><option key={x.id} value={x.id}>{x.name}</option>)}</select>{selected.workouts?.map((x:any)=><div className="managementRow" key={x.id}><b>{x.workoutPlan.name}</b><small>{new Date(x.assignedAt).toLocaleDateString()}</small></div>)}</div>}
       {clientTab==="nutrition"&&<div className="clientSection"><h3>Nutrition</h3><select className="largeSelect" defaultValue="" onChange={e=>assignNutrition(e.target.value)}><option value="" disabled>Assign nutrition plan…</option>{nutrition.map(x=><option key={x.id} value={x.id}>{x.name} · {x.calories||"—"} kcal</option>)}</select>{selected.nutrition?.map((x:any)=><div className="managementRow" key={x.id}><b>{x.nutritionPlan.name}</b><small>{x.nutritionPlan.calories||"—"} kcal</small></div>)}</div>}
       {clientTab==="progress"&&<div className="clientSection"><h3>Progress History</h3>{selected.measurements?.length?selected.measurements.map((x:any)=><div className="managementRow" key={x.id}><b>{x.metric}: {String(x.value)} {x.unit}</b><small>{new Date(x.measuredAt).toLocaleDateString()}</small></div>):<Empty text="No measurements yet."/>}</div>}
-      {clientTab==="check-ins"&&<div className="clientSection"><h3>Weekly Check-ins</h3>{selected.checkIns?.length?selected.checkIns.map((x:any)=><div className="checkinCard" key={x.id}><b>{new Date(x.createdAt).toLocaleDateString()} · {x.weightKg?`${x.weightKg} kg`:"Check-in"}</b><p>Training: {x.trainingPerformance||"—"} · Diet: {x.dietAdherence??"—"}% · Energy: {x.energyLevel??"—"}/10 · Sleep: {x.sleepHours??"—"}h</p><p>{x.stepsCardio||""} {x.issues||""} {x.questions||""} {x.notes||""}</p></div>):<Empty text="No check-ins yet."/>}</div>}
+      {clientTab==="check-ins"&&
+  <div className="clientSection">
+    <h3>Weekly Check-ins</h3>
+
+    {selected.checkIns?.length?
+      selected.checkIns.map((x:any)=>
+        <div className="checkinCard" key={x.id}>
+          <b>
+            {new Date(x.createdAt).toLocaleDateString()} · {x.weightKg?`${x.weightKg} kg`:"Check-in"}
+          </b>
+
+          <p>
+            Training: {x.trainingPerformance||"—"} ·
+            Diet: {x.dietAdherence??"—"}% ·
+            Energy: {x.energyLevel??"—"}/10 ·
+            Sleep: {x.sleepHours??"—"}h
+          </p>
+
+          <p>
+            {x.stepsCardio||""} {x.issues||""} {x.questions||""} {x.notes||""}
+          </p>
+
+          {!!x.photoUrls?.length&&
+            <div className="progressPhotos" style={{marginTop:"14px"}}>
+              {x.photoUrls.map((u:string)=>
+                <ProtectedImage key={u} src={u}/>
+              )}
+            </div>
+          }
+        </div>
+      )
+      :
+      <Empty text="No check-ins yet."/>
+    }
+  </div>
+}
       {clientTab==="calls"&&<div className="clientSection"><h3>Calls</h3>{selected.appointments?.length?selected.appointments.map((x:any)=><div className="managementRow" key={x.id}><b>{date(x.preferredAt)}</b><span>{x.status}</span></div>):<Empty text="No calls yet."/>}</div>}
       {clientTab==="payments"&&<div className="clientSection"><h3>Payments</h3>{selected.payments?.length?selected.payments.map((x:any)=><div className="managementRow" key={x.id}><b>{money(x.amountPaise)}</b><span>{x.status}</span><small>{new Date(x.createdAt).toLocaleDateString()}</small></div>):<Empty text="No payments yet."/>}</div>}
       {clientTab==="notes"&&<div className="clientSection"><h3>Private Coach Notes</h3><p className="muted">Only Jay can see these.</p><form onSubmit={addNote} className="noteComposer"><textarea name="body" placeholder="Add a private note…" required/><button className="btn red">Save Note</button></form><div className="noteList">{selected.notes?.length?selected.notes.map((x:any)=><div className="coachNote" key={x.id}><small>{date(x.createdAt)}</small><p>{x.body}</p></div>):<Empty text="No private notes yet."/>}</div></div>}
@@ -927,7 +962,26 @@ function AdminCheckins(){
   const [items,setItems]=useState<any[]>([]);
   useEffect(()=>{api<any[]>("/admin/check-ins").then(setItems)},[]);
   const exportRows=items.map(c=>({Client:c.user.fullName,Email:c.user.email,Date:new Date(c.createdAt).toLocaleDateString(),Weight_kg:c.weightKg?Number(c.weightKg):null,Body_Fat_Percent:c.bodyFat?Number(c.bodyFat):null,Sleep_Hours:c.sleepHours?Number(c.sleepHours):null,Energy_1_to_10:c.energyLevel??null,Diet_Adherence_Percent:c.dietAdherence??null,Notes:c.notes||""}));
-  return <><div className="toolbar"><p className="muted">Weekly client progress submissions.</p><button className="btn ghost" onClick={()=>downloadExcel("jay-sthetics-checkins.xlsx",[{name:"Weekly Check-ins",rows:exportRows}])}>↓ Download Excel</button></div><div className="dataTable"><div className="tr checkHead"><span>Client</span><span>Date</span><span>Weight</span><span>Sleep</span><span>Energy</span><span>Adherence</span></div>{items.map(c=><div className="tr checkRow" key={c.id}><span><b>{c.user.fullName}</b><small>{c.user.email}</small></span><span>{new Date(c.createdAt).toLocaleDateString()}</span><span>{c.weightKg?`${c.weightKg} kg`:"—"}</span><span>{c.sleepHours?`${c.sleepHours}h`:"—"}</span><span>{c.energyLevel||"—"}/10</span><span>{c.dietAdherence??"—"}%</span></div>)}</div></>
+  return <><div className="toolbar"><p className="muted">Weekly client progress submissions.</p><button className="btn ghost" onClick={()=>downloadExcel("jay-sthetics-checkins.xlsx",[{name:"Weekly Check-ins",rows:exportRows}])}>↓ Download Excel</button></div><div className="dataTable"><div className="tr checkHead"><span>Client</span><span>Date</span><span>Weight</span><span>Sleep</span><span>Energy</span><span>Adherence</span></div>{items.map(c=><div className="tr checkRow" key={c.id}>
+  <span>
+    <b>{c.user.fullName}</b>
+    <small>{c.user.email}</small>
+
+    {!!c.photoUrls?.length&&
+      <div className="progressPhotos" style={{marginTop:"10px"}}>
+        {c.photoUrls.map((u:string)=>
+          <ProtectedImage key={u} src={u}/>
+        )}
+      </div>
+    }
+  </span>
+
+  <span>{new Date(c.createdAt).toLocaleDateString()}</span>
+  <span>{c.weightKg?`${c.weightKg} kg`:"—"}</span>
+  <span>{c.sleepHours?`${c.sleepHours}h`:"—"}</span>
+  <span>{c.energyLevel||"—"}/10</span>
+  <span>{c.dietAdherence??"—"}%</span>
+</div>)}</div></>
 }
 
 function AdminCalls({setNotice}:{setNotice:(s:string)=>void}){
