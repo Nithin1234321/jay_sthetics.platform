@@ -1300,24 +1300,131 @@ function ClientPanel({user,logout}:{user:User;logout:()=>void}){
 
 function ClientDashboard({data}:any){
   const sub=data?.subscriptions?.[0];
+
+  const endDate=sub?.endsAt?new Date(sub.endsAt):null;
+  const now=new Date();
+
+  const daysRemaining=endDate
+    ? Math.max(0,Math.ceil((endDate.getTime()-now.getTime())/(1000*60*60*24)))
+    : null;
+
+  const expired=!!endDate&&endDate.getTime()<=now.getTime();
+
+  const renewalMessage=
+    expired
+      ?"Your coaching programme has ended. Renew to restore access."
+      :daysRemaining!==null&&daysRemaining<=7
+        ?"Renew soon to avoid interruption to your coaching access."
+        :daysRemaining!==null&&daysRemaining<=14
+          ?"Your programme is approaching its renewal date."
+          :"Your programme is currently active.";
+
   return <div className="clientHome">
     <div className="clientWelcome">
-      <div><span>WELCOME BACK</span><h2>{data?.fullName?.split(" ")[0]}, stay consistent.</h2><p>Your programme, check-ins and coaching support are all here.</p></div>
-      <div className="programStatusCard"><small>CURRENT PROGRAMME</small><b>{sub?.program?.name||"No active programme"}</b><span className={`statusDot ${sub?.status==="ACTIVE"?"live":"off"}`}>{sub?.status||"NOT ACTIVE"}</span></div>
+      <div>
+        <span>WELCOME BACK</span>
+        <h2>{data?.fullName?.split(" ")[0]}, stay consistent.</h2>
+        <p>Your programme, check-ins and coaching support are all here.</p>
+      </div>
+
+      <div className="programStatusCard">
+        <small>CURRENT PROGRAMME</small>
+        <b>{sub?.program?.name||"No active programme"}</b>
+        <span className={`statusDot ${sub?.status==="ACTIVE"?"live":"off"}`}>
+          {sub?.status||"NOT ACTIVE"}
+        </span>
+      </div>
     </div>
+
     <div className="metricGrid premiumMetrics clientMetrics">
-      <div className="metric premiumMetric"><small>PROGRAMME</small><b>{sub?.program?.name||"—"}</b><p>Assigned coaching plan</p></div>
-      <div className="metric premiumMetric"><small>STATUS</small><b>{sub?.status||"—"}</b><p>Subscription access</p></div>
-      <div className="metric premiumMetric"><small>RECENT CHECK-INS</small><b>{data?.checkIns?.length||0}</b><p>Latest coaching updates</p></div>
+      <div className="metric premiumMetric">
+        <small>PROGRAMME</small>
+        <b>{sub?.program?.name||"—"}</b>
+        <p>Assigned coaching plan</p>
+      </div>
+
+      <div className="metric premiumMetric">
+        <small>STATUS</small>
+        <b>{sub?.status||"—"}</b>
+        <p>Subscription access</p>
+      </div>
+
+      <div className="metric premiumMetric">
+        <small>RECENT CHECK-INS</small>
+        <b>{data?.checkIns?.length||0}</b>
+        <p>Latest coaching updates</p>
+      </div>
     </div>
+
+    {sub&&
+      <div className="settingsCard" style={{marginTop:"22px"}}>
+        <small className="redText">SUBSCRIPTION</small>
+        <h2 style={{marginBottom:"8px"}}>
+          {expired
+            ?"Programme Ended"
+            :daysRemaining!==null
+              ?`${daysRemaining} ${daysRemaining===1?"Day":"Days"} Remaining`
+              :"Active Programme"
+          }
+        </h2>
+
+        <p>
+          <b>{sub.program?.name}</b>
+        </p>
+
+        {endDate&&
+          <p className="muted">
+            {expired?"Ended":"Ends"} on{" "}
+            {endDate.toLocaleDateString("en-US",{
+              month:"long",
+              day:"numeric",
+              year:"numeric"
+            })}
+          </p>
+        }
+
+        <p>{renewalMessage}</p>
+
+        {(expired||(daysRemaining!==null&&daysRemaining<=30))&&
+          <a
+            className="btn red"
+            href="/programs"
+            style={{display:"inline-flex",marginTop:"8px"}}
+          >
+            Renew Programme
+          </a>
+        }
+      </div>
+    }
+
     <div className="clientActionGrid">
-      <div className="actionCard"><span>01</span><h3>Training</h3><p>Open your current workout split and exercise demonstrations.</p></div>
-      <div className="actionCard"><span>02</span><h3>Nutrition</h3><p>Review calories, macros and meal alternatives.</p></div>
-      <div className="actionCard"><span>03</span><h3>Weekly Check-in</h3><p>Submit progress, adherence and photos for Jay.</p></div>
-      <div className="actionCard"><span>04</span><h3>Coach Support</h3><p>Use private messages and available call slots.</p></div>
+      <div className="actionCard">
+        <span>01</span>
+        <h3>Training</h3>
+        <p>Open your current workout split and exercise demonstrations.</p>
+      </div>
+
+      <div className="actionCard">
+        <span>02</span>
+        <h3>Nutrition</h3>
+        <p>Review calories, macros and meal alternatives.</p>
+      </div>
+
+      <div className="actionCard">
+        <span>03</span>
+        <h3>Weekly Check-in</h3>
+        <p>Submit progress, adherence and photos for Jay.</p>
+      </div>
+
+      <div className="actionCard">
+        <span>04</span>
+        <h3>Coach Support</h3>
+        <p>Use private messages and available call slots.</p>
+      </div>
     </div>
   </div>;
 }
+
 function ClientTraining({data}:any){return <div className="planGrid">{data?.length?data.map((a:any)=><div className="planCard" key={a.id}><h2>{a.workoutPlan.name}</h2>{a.workoutPlan.exercises.map((x:any)=><div className="clientExercise" key={x.id}><div><span className="pill">{x.dayLabel}</span><h3>{x.exercise.name}</h3><p>{x.sets||"—"} sets × {x.reps||"—"} · Rest {x.restSeconds||"—"} sec</p><p>{x.exercise.instructions}</p><ul>{x.exercise.formCues.map((c:string)=><li key={c}>{c}</li>)}</ul>{x.exercise.alternatives?.length>0&&<small>Alternatives: {x.exercise.alternatives.map((alt:any)=>alt.alternativeExercise.name).join(", ")}</small>}</div>{x.exercise.videoUrl&&<ProtectedVideo src={x.exercise.videoUrl}/>}</div>)}</div>):<Empty text="Jay hasn't assigned a workout plan yet."/>}</div>}
 function ClientExerciseLibrary(){
   const [items,setItems]=useState<any[]>([]);
