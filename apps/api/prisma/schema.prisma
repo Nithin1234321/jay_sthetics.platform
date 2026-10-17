@@ -86,6 +86,7 @@ model ClientProfile {
   currentWeightKg   Decimal? @db.Decimal(6,2)
   bodyFatPercent    Decimal? @db.Decimal(5,2)
   heightCm          Decimal? @db.Decimal(6,2)
+  profilePhotoUrl   String?
   notes             String?
   user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt         DateTime @default(now())

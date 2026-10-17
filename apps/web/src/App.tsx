@@ -551,6 +551,67 @@ function AdminOverview(){
   </div>;
 }
 
+function ProfilePhoto({src,name,size=52}:{src?:string|null;name?:string;size?:number}){
+  const [url,setUrl]=useState("");
+
+  useEffect(()=>{
+    let objectUrl="";
+
+    if(!src){
+      setUrl("");
+      return;
+    }
+
+    const protectedSrc=src.startsWith("/uploads/")
+      ? `/api/media/${src.split("/").pop()}`
+      : src;
+
+    if(!protectedSrc.startsWith("/api/")){
+      setUrl(protectedSrc);
+      return;
+    }
+
+    apiBlob(protectedSrc.replace(/^\/api/,""))
+      .then(blob=>{
+        objectUrl=URL.createObjectURL(blob);
+        setUrl(objectUrl);
+      })
+      .catch(()=>setUrl(""));
+
+    return()=>{
+      if(objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  },[src]);
+
+  if(url){
+    return <img
+      src={url}
+      alt={name||"Client"}
+      style={{
+        width:size,
+        height:size,
+        borderRadius:"50%",
+        objectFit:"cover",
+        flex:"0 0 auto"
+      }}
+    />;
+  }
+
+  return <div
+    className="clientInitial"
+    style={{
+      width:size,
+      height:size,
+      minWidth:size,
+      display:"flex",
+      alignItems:"center",
+      justifyContent:"center"
+    }}
+  >
+    {name?.[0]?.toUpperCase()||"?"}
+  </div>;
+}
+
 function AdminClients({setNotice}:{setNotice:(s:string)=>void}){
   const [clients,setClients]=useState<any[]>([]),[programs,setPrograms]=useState<Program[]>([]),[workouts,setWorkouts]=useState<any[]>([]),[nutrition,setNutrition]=useState<any[]>([]),[q,setQ]=useState("");
   const [selected,setSelected]=useState<any|null>(null),[showNew,setShowNew]=useState(false),[clientTab,setClientTab]=useState("overview");
@@ -566,9 +627,49 @@ function AdminClients({setNotice}:{setNotice:(s:string)=>void}){
   async function addNote(e:FormEvent<HTMLFormElement>){e.preventDefault();if(!selected)return;const f=new FormData(e.currentTarget);await api(`/admin/clients/${selected.id}/notes`,{method:"POST",body:JSON.stringify({body:f.get("body")})});e.currentTarget.reset();setNotice("Private note saved.");refresh()}
   return <div>
     <div className="toolbar"><div className="search"><input value={q} onChange={e=>setQ(e.target.value)} placeholder="Search name, email or phone"/><button className="btn ghost" onClick={()=>load()}>Search</button></div><div className="toolbarActions"><button className="btn ghost" onClick={()=>downloadExcel("jay-sthetics-clients.xlsx",[{name:"Clients",rows:clients.map(c=>({Client_ID:c.id,Name:c.fullName,Email:c.email,Phone:c.phone||"",Account_Status:c.isActive?"Active":"Disabled",Programme:c.subscriptions?.[0]?.program?.name||"Not assigned",Subscription_Status:c.subscriptions?.[0]?.status||"No subscription",Joined:new Date(c.createdAt).toLocaleDateString()}))}])}>↓ Excel</button><button className="btn red" onClick={()=>setShowNew(true)}>+ Add Client</button></div></div>
-    <div className="dataTable premiumTable"><div className="tr head"><span>Client</span><span>Contact</span><span>Programme</span><span>Access</span></div>{clients.map(c=><button className="tr rowButton" key={c.id} onClick={()=>open(c.id)}><span><b>{c.fullName}</b><small>{date(c.createdAt)}</small></span><span>{c.email}<small>{c.phone||"No phone"}</small></span><span>{c.subscriptions?.[0]?.program?.name||"Not assigned"}</span><span>{c.subscriptions?.[0]?.status||"NO PLAN"}</span></button>)}</div>
+    <div className="dataTable premiumTable"><div className="tr head"><span>Client</span><span>Contact</span><span>Programme</span><span>Access</span></div>{clients.map(c=><button className="tr rowButton" key={c.id} onClick={()=>open(c.id)}><span style={{display:"flex",alignItems:"center",gap:"10px"}}>
+  <ProfilePhoto
+    src={c.clientProfile?.profilePhotoUrl}
+    name={c.fullName}
+    size={42}
+  />
+  <span>
+    <b>{c.fullName}</b>
+    <small>{date(c.createdAt)}</small>
+  </span>
+</span><span>{c.email}<small>{c.phone||"No phone"}</small></span><span>{c.subscriptions?.[0]?.program?.name||"Not assigned"}</span><span>{c.subscriptions?.[0]?.status||"NO PLAN"}</span></button>)}</div>
     {showNew&&<Dialog title="Create Client" close={()=>setShowNew(false)}><form onSubmit={create}><input name="fullName" placeholder="Full name" required/><input name="email" type="email" placeholder="Email" required/><input name="phone" placeholder="Phone"/><input name="goal" placeholder="Fitness goal"/><input name="password" placeholder="Temporary password" minLength={8} required/><button className="btn red full">Create Client</button></form></Dialog>}
-    {selected&&<div className="clientWorkspaceOverlay"><div className="clientWorkspace"><div className="clientWorkspaceTop"><button className="backClient" onClick={()=>setSelected(null)}>← Back to clients</button><div className="clientIdentity"><div className="clientInitial">{selected.fullName?.[0]}</div><div><h2>{selected.fullName}</h2><p>{selected.email} · {selected.phone||"No phone"}</p></div></div><div className="clientAccessBadge">{selected.subscriptions?.[0]?.status||"NO PLAN"}</div></div>
+    {selected&&<div className="clientWorkspaceOverlay"><div className="clientWorkspace"><div className="clientWorkspaceTop"><button className="backClient" onClick={()=>setSelected(null)}>← Back to clients</button><div className="clientIdentity">
+  <ProfilePhoto
+    src={selected.clientProfile?.profilePhotoUrl}
+    name={selected.fullName}
+    size={64}
+  />
+
+  <div>
+    <h2>{selected.fullName}</h2>
+    <p>{selected.email}</p>
+
+    {selected.phone?
+      <div style={{display:"flex",alignItems:"center",gap:"10px",marginTop:"6px"}}>
+        <span>{selected.phone}</span>
+        <a
+          className="btn ghost"
+          href={`tel:${selected.phone}`}
+          style={{padding:"6px 10px"}}
+        >
+          Call Client
+        </a>
+      </div>
+      :
+      <p>No phone</p>
+    }
+  </div>
+</div>
+
+<div className="clientAccessBadge">
+  {selected.subscriptions?.[0]?.status||"NO PLAN"}
+</div></div>
       <div className="clientTabs">{["overview","profile","subscription","workout","nutrition","progress","check-ins","calls","payments","notes"].map(t=><button key={t} className={clientTab===t?"active":""} onClick={()=>setClientTab(t)}>{t}</button>)}</div><div className="clientWorkspaceBody">
       {clientTab==="overview"&&<div className="clientOverviewGrid"><div className="clientHeroCard"><small>COACHING STATUS</small><h2>{selected.subscriptions?.[0]?.program?.name||"No programme assigned"}</h2><p>{selected.subscriptions?.[0]?.status||"No coaching access yet."}</p></div><Info k="Goal" v={selected.clientProfile?.fitnessGoal||"Not added"}/><Info k="Weight" v={selected.clientProfile?.currentWeightKg?`${selected.clientProfile.currentWeightKg} kg`:"Not added"}/><Info k="Height" v={selected.clientProfile?.heightCm?`${selected.clientProfile.heightCm} cm`:"Not added"}/><Info k="Experience" v={selected.clientProfile?.trainingExperience||selected.clientProfile?.experienceLevel||"Not added"}/></div>}
       {clientTab==="profile"&&<div className="clientSection"><h3>Client Details</h3><form onSubmit={saveProfile} className="profileForm"><div className="formGrid"><label>Full name<input name="fullName" defaultValue={selected.fullName} required/></label><label>Contact number<input name="phone" defaultValue={selected.phone||""} required/></label></div><div className="formGrid"><label>Date of birth<input name="dob" type="date" defaultValue={selected.clientProfile?.dateOfBirth?String(selected.clientProfile.dateOfBirth).slice(0,10):""} required/></label><label>Height (cm)<input name="height" type="number" step=".1" defaultValue={selected.clientProfile?.heightCm||""} required/></label></div><div className="formGrid"><label>Weight (kg)<input name="weight" type="number" step=".1" defaultValue={selected.clientProfile?.currentWeightKg||""} required/></label><label>Training experience<input name="experience" defaultValue={selected.clientProfile?.trainingExperience||selected.clientProfile?.experienceLevel||""} required/></label></div><label>Goal<textarea name="goal" defaultValue={selected.clientProfile?.fitnessGoal||""} required/></label><button className="btn red">Save Details</button></form></div>}
@@ -1270,6 +1371,22 @@ function ClientPanel({user,logout}:{user:User;logout:()=>void}){
     if(tab==="calls")setData(await api("/client/availability"));
   }catch(e:any){setData({error:e.message})}}
   async function onboarding(e:FormEvent<HTMLFormElement>){e.preventDefault();const f=new FormData(e.currentTarget);try{await api("/client/onboarding",{method:"PATCH",body:JSON.stringify({dateOfBirth:f.get("dob"),heightCm:Number(f.get("height")),weightKg:Number(f.get("weight")),fitnessGoal:f.get("goal"),trainingExperience:f.get("experience"),phone:f.get("phone")})});setNotice("Coaching profile saved.");setData(await api("/client/onboarding"))}catch(e:any){setNotice(e.message)}}
+  async function uploadProfilePhoto(file:File){
+    try{
+      const fd=new FormData();
+      fd.append("photo",file);
+
+      await api("/client/profile-photo",{
+        method:"POST",
+        body:fd
+      });
+
+      setNotice("Profile photo updated.");
+      setData(await api("/client/onboarding"));
+    }catch(e:any){
+      setNotice(e.message);
+    }
+  }
   async function checkin(e:FormEvent<HTMLFormElement>){e.preventDefault();const form=e.currentTarget;const f=new FormData(form);try{
     let photoUrls:string[]=[];
     const input=form.elements.namedItem("photos") as HTMLInputElement|null;
@@ -1285,7 +1402,33 @@ function ClientPanel({user,logout}:{user:User;logout:()=>void}){
   return <div className="appShell"><Sidebar items={tabs} tab={tab} setTab={setTab} logout={logout} badges={{chat:clientUnread}}/><main className="dash premiumDash"><div className="dashTop premiumTop"><div><small className="redText">jay.__sthetics · CLIENT</small><h1>{tab.toUpperCase()}</h1><p>Your coaching, progress and communication in one place.</p></div><div className="topRight"><div className="topStatus"><span></span>Active</div><div className="avatar premiumAvatar">{user.fullName?.split(" ").map((x:string)=>x[0]).join("").slice(0,2)}</div></div></div>{notice&&<div className="inlineNotice">{notice}</div>}
     {data?.error&&<Locked message={data.error}/>}
     {tab==="dashboard"&&!data?.error&&<ClientDashboard data={data}/>}
-    {tab==="onboarding"&&!data?.error&&<div className="settingsCard onboardingCard"><h2>My Coaching Profile</h2><p className="muted">Complete these details so Jay can personalize your plan.</p><form onSubmit={onboarding}><div className="formGrid"><label>Date of birth<input name="dob" type="date" defaultValue={data?.clientProfile?.dateOfBirth?String(data.clientProfile.dateOfBirth).slice(0,10):""} required/></label><label>Contact number<input name="phone" defaultValue={data?.phone||""} required/></label></div><div className="formGrid"><label>Height (cm)<input name="height" type="number" step=".1" defaultValue={data?.clientProfile?.heightCm||""} required/></label><label>Weight (kg)<input name="weight" type="number" step=".1" defaultValue={data?.clientProfile?.currentWeightKg||""} required/></label></div><label>Goal<textarea name="goal" defaultValue={data?.clientProfile?.fitnessGoal||""} required/></label><label>Training experience<input name="experience" defaultValue={data?.clientProfile?.trainingExperience||data?.clientProfile?.experienceLevel||""} required/></label><button className="btn red">Save Details</button></form></div>}
+    {tab==="onboarding"&&!data?.error&&<div className="settingsCard onboardingCard">
+  <h2>My Coaching Profile</h2>
+  <p className="muted">Complete these details so Jay can personalize your plan.</p>
+
+  <div style={{display:"flex",alignItems:"center",gap:"16px",margin:"18px 0"}}>
+    <ProfilePhoto
+      src={data?.clientProfile?.profilePhotoUrl}
+      name={data?.fullName}
+      size={82}
+    />
+
+    <label className="btn ghost" style={{cursor:"pointer"}}>
+      {data?.clientProfile?.profilePhotoUrl?"Replace Profile Photo":"Upload Profile Photo"}
+      <input
+        type="file"
+        accept="image/jpeg,image/png,image/webp"
+        style={{display:"none"}}
+        onChange={e=>{
+          const file=e.target.files?.[0];
+          if(file) uploadProfilePhoto(file);
+          e.currentTarget.value="";
+        }}
+      />
+    </label>
+  </div>
+
+  <form onSubmit={onboarding}><div className="formGrid"><label>Date of birth<input name="dob" type="date" defaultValue={data?.clientProfile?.dateOfBirth?String(data.clientProfile.dateOfBirth).slice(0,10):""} required/></label><label>Contact number<input name="phone" defaultValue={data?.phone||""} required/></label></div><div className="formGrid"><label>Height (cm)<input name="height" type="number" step=".1" defaultValue={data?.clientProfile?.heightCm||""} required/></label><label>Weight (kg)<input name="weight" type="number" step=".1" defaultValue={data?.clientProfile?.currentWeightKg||""} required/></label></div><label>Goal<textarea name="goal" defaultValue={data?.clientProfile?.fitnessGoal||""} required/></label><label>Training experience<input name="experience" defaultValue={data?.clientProfile?.trainingExperience||data?.clientProfile?.experienceLevel||""} required/></label><button className="btn red">Save Details</button></form></div>}
     {tab==="training"&&!data?.error&&<>
       <ClientTraining data={data}/>
       <ClientExerciseLibrary/>

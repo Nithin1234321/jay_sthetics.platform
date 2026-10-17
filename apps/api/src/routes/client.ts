@@ -1,9 +1,10 @@
 import { Router } from "express";
 import { z } from "zod";
 import multer from "multer";
+import fs from "fs";
 import { prisma } from "../db.js";
 import { config } from "../config.js";
-import { uploadDir } from "../utils/uploads.js";
+import { uploadDir, safeUploadPath } from "../utils/uploads.js";
 import { requireAuth } from "../middleware/auth.js";
 import { requireActiveSubscription } from "../middleware/subscription.js";
 
@@ -14,6 +15,13 @@ const photoUpload = multer({
   dest: uploadDir,
   limits: { fileSize: 15 * 1024 * 1024, files: 3 },
   fileFilter: (_req, file, cb) => cb(null, ["image/jpeg","image/png","image/webp"].includes(file.mimetype))
+});
+
+const profilePhotoUpload = multer({
+  dest: uploadDir,
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) =>
+    cb(null, ["image/jpeg","image/png","image/webp"].includes(file.mimetype))
 });
 
 clientRouter.get("/dashboard", async (req,res) => {
@@ -41,6 +49,43 @@ clientRouter.get("/onboarding", async (req,res) => {
     where:{id:req.auth!.sub},
     select:{id:true,fullName:true,email:true,phone:true,clientProfile:true}
   }));
+});
+
+clientRouter.post("/profile-photo", profilePhotoUpload.single("photo"), async (req,res) => {
+  if(!req.file){
+    return res.status(400).json({error:"Profile photo required"});
+  }
+
+  const existing = await prisma.clientProfile.findUnique({
+    where:{userId:req.auth!.sub},
+    select:{profilePhotoUrl:true}
+  });
+
+  const profilePhotoUrl = `/api/media/${req.file.filename}`;
+
+  const profile = await prisma.clientProfile.upsert({
+    where:{userId:req.auth!.sub},
+    create:{
+      userId:req.auth!.sub,
+      profilePhotoUrl
+    },
+    update:{
+      profilePhotoUrl
+    }
+  });
+
+  if(existing?.profilePhotoUrl?.startsWith("/api/media/")){
+    const oldFilename = existing.profilePhotoUrl.split("/").pop();
+
+    if(oldFilename){
+      const oldPath = safeUploadPath(oldFilename);
+      if(fs.existsSync(oldPath)){
+        fs.unlinkSync(oldPath);
+      }
+    }
+  }
+
+  res.status(201).json(profile);
 });
 
 clientRouter.patch("/onboarding", async (req,res) => {
