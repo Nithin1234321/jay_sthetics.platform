@@ -717,11 +717,260 @@ function AdminClients({setNotice}:{setNotice:(s:string)=>void}){
 
 function AdminLeads({setNotice}:{setNotice:(s:string)=>void}){
   const [items,setItems]=useState<any[]>([]);
-  async function load(){setItems(await api<any[]>("/admin/leads"))}
-  useEffect(()=>{load().catch(e=>setNotice(e.message))},[]);
-  async function update(id:string,status:string){try{await api(`/admin/leads/${id}`,{method:"PATCH",body:JSON.stringify({status})});load()}catch(e:any){setNotice(e.message)}}
-  return <><div className="toolbar"><p className="muted">People who contacted Jay before purchasing.</p><button className="btn ghost" onClick={()=>downloadExcel("jay-sthetics-leads.xlsx",[{name:"Leads",rows:items.map(x=>({Name:x.fullName,Email:x.email,Phone:x.phone||"",Goal:x.fitnessGoal||"",Message:x.message||"",Status:x.status,Created:date(x.createdAt)}))}])}>↓ Excel</button></div>
-    <div className="dataTable"><div className="tr head"><span>Name</span><span>Contact</span><span>Goal / message</span><span>Status</span></div>{items.map(x=><div className="tr" key={x.id}><span><b>{x.fullName}</b><small>{date(x.createdAt)}</small></span><span>{x.email}<small>{x.phone||"—"}</small></span><span>{x.fitnessGoal||x.message||"—"}</span><span><select value={x.status} onChange={e=>update(x.id,e.target.value)}><option>NEW</option><option>CONTACTED</option><option>INTERESTED</option><option>CONVERTED</option><option>NOT_INTERESTED</option></select></span></div>)}</div></>
+
+  async function load(){
+    setItems(await api<any[]>("/admin/leads"));
+  }
+
+  useEffect(()=>{
+    load().catch(e=>setNotice(e.message));
+  },[]);
+
+  async function update(id:string,status:string){
+    try{
+      await api(`/admin/leads/${id}`,{
+        method:"PATCH",
+        body:JSON.stringify({status})
+      });
+
+      setNotice("Lead status updated.");
+      load();
+    }catch(e:any){
+      setNotice(e.message);
+    }
+  }
+
+  const newCount=items.filter(x=>x.status==="NEW").length;
+  const interestedCount=items.filter(x=>x.status==="INTERESTED").length;
+  const convertedCount=items.filter(x=>x.status==="CONVERTED").length;
+
+  return <>
+    <div className="toolbar">
+      <div>
+        <h2 style={{margin:"0 0 6px"}}>Lead Enquiries</h2>
+        <p className="muted" style={{margin:0}}>
+          Manage people who contacted Jay before purchasing a coaching programme.
+        </p>
+      </div>
+
+      <button
+        className="btn ghost"
+        onClick={()=>downloadExcel(
+          "jay-sthetics-leads.xlsx",
+          [{
+            name:"Leads",
+            rows:items.map(x=>({
+              Name:x.fullName,
+              Email:x.email,
+              Phone:x.phone||"",
+              Goal:x.fitnessGoal||"",
+              Message:x.message||"",
+              Status:x.status,
+              Created:date(x.createdAt)
+            }))
+          }]
+        )}
+      >
+        ↓ Download Excel
+      </button>
+    </div>
+
+    <div
+      style={{
+        display:"grid",
+        gridTemplateColumns:"repeat(3,minmax(0,1fr))",
+        gap:"14px",
+        margin:"20px 0 24px"
+      }}
+    >
+      <div className="metric premiumMetric">
+        <small>NEW LEADS</small>
+        <b>{newCount}</b>
+        <p>Waiting for first contact</p>
+      </div>
+
+      <div className="metric premiumMetric">
+        <small>INTERESTED</small>
+        <b>{interestedCount}</b>
+        <p>Potential coaching clients</p>
+      </div>
+
+      <div className="metric premiumMetric">
+        <small>CONVERTED</small>
+        <b>{convertedCount}</b>
+        <p>Joined coaching</p>
+      </div>
+    </div>
+
+    {items.length?
+      <div style={{display:"grid",gap:"14px"}}>
+        {items.map(x=>
+          <article
+            key={x.id}
+            style={{
+              border:"1px solid rgba(255,255,255,.10)",
+              borderRadius:"16px",
+              background:"rgba(255,255,255,.025)",
+              padding:"20px",
+              display:"grid",
+              gridTemplateColumns:"minmax(0,1fr) auto",
+              gap:"20px"
+            }}
+          >
+            <div>
+              <div
+                style={{
+                  display:"flex",
+                  alignItems:"center",
+                  gap:"12px",
+                  flexWrap:"wrap",
+                  marginBottom:"14px"
+                }}
+              >
+                <div
+                  className="clientInitial"
+                  style={{
+                    width:"46px",
+                    height:"46px",
+                    minWidth:"46px",
+                    display:"flex",
+                    alignItems:"center",
+                    justifyContent:"center"
+                  }}
+                >
+                  {x.fullName?.[0]?.toUpperCase()||"?"}
+                </div>
+
+                <div>
+                  <h3 style={{margin:"0 0 4px"}}>{x.fullName}</h3>
+                  <small className="muted">
+                    Enquiry received {date(x.createdAt)}
+                  </small>
+                </div>
+              </div>
+
+              <div
+                style={{
+                  display:"grid",
+                  gridTemplateColumns:"repeat(2,minmax(0,1fr))",
+                  gap:"12px",
+                  marginBottom:"16px"
+                }}
+              >
+                <div
+                  style={{
+                    padding:"12px 14px",
+                    border:"1px solid rgba(255,255,255,.08)",
+                    borderRadius:"10px"
+                  }}
+                >
+                  <small className="muted">EMAIL</small>
+                  <div style={{marginTop:"5px",wordBreak:"break-word"}}>
+                    {x.email}
+                  </div>
+                </div>
+
+                <div
+                  style={{
+                    padding:"12px 14px",
+                    border:"1px solid rgba(255,255,255,.08)",
+                    borderRadius:"10px"
+                  }}
+                >
+                  <small className="muted">PHONE</small>
+                  <div style={{marginTop:"5px"}}>
+                    {x.phone||"Not provided"}
+                  </div>
+                </div>
+              </div>
+
+              <div
+                style={{
+                  display:"grid",
+                  gridTemplateColumns:"minmax(180px,.7fr) minmax(0,1.3fr)",
+                  gap:"12px"
+                }}
+              >
+                <div
+                  style={{
+                    padding:"14px",
+                    border:"1px solid rgba(255,255,255,.08)",
+                    borderRadius:"10px"
+                  }}
+                >
+                  <small className="muted">FITNESS GOAL</small>
+                  <p style={{margin:"7px 0 0"}}>
+                    {x.fitnessGoal||"Not provided"}
+                  </p>
+                </div>
+
+                <div
+                  style={{
+                    padding:"14px",
+                    border:"1px solid rgba(255,255,255,.08)",
+                    borderRadius:"10px"
+                  }}
+                >
+                  <small className="muted">MESSAGE</small>
+                  <p
+                    style={{
+                      margin:"7px 0 0",
+                      lineHeight:1.6,
+                      whiteSpace:"pre-wrap"
+                    }}
+                  >
+                    {x.message||"No message provided."}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div
+              style={{
+                minWidth:"190px",
+                display:"flex",
+                flexDirection:"column",
+                gap:"10px"
+              }}
+            >
+              <label>
+                <small className="muted">LEAD STATUS</small>
+                <select
+                  value={x.status}
+                  onChange={e=>update(x.id,e.target.value)}
+                  style={{marginTop:"6px"}}
+                >
+                  <option value="NEW">New</option>
+                  <option value="CONTACTED">Contacted</option>
+                  <option value="INTERESTED">Interested</option>
+                  <option value="CONVERTED">Converted</option>
+                  <option value="NOT_INTERESTED">Not Interested</option>
+                </select>
+              </label>
+
+              <a
+                className="btn ghost full"
+                href={`mailto:${x.email}`}
+              >
+                Email Lead
+              </a>
+
+              {x.phone&&
+                <a
+                  className="btn red full"
+                  href={`tel:${x.phone}`}
+                >
+                  Call Lead
+                </a>
+              }
+            </div>
+          </article>
+        )}
+      </div>
+      :
+      <Empty text="No lead enquiries yet."/>
+    }
+  </>;
 }
 
 function AdminPrograms({setNotice}:{setNotice:(s:string)=>void}){
