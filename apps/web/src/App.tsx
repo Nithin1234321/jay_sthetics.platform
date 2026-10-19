@@ -614,7 +614,68 @@ function AdminClients({setNotice}:{setNotice:(s:string)=>void}){
   async function open(id:string){try{setClientTab("overview");setSelected(await api<any>(`/admin/clients/${id}`))}catch(e:any){setNotice(e.message)}}
   async function refresh(){if(selected)setSelected(await api<any>(`/admin/clients/${selected.id}`))}
   async function create(e:FormEvent<HTMLFormElement>){e.preventDefault();const f=new FormData(e.currentTarget);try{await api("/admin/clients",{method:"POST",body:JSON.stringify({fullName:f.get("fullName"),email:f.get("email"),phone:f.get("phone"),temporaryPassword:f.get("password"),fitnessGoal:f.get("goal")})});setShowNew(false);setNotice("Client created.");load()}catch(e:any){setNotice(e.message)}}
-  async function assignProgram(programId:string){if(!selected)return;await api(`/admin/clients/${selected.id}/subscription`,{method:"POST",body:JSON.stringify({programId,status:"ACTIVE"})});setNotice("Programme assigned.");refresh()}
+  async function assignProgram(
+    programId:string,
+    startsAt?:string,
+    endsAt?:string
+  ){
+    if(!selected||!programId)return;
+
+    await api(`/admin/clients/${selected.id}/subscription`,{
+      method:"POST",
+      body:JSON.stringify({
+        programId,
+        status:"ACTIVE",
+        startsAt:startsAt||undefined,
+        endsAt:endsAt||undefined
+      })
+    });
+
+    setNotice("Programme assigned.");
+    refresh();
+  }
+
+  async function assignExistingClient(e:FormEvent<HTMLFormElement>){
+    e.preventDefault();
+
+    if(!selected)return;
+
+    const form=e.currentTarget;
+    const f=new FormData(form);
+
+    try{
+      await assignProgram(
+        String(f.get("programId")||""),
+        String(f.get("startsAt")||""),
+        String(f.get("endsAt")||"")
+      );
+
+      form.reset();
+    }catch(e:any){
+      setNotice(e.message);
+    }
+  }
+
+  async function updateActiveSubscriptionDates(
+    subscriptionId:string,
+    startsAt:string,
+    endsAt:string
+  ){
+    try{
+      await api(`/admin/subscriptions/${subscriptionId}/dates`,{
+        method:"PATCH",
+        body:JSON.stringify({
+          startsAt,
+          endsAt
+        })
+      });
+
+      setNotice("Active subscription dates updated.");
+      refresh();
+    }catch(e:any){
+      setNotice(e.message);
+    }
+  }
   async function assignWorkout(workoutPlanId:string){if(!selected||!workoutPlanId)return;await api(`/admin/clients/${selected.id}/workout`,{method:"POST",body:JSON.stringify({workoutPlanId})});setNotice("Workout assigned.");refresh()}
   async function assignNutrition(nutritionPlanId:string){if(!selected||!nutritionPlanId)return;await api(`/admin/clients/${selected.id}/nutrition`,{method:"POST",body:JSON.stringify({nutritionPlanId})});setNotice("Nutrition assigned.");refresh()}
   async function saveProfile(e:FormEvent<HTMLFormElement>){e.preventDefault();if(!selected)return;const f=new FormData(e.currentTarget);try{await api(`/admin/clients/${selected.id}/profile`,{method:"PATCH",body:JSON.stringify({fullName:f.get("fullName"),phone:f.get("phone"),dateOfBirth:f.get("dob"),heightCm:Number(f.get("height")),currentWeightKg:Number(f.get("weight")),fitnessGoal:f.get("goal"),trainingExperience:f.get("experience")})});setNotice("Client details updated.");refresh()}catch(e:any){setNotice(e.message)}}
@@ -667,7 +728,165 @@ function AdminClients({setNotice}:{setNotice:(s:string)=>void}){
       <div className="clientTabs">{["overview","profile","subscription","workout","nutrition","progress","check-ins","calls","payments","notes"].map(t=><button key={t} className={clientTab===t?"active":""} onClick={()=>setClientTab(t)}>{t}</button>)}</div><div className="clientWorkspaceBody">
       {clientTab==="overview"&&<div className="clientOverviewGrid"><div className="clientHeroCard"><small>COACHING STATUS</small><h2>{selected.subscriptions?.[0]?.program?.name||"No programme assigned"}</h2><p>{selected.subscriptions?.[0]?.status||"No coaching access yet."}</p></div><Info k="Goal" v={selected.clientProfile?.fitnessGoal||"Not added"}/><Info k="Weight" v={selected.clientProfile?.currentWeightKg?`${selected.clientProfile.currentWeightKg} kg`:"Not added"}/><Info k="Height" v={selected.clientProfile?.heightCm?`${selected.clientProfile.heightCm} cm`:"Not added"}/><Info k="Experience" v={selected.clientProfile?.trainingExperience||selected.clientProfile?.experienceLevel||"Not added"}/></div>}
       {clientTab==="profile"&&<div className="clientSection"><h3>Client Details</h3><form onSubmit={saveProfile} className="profileForm"><div className="formGrid"><label>Full name<input name="fullName" defaultValue={selected.fullName} required/></label><label>Contact number<input name="phone" defaultValue={selected.phone||""} required/></label></div><div className="formGrid"><label>Date of birth<input name="dob" type="date" defaultValue={selected.clientProfile?.dateOfBirth?String(selected.clientProfile.dateOfBirth).slice(0,10):""} required/></label><label>Height (cm)<input name="height" type="number" step=".1" defaultValue={selected.clientProfile?.heightCm||""} required/></label></div><div className="formGrid"><label>Weight (kg)<input name="weight" type="number" step=".1" defaultValue={selected.clientProfile?.currentWeightKg||""} required/></label><label>Training experience<input name="experience" defaultValue={selected.clientProfile?.trainingExperience||selected.clientProfile?.experienceLevel||""} required/></label></div><label>Goal<textarea name="goal" defaultValue={selected.clientProfile?.fitnessGoal||""} required/></label><button className="btn red">Save Details</button></form></div>}
-      {clientTab==="subscription"&&<div className="clientSection"><h3>Subscription</h3><select className="largeSelect" defaultValue="" onChange={e=>e.target.value&&assignProgram(e.target.value)}><option value="" disabled>Assign programme…</option>{programs.filter(p=>p.isActive).map(p=><option key={p.id} value={p.id}>{p.name} · {money(p.pricePaise)}</option>)}</select>{selected.subscriptions?.map((x:any)=><div className="managementRow" key={x.id}><b>{x.program.name}</b><span>{x.status}</span></div>)}</div>}
+      {clientTab==="subscription"&&
+  <div className="clientSection">
+    <h3>Subscription</h3>
+
+    <p className="muted">
+      Activate an existing coaching customer without creating a Razorpay payment.
+    </p>
+
+    <form
+      onSubmit={assignExistingClient}
+      style={{
+        padding:"18px",
+        border:"1px solid rgba(255,255,255,.08)",
+        borderRadius:"14px",
+        marginBottom:"24px"
+      }}
+    >
+      <label>
+        Programme
+        <select
+          className="largeSelect"
+          name="programId"
+          defaultValue=""
+          required
+        >
+          <option value="" disabled>
+            Choose programme…
+          </option>
+
+          {programs.filter(p=>p.isActive).map(p=>
+            <option key={p.id} value={p.id}>
+              {p.name} · {money(p.pricePaise)}
+            </option>
+          )}
+        </select>
+      </label>
+
+      <div className="formGrid" style={{marginTop:"12px"}}>
+        <label>
+          Coaching start date
+          <input
+            name="startsAt"
+            type="date"
+            required
+          />
+        </label>
+
+        <label>
+          Coaching end date
+          <input
+            name="endsAt"
+            type="date"
+            required
+          />
+        </label>
+      </div>
+
+      <button
+        className="btn red"
+        type="submit"
+        style={{marginTop:"12px"}}
+      >
+        Activate Existing Client
+      </button>
+    </form>
+
+    <h3>Subscription History</h3>
+
+    {selected.subscriptions?.length?
+      selected.subscriptions.map((x:any)=>
+        <div
+          className="managementRow"
+          key={x.id}
+          style={{
+            alignItems:"flex-start",
+            gap:"16px"
+          }}
+        >
+          <div style={{flex:1}}>
+            <b>{x.program.name}</b>
+            <small>Status: {x.status}</small>
+
+            <small>
+              Start:{" "}
+              {x.startsAt
+                ? new Date(x.startsAt).toLocaleDateString()
+                : "Not set"}
+            </small>
+
+            <small>
+              End:{" "}
+              {x.endsAt
+                ? new Date(x.endsAt).toLocaleDateString()
+                : "Not set"}
+            </small>
+          </div>
+
+          {x.status==="ACTIVE"&&
+            <form
+              onSubmit={e=>{
+                e.preventDefault();
+
+                const f=new FormData(e.currentTarget);
+
+                updateActiveSubscriptionDates(
+                  x.id,
+                  String(f.get("startsAt")||""),
+                  String(f.get("endsAt")||"")
+                );
+              }}
+              style={{
+                display:"grid",
+                gap:"8px",
+                minWidth:"220px"
+              }}
+            >
+              <label>
+                <small>Start date</small>
+                <input
+                  name="startsAt"
+                  type="date"
+                  defaultValue={
+                    x.startsAt
+                      ? String(x.startsAt).slice(0,10)
+                      : ""
+                  }
+                  required
+                />
+              </label>
+
+              <label>
+                <small>End date</small>
+                <input
+                  name="endsAt"
+                  type="date"
+                  defaultValue={
+                    x.endsAt
+                      ? String(x.endsAt).slice(0,10)
+                      : ""
+                  }
+                  required
+                />
+              </label>
+
+              <button
+                className="btn ghost"
+                type="submit"
+              >
+                Update Active Dates
+              </button>
+            </form>
+          }
+        </div>
+      )
+      :
+      <Empty text="No subscription history yet."/>
+    }
+  </div>
+}
       {clientTab==="workout"&&<div className="clientSection"><h3>Workout</h3><select className="largeSelect" defaultValue="" onChange={e=>assignWorkout(e.target.value)}><option value="" disabled>Assign workout plan…</option>{workouts.map(x=><option key={x.id} value={x.id}>{x.name}</option>)}</select>{selected.workouts?.map((x:any)=><div className="managementRow" key={x.id}><b>{x.workoutPlan.name}</b><small>{new Date(x.assignedAt).toLocaleDateString()}</small></div>)}</div>}
       {clientTab==="nutrition"&&<div className="clientSection"><h3>Nutrition</h3><select className="largeSelect" defaultValue="" onChange={e=>assignNutrition(e.target.value)}><option value="" disabled>Assign nutrition plan…</option>{nutrition.map(x=><option key={x.id} value={x.id}>{x.name} · {x.calories||"—"} kcal</option>)}</select>{selected.nutrition?.map((x:any)=><div className="managementRow" key={x.id}><b>{x.nutritionPlan.name}</b><small>{x.nutritionPlan.calories||"—"} kcal</small></div>)}</div>}
       {clientTab==="progress"&&<div className="clientSection"><h3>Progress History</h3>{selected.measurements?.length?selected.measurements.map((x:any)=><div className="managementRow" key={x.id}><b>{x.metric}: {String(x.value)} {x.unit}</b><small>{new Date(x.measuredAt).toLocaleDateString()}</small></div>):<Empty text="No measurements yet."/>}</div>}

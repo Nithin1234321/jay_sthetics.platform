@@ -204,24 +204,52 @@ adminRouter.patch("/programs/:id", async (req, res) => {
 adminRouter.post("/clients/:id/subscription", async (req, res) => {
   const parsed = z.object({
     programId: z.string().min(1),
-    status: z.enum(["PENDING", "ACTIVE", "PAUSED", "EXPIRED", "CANCELLED"]).default("ACTIVE")
+    status: z.enum(["PENDING", "ACTIVE", "PAUSED", "EXPIRED", "CANCELLED"]).default("ACTIVE"),
+    startsAt: z.string().optional(),
+    endsAt: z.string().optional()
   }).safeParse(req.body);
-  if (!parsed.success) return res.status(400).json({ error: "Invalid input" });
 
-  const program = await prisma.program.findUnique({ where: { id: parsed.data.programId } });
-  if (!program) return res.status(404).json({ error: "Programme not found" });
+  if (!parsed.success) {
+    return res.status(400).json({ error: "Invalid input" });
+  }
 
-  const startsAt = parsed.data.status === "ACTIVE" ? new Date() : null;
-  const endsAt = startsAt && program.durationDays
-    ? new Date(startsAt.getTime() + program.durationDays * 86400000)
-    : null;
+  const clientId = String(req.params.id);
+
+  const program = await prisma.program.findUnique({
+    where: { id: parsed.data.programId }
+  });
+
+  if (!program) {
+    return res.status(404).json({ error: "Programme not found" });
+  }
+
+  const startsAt = parsed.data.startsAt
+    ? new Date(`${parsed.data.startsAt}T00:00:00.000Z`)
+    : parsed.data.status === "ACTIVE"
+      ? new Date()
+      : null;
+
+  const endsAt = parsed.data.endsAt
+    ? new Date(`${parsed.data.endsAt}T23:59:59.999Z`)
+    : startsAt && program.durationDays
+      ? new Date(startsAt.getTime() + program.durationDays * 86400000)
+      : null;
+
+  if (
+    startsAt &&
+    endsAt &&
+    endsAt.getTime() <= startsAt.getTime()
+  ) {
+    return res.status(400).json({
+      error: "End date must be after start date."
+    });
+  }
 
   const sub = await prisma.$transaction(async tx => {
-    // A client may only have one ACTIVE coaching subscription.
     if (parsed.data.status === "ACTIVE") {
       await tx.subscription.updateMany({
         where: {
-          userId: req.params.id,
+          userId: clientId,
           status: "ACTIVE"
         },
         data: {
@@ -232,7 +260,7 @@ adminRouter.post("/clients/:id/subscription", async (req, res) => {
 
     return tx.subscription.create({
       data: {
-        userId: req.params.id,
+        userId: clientId,
         programId: program.id,
         status: parsed.data.status,
         startsAt,
@@ -241,8 +269,81 @@ adminRouter.post("/clients/:id/subscription", async (req, res) => {
       include: { program: true }
     });
   });
-  await audit(req.auth!.sub, "ASSIGN", "SUBSCRIPTION", sub.id, { clientId: req.params.id });
+
+  await audit(
+    req.auth!.sub,
+    "ASSIGN",
+    "SUBSCRIPTION",
+    sub.id,
+    {
+      clientId,
+      source: parsed.data.startsAt || parsed.data.endsAt
+        ? "MANUAL_EXISTING_CLIENT"
+        : "ADMIN_DEFAULT"
+    }
+  );
+
   res.status(201).json(sub);
+});
+
+adminRouter.patch("/subscriptions/:id/dates", async (req, res) => {
+  const subscriptionId = String(req.params.id);
+
+  const parsed = z.object({
+    startsAt: z.string().min(1),
+    endsAt: z.string().min(1)
+  }).safeParse(req.body);
+
+  if (!parsed.success) {
+    return res.status(400).json({ error: "Invalid dates" });
+  }
+
+  const existing = await prisma.subscription.findUnique({
+    where: { id: subscriptionId }
+  });
+
+  if (!existing) {
+    return res.status(404).json({ error: "Subscription not found" });
+  }
+
+  if (existing.status !== "ACTIVE") {
+    return res.status(400).json({
+      error: "Only the current active subscription can be edited."
+    });
+  }
+
+  const startsAt = new Date(`${parsed.data.startsAt}T00:00:00.000Z`);
+  const endsAt = new Date(`${parsed.data.endsAt}T23:59:59.999Z`);
+
+  if (endsAt.getTime() <= startsAt.getTime()) {
+    return res.status(400).json({
+      error: "End date must be after start date."
+    });
+  }
+
+  const updated = await prisma.subscription.update({
+    where: { id: subscriptionId },
+    data: {
+      startsAt,
+      endsAt
+    },
+    include: {
+      program: true
+    }
+  });
+
+  await audit(
+    req.auth!.sub,
+    "UPDATE_DATES",
+    "SUBSCRIPTION",
+    updated.id,
+    {
+      startsAt: updated.startsAt,
+      endsAt: updated.endsAt
+    }
+  );
+
+  res.json(updated);
 });
 
 // EXERCISE LIBRARY + LOCAL DEV VIDEO UPLOAD
