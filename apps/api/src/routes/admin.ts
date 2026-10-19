@@ -150,6 +150,7 @@ adminRouter.post("/clients", async (req, res) => {
       email: parsed.data.email.toLowerCase(),
       phone: parsed.data.phone || null,
       passwordHash,
+      emailVerifiedAt: new Date(),
       clientProfile: { create: { fitnessGoal: parsed.data.fitnessGoal } }
     },
     select: { id: true, fullName: true, email: true }
