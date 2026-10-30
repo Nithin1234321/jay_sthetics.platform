@@ -3,6 +3,9 @@ import { z } from "zod";
 import bcrypt from "bcryptjs";
 import multer from "multer";
 import fs from "fs";
+import path from "path";
+import { spawn } from "child_process";
+import ffmpegStatic from "ffmpeg-static";
 import { prisma } from "../db.js";
 import { requireAdmin, requireAuth } from "../middleware/auth.js";
 import { uploadDir, safeUploadPath } from "../utils/uploads.js";
@@ -27,6 +30,78 @@ const pdfUpload = multer({
     cb(null, file.mimetype === "application/pdf");
   }
 });
+
+
+async function convertExerciseVideo(inputPath: string) {
+  const ffmpegPath =
+    typeof ffmpegStatic === "string"
+      ? ffmpegStatic
+      : (ffmpegStatic as any)?.default;
+
+  if (!ffmpegPath || typeof ffmpegPath !== "string") {
+    throw new Error("FFmpeg binary unavailable");
+  }
+
+  const outputFilename = `${Date.now()}-${Math.random().toString(36).slice(2)}.mp4`;
+  const outputPath = path.join(uploadDir, outputFilename);
+
+  await new Promise<void>((resolve, reject) => {
+    const args = [
+      "-y",
+      "-i", inputPath,
+
+      // Keep aspect ratio, cap at 1080p, never upscale.
+      "-vf",
+      "scale=w='min(1920,iw)':h='min(1080,ih)':force_original_aspect_ratio=decrease,format=yuv420p",
+
+      // Browser-safe H.264 video.
+      "-c:v", "libx264",
+      "-preset", "medium",
+      "-crf", "20",
+      "-profile:v", "high",
+      "-level", "4.1",
+
+      // Browser-safe AAC audio.
+      "-c:a", "aac",
+      "-b:a", "192k",
+
+      // Improves web/mobile startup.
+      "-movflags", "+faststart",
+
+      outputPath
+    ];
+
+    const proc = spawn(ffmpegPath, args, {
+      stdio: ["ignore", "ignore", "pipe"]
+    });
+
+    let errorText = "";
+
+    proc.stderr?.on("data", (chunk: Buffer) => {
+      errorText += chunk.toString();
+    });
+
+    proc.on("error", reject);
+
+    proc.on("close", (code: number | null) => {
+      if (code === 0) {
+        resolve();
+      } else {
+        reject(
+          new Error(
+            `Video conversion failed with code ${code}: ${errorText.slice(-2000)}`
+          )
+        );
+      }
+    });
+  });
+
+  return {
+    filename: outputFilename,
+    path: outputPath,
+    size: fs.statSync(outputPath).size
+  };
+}
 
 async function audit(adminId: string, action: string, entityType: string, entityId?: string, metadata?: object) {
   await prisma.adminAuditLog.create({
@@ -356,13 +431,37 @@ adminRouter.get("/exercises", async (_req, res) => {
 });
 
 adminRouter.post("/exercise-video", upload.single("video"), async (req, res) => {
-  if (!req.file) return res.status(400).json({ error: "Video file required (.mp4/.mov/.webm)" });
-  const publicUrl = `/api/media/${req.file.filename}`;
-  res.status(201).json({
-    videoUrl: publicUrl,
-    originalName: req.file.originalname,
-    size: req.file.size
-  });
+  if (!req.file) {
+    return res.status(400).json({
+      error: "Video file required (.mp4/.mov/.webm)"
+    });
+  }
+
+  try {
+    const converted = await convertExerciseVideo(req.file.path);
+
+    if (fs.existsSync(req.file.path)) {
+      fs.unlinkSync(req.file.path);
+    }
+
+    const publicUrl = `/api/media/${converted.filename}`;
+
+    res.status(201).json({
+      videoUrl: publicUrl,
+      originalName: req.file.originalname,
+      size: converted.size
+    });
+  } catch (error) {
+    if (fs.existsSync(req.file.path)) {
+      fs.unlinkSync(req.file.path);
+    }
+
+    console.error("Exercise video conversion failed:", error);
+
+    res.status(500).json({
+      error: "Video conversion failed"
+    });
+  }
 });
 
 adminRouter.post("/exercises", async (req, res) => {
@@ -410,12 +509,31 @@ adminRouter.post("/exercises/:id/video", upload.single("video"), async (req, res
   });
 
   if(!exercise){
-    const newPath = safeUploadPath(req.file.filename);
-    if(fs.existsSync(newPath)) fs.unlinkSync(newPath);
+    if(fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
     return res.status(404).json({error:"Exercise not found"});
   }
 
-  const newVideoUrl = `/api/media/${req.file.filename}`;
+  let converted;
+
+  try {
+    converted = await convertExerciseVideo(req.file.path);
+
+    if(fs.existsSync(req.file.path)){
+      fs.unlinkSync(req.file.path);
+    }
+  } catch (error) {
+    if(fs.existsSync(req.file.path)){
+      fs.unlinkSync(req.file.path);
+    }
+
+    console.error("Exercise replacement conversion failed:", error);
+
+    return res.status(500).json({
+      error:"Video conversion failed"
+    });
+  }
+
+  const newVideoUrl = `/api/media/${converted.filename}`;
 
   const updated = await prisma.exercise.update({
     where:{id:exercise.id},
