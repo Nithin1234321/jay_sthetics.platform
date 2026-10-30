@@ -204,7 +204,7 @@ mediaRouter.get(
   }
 
   if (range && mime.startsWith("video/")) {
-    const match = /^bytes=(\d*)-(\d*)$/.exec(range);
+    const match = /^bytes=(\d*)-(\d*)$/.exec(range.trim());
 
     if (!match) {
       res.status(416);
@@ -212,18 +212,39 @@ mediaRouter.get(
       return res.end();
     }
 
-    const start = match[1]
-      ? Number(match[1])
-      : 0;
+    let start:number;
+    let end:number;
 
-    const end = match[2]
-      ? Math.min(Number(match[2]), fileSize - 1)
-      : fileSize - 1;
+    const startText = match[1];
+    const endText = match[2];
+
+    // Safari can request suffix ranges such as: bytes=-500
+    if (!startText && endText) {
+      const suffixLength = Number(endText);
+
+      if (
+        Number.isNaN(suffixLength) ||
+        suffixLength <= 0
+      ) {
+        res.status(416);
+        res.setHeader("Content-Range", `bytes */${fileSize}`);
+        return res.end();
+      }
+
+      start = Math.max(fileSize - suffixLength, 0);
+      end = fileSize - 1;
+    } else {
+      start = startText ? Number(startText) : 0;
+      end = endText
+        ? Math.min(Number(endText), fileSize - 1)
+        : fileSize - 1;
+    }
 
     if (
       Number.isNaN(start) ||
       Number.isNaN(end) ||
-      start > end ||
+      start < 0 ||
+      end < start ||
       start >= fileSize
     ) {
       res.status(416);

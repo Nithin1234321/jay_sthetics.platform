@@ -2331,6 +2331,16 @@ function ProtectedVideo({src}:{src:string}){
       playsInline
       preload="metadata"
       src={url}
+      onError={e=>{
+        const media=e.currentTarget;
+        const code=media.error?.code;
+
+        setError(
+          code===4
+            ?"This video format is not supported on this device."
+            :"Video could not be played on this device."
+        );
+      }}
     />
     :
     <div className="mediaLoading">
