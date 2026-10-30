@@ -1,5 +1,5 @@
 import { ChangeEvent, FormEvent, useEffect, useState } from "react";
-import { api, apiBlob } from "./lib/api";
+import { api, apiBlob, API_ORIGIN } from "./lib/api";
 import { downloadExcel } from "./lib/excel";
 
 type User={id:string;fullName:string;email:string;role:"ADMIN"|"CLIENT"};
@@ -2273,12 +2273,58 @@ function WeightTrend({points}:{points:{date:Date;weight:number}[]}){
 
 function ProtectedVideo({src}:{src:string}){
   const [url,setUrl]=useState<string>("");
-  useEffect(()=>{let objectUrl="";if(!src)return;
-    const protectedSrc=src.startsWith("/uploads/")?`/api/media/${src.split("/").pop()}`:src;
-    if(!protectedSrc.startsWith("/api/")){setUrl(protectedSrc);return;}
-    apiBlob(protectedSrc.replace(/^\/api/,"")).then(blob=>{objectUrl=URL.createObjectURL(blob);setUrl(objectUrl)}).catch(()=>{});
-    return()=>{if(objectUrl)URL.revokeObjectURL(objectUrl)}
+  const [error,setError]=useState("");
+
+  useEffect(()=>{
+    let cancelled=false;
+
+    async function load(){
+      if(!src)return;
+
+      const protectedSrc=src.startsWith("/uploads/")
+        ? `/api/media/${src.split("/").pop()}`
+        : src;
+
+      if(!protectedSrc.startsWith("/api/")){
+        setUrl(protectedSrc);
+        return;
+      }
+
+      const filename=protectedSrc.split("/").pop();
+
+      if(!filename){
+        setError("Video unavailable.");
+        return;
+      }
+
+      try{
+        const result=await api<{token:string}>(
+          `/media/${encodeURIComponent(filename)}/access`
+        );
+
+        if(cancelled)return;
+
+        setUrl(
+          `${API_ORIGIN}/api/media/${encodeURIComponent(filename)}?mt=${encodeURIComponent(result.token)}`
+        );
+      }catch(e:any){
+        if(!cancelled){
+          setError(e.message||"Video could not be loaded.");
+        }
+      }
+    }
+
+    load();
+
+    return()=>{
+      cancelled=true;
+    };
   },[src]);
+
+  if(error){
+    return <div className="mediaLoading">{error}</div>;
+  }
+
   return url?
     <video
       controls

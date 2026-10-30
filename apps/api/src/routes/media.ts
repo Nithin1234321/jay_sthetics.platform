@@ -1,11 +1,114 @@
 import { Router } from "express";
 import fs from "fs";
+import crypto from "crypto";
 import { requireAuth } from "../middleware/auth.js";
+import { config } from "../config.js";
 import { requireActiveSubscription } from "../middleware/subscription.js";
 import { safeUploadPath } from "../utils/uploads.js";
 
 export const mediaRouter = Router();
-mediaRouter.use(requireAuth, requireActiveSubscription);
+
+function createMediaToken(
+  filename:string,
+  userId:string,
+  role:"ADMIN"|"CLIENT"
+){
+  const exp = Date.now() + 2 * 60 * 60 * 1000;
+
+  const payload = Buffer.from(
+    JSON.stringify({
+      filename,
+      userId,
+      role,
+      exp
+    })
+  ).toString("base64url");
+
+  const signature = crypto
+    .createHmac("sha256", config.JWT_SECRET)
+    .update(payload)
+    .digest("base64url");
+
+  return `${payload}.${signature}`;
+}
+
+function mediaTokenAuth(req:any,res:any,next:any){
+  const token = String(req.query.mt || "");
+
+  if(!token){
+    return requireAuth(req,res,next);
+  }
+
+  const parts = token.split(".");
+
+  if(parts.length !== 2){
+    return res.status(401).json({error:"Invalid media token"});
+  }
+
+  const [payload,signature] = parts;
+
+  const expected = crypto
+    .createHmac("sha256", config.JWT_SECRET)
+    .update(payload)
+    .digest("base64url");
+
+  const a = Buffer.from(signature);
+  const b = Buffer.from(expected);
+
+  if(
+    a.length !== b.length ||
+    !crypto.timingSafeEqual(a,b)
+  ){
+    return res.status(401).json({error:"Invalid media token"});
+  }
+
+  try{
+    const parsed = JSON.parse(
+      Buffer.from(payload,"base64url").toString("utf8")
+    );
+
+    if(
+      parsed.filename !== req.params.filename ||
+      !parsed.userId ||
+      !parsed.role ||
+      parsed.exp < Date.now()
+    ){
+      return res.status(401).json({error:"Expired media token"});
+    }
+
+    req.auth = {
+      sub: parsed.userId,
+      role: parsed.role,
+      email: ""
+    };
+
+    return next();
+  }catch{
+    return res.status(401).json({error:"Invalid media token"});
+  }
+}
+
+mediaRouter.get(
+  "/:filename/access",
+  requireAuth,
+  requireActiveSubscription,
+  async (req,res)=>{
+    const filename = String(req.params.filename);
+    const fullPath = safeUploadPath(filename);
+
+    if(!fs.existsSync(fullPath)){
+      return res.status(404).json({error:"Media not found"});
+    }
+
+    const token = createMediaToken(
+      filename,
+      req.auth!.sub,
+      req.auth!.role
+    );
+
+    return res.json({token});
+  }
+);
 
 function detectMime(fullPath: string) {
   const fd = fs.openSync(fullPath, "r");
@@ -75,8 +178,13 @@ function detectMime(fullPath: string) {
   return "application/octet-stream";
 }
 
-mediaRouter.get("/:filename", async (req, res) => {
-  const fullPath = safeUploadPath(req.params.filename);
+mediaRouter.get(
+  "/:filename",
+  mediaTokenAuth,
+  requireActiveSubscription,
+  async (req, res) => {
+  const filename = String(req.params.filename);
+  const fullPath = safeUploadPath(filename);
 
   if (!fs.existsSync(fullPath)) {
     return res.status(404).json({ error: "Media not found" });
