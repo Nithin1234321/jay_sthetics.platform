@@ -2279,7 +2279,17 @@ function ProtectedVideo({src}:{src:string}){
     apiBlob(protectedSrc.replace(/^\/api/,"")).then(blob=>{objectUrl=URL.createObjectURL(blob);setUrl(objectUrl)}).catch(()=>{});
     return()=>{if(objectUrl)URL.revokeObjectURL(objectUrl)}
   },[src]);
-  return url?<video controls src={url}/>:<div className="mediaLoading">Loading protected video…</div>;
+  return url?
+    <video
+      controls
+      playsInline
+      preload="metadata"
+      src={url}
+    />
+    :
+    <div className="mediaLoading">
+      Loading protected video…
+    </div>;
 }
 function ProtectedImage({src}:{src:string}){
   const [url,setUrl]=useState<string>("");
