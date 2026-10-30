@@ -480,44 +480,124 @@ function Sidebar({
   logout:()=>void;
   badges?:Record<string,number>;
 }){
+  const [mobileOpen,setMobileOpen]=useState(false);
+
   const icon=(x:string)=>({
-    overview:"◫",clients:"◉",leads:"◎",programs:"▦",
-    "exercise library":"✦","workout plans":"⌁",nutrition:"◇",
-    "check-ins":"✓",calls:"☎",messages:"✉",payments:"▣",settings:"⚙",
-    dashboard:"◫",onboarding:"◎",training:"⌁",progress:"↗",
-    "weekly check-in":"✓",chat:"✉"
+    overview:"◫",
+    clients:"◉",
+    leads:"◎",
+    programs:"▦",
+    "exercise library":"✦",
+    "workout plans":"⌁",
+    nutrition:"◇",
+    "check-ins":"✓",
+    calls:"☎",
+    messages:"✉",
+    payments:"▣",
+    settings:"⚙",
+    dashboard:"◫",
+    onboarding:"◎",
+    training:"⌁",
+    progress:"↗",
+    "weekly check-in":"✓",
+    chat:"✉"
   } as Record<string,string>)[x]||"•";
 
-  return <aside className="sidebar premiumSidebar">
-    <div className="sidebarBrandWrap">
-      <div className="brand"><b>jay.</b><span>__sthetics</span></div>
-      <small>COACHING PLATFORM</small>
-    </div>
+  function selectTab(x:string){
+    setTab(x);
+    setMobileOpen(false);
+  }
 
-    <div className="sidebarNav">
-      {items.map(x=>
-        <button
-          key={x}
-          className={tab===x?"sideActive":""}
-          onClick={()=>setTab(x)}
-        >
-          <span className="sideIcon">{icon(x)}</span>
-          <span>{x}</span>
-          {!!badges[x]&&
-            <span className="messageBadge">
-              {badges[x]>99?"99+":badges[x]}
-            </span>
-          }
-        </button>
-      )}
-    </div>
+  return <>
+    <div className="mobileAppHeader">
+      <div className="mobileAppIdentity">
+        <div className="brand">
+          <b>jay.</b><span>__sthetics</span>
+        </div>
 
-    <div className="sidebarFooter">
-      <button className="logoutBtn" onClick={logout}>
-        <span>↪</span><span>Logout</span>
+        <small>
+          {tab.split("-").join(" ")}
+        </small>
+      </div>
+
+      <button
+        type="button"
+        className="mobileMenuTrigger"
+        aria-label="Open navigation"
+        onClick={()=>setMobileOpen(true)}
+      >
+        <span></span>
+        <span></span>
+        <span></span>
       </button>
     </div>
-  </aside>
+
+    {mobileOpen&&
+      <button
+        type="button"
+        className="mobileNavOverlay"
+        aria-label="Close navigation"
+        onClick={()=>setMobileOpen(false)}
+      />
+    }
+
+    <aside
+      className={`sidebar premiumSidebar ${
+        mobileOpen ? "mobileSidebarOpen" : ""
+      }`}
+    >
+      <div className="sidebarBrandWrap">
+        <div className="brand">
+          <b>jay.</b><span>__sthetics</span>
+        </div>
+
+        <small>COACHING PLATFORM</small>
+
+        <button
+          type="button"
+          className="mobileSidebarClose"
+          aria-label="Close navigation"
+          onClick={()=>setMobileOpen(false)}
+        >
+          ×
+        </button>
+      </div>
+
+      <div className="sidebarNav">
+        {items.map(x=>
+          <button
+            key={x}
+            className={tab===x?"sideActive":""}
+            onClick={()=>selectTab(x)}
+          >
+            <span className="sideIcon">
+              {icon(x)}
+            </span>
+
+            <span className="sideLabel">
+              {x}
+            </span>
+
+            {!!badges[x]&&
+              <span className="messageBadge">
+                {badges[x]>99?"99+":badges[x]}
+              </span>
+            }
+          </button>
+        )}
+      </div>
+
+      <div className="sidebarFooter">
+        <button
+          className="logoutBtn"
+          onClick={logout}
+        >
+          <span>↪</span>
+          <span>Logout</span>
+        </button>
+      </div>
+    </aside>
+  </>
 }
 
 function AdminOverview(){
