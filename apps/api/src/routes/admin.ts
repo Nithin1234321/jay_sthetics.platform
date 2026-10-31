@@ -52,14 +52,15 @@ async function convertExerciseVideo(inputPath: string) {
 
       // Keep aspect ratio, cap at 1080p, never upscale.
       "-vf",
-      "scale=w='min(1920,iw)':h='min(1080,ih)':force_original_aspect_ratio=decrease,format=yuv420p",
+      "scale=w='min(1920,iw)':h='min(1080,ih)':force_original_aspect_ratio=decrease,fps=30,format=yuv420p",
 
       // Browser-safe H.264 video.
       "-c:v", "libx264",
       "-preset", "medium",
       "-crf", "20",
       "-profile:v", "high",
-      "-level", "4.1",
+      "-level:v", "4.1",
+      "-pix_fmt", "yuv420p",
 
       // Browser-safe AAC audio.
       "-c:a", "aac",
