@@ -197,6 +197,7 @@ mediaRouter.get(
 
   res.setHeader("Cache-Control", "private, max-age=3600");
   res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
   res.setHeader("Content-Type", mime);
 
   if (mime.startsWith("video/")) {

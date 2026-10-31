@@ -2330,6 +2330,7 @@ function ProtectedVideo({src}:{src:string}){
       controls
       playsInline
       preload="metadata"
+      crossOrigin="anonymous"
       src={url}
       onError={e=>{
         const media=e.currentTarget;
