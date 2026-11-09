@@ -287,9 +287,9 @@ model WorkoutExercise {
   exerciseId String
   dayLabel String
   position Int
-  sets Int?
+  sets String?
   reps String?
-  restSeconds Int?
+  restSeconds String?
   notes String?
   workoutPlan WorkoutPlan @relation(fields: [workoutPlanId], references: [id], onDelete: Cascade)
   exercise Exercise @relation(fields: [exerciseId], references: [id])

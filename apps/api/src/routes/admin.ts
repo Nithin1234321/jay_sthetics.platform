@@ -647,10 +647,10 @@ adminRouter.post("/workout-plans/:id/exercises", async (req, res) => {
     exerciseId: z.string(),
     dayLabel: z.string().min(1),
     position: z.number().int().positive(),
-    sets: z.number().int().positive().optional(),
-    reps: z.string().optional(),
-    restSeconds: z.number().int().positive().optional(),
-    notes: z.string().optional()
+    sets: z.string().max(250).optional(),
+    reps: z.string().max(250).optional(),
+    restSeconds: z.string().max(250).optional(),
+    notes: z.string().max(4000).optional()
   }).safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: "Invalid input" });
 
@@ -666,6 +666,61 @@ adminRouter.post("/workout-plans/:id/exercises", async (req, res) => {
     create: { workoutPlanId: req.params.id, ...parsed.data }
   });
   res.status(201).json(item);
+});
+
+adminRouter.delete("/workout-plans/:planId/exercises/:itemId", async (req, res) => {
+  const planId = String(req.params.planId);
+  const itemId = String(req.params.itemId);
+
+  const item = await prisma.workoutExercise.findFirst({
+    where: {
+      id: itemId,
+      workoutPlanId: planId
+    }
+  });
+
+  if (!item) {
+    return res.status(404).json({ error: "Workout exercise not found" });
+  }
+
+  await prisma.workoutExercise.delete({
+    where: { id: item.id }
+  });
+
+  await audit(
+    req.auth!.sub,
+    "DELETE_EXERCISE_FROM_WORKOUT",
+    "WORKOUT_PLAN",
+    planId,
+    { workoutExerciseId: item.id }
+  );
+
+  res.json({ ok: true });
+});
+
+adminRouter.delete("/workout-plans/:id", async (req, res) => {
+  const planId = String(req.params.id);
+
+  const plan = await prisma.workoutPlan.findUnique({
+    where: { id: planId }
+  });
+
+  if (!plan) {
+    return res.status(404).json({ error: "Workout plan not found" });
+  }
+
+  await prisma.workoutPlan.delete({
+    where: { id: planId }
+  });
+
+  await audit(
+    req.auth!.sub,
+    "DELETE",
+    "WORKOUT_PLAN",
+    planId
+  );
+
+  res.json({ ok: true });
 });
 
 adminRouter.post("/clients/:id/workout", async (req, res) => {

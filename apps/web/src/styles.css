@@ -1106,3 +1106,232 @@ button.tr{width:100%;color:inherit;border:0;text-align:left;cursor:pointer}
     gap:18px;
   }
 }
+
+
+/* WORKOUT PLAN DETAIL CARDS */
+.workoutPlanGrid{
+  align-items:start;
+}
+
+.workoutPlanCard{
+  padding:0;
+  overflow:hidden;
+}
+
+.workoutPlanHeader{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:24px;
+  padding:24px;
+  border-bottom:1px solid #29292c;
+  background:linear-gradient(180deg,#141416 0%,#101011 100%);
+}
+
+.workoutPlanHeader h2{
+  margin:5px 0 8px;
+  font-size:24px;
+  line-height:1.2;
+}
+
+.workoutPlanDescription{
+  margin:0;
+  max-width:720px;
+  color:#a4a4aa!important;
+  white-space:pre-wrap;
+  line-height:1.7;
+  font-size:13px;
+}
+
+.workoutPlanExerciseList{
+  display:grid;
+  gap:14px;
+  padding:18px;
+}
+
+.workoutDetailCard{
+  padding:18px;
+  border:1px solid #2b2b2f;
+  border-radius:12px;
+  background:#0c0c0e;
+  min-width:0;
+}
+
+.workoutDetailTop{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:16px;
+}
+
+.workoutDetailTop h3,
+.clientExerciseContent h3{
+  margin:10px 0 14px;
+  font-size:18px;
+  line-height:1.3;
+}
+
+.exercisePosition{
+  color:#e11d1d;
+}
+
+.workoutPrescriptionGrid{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:10px;
+  margin-top:10px;
+}
+
+.workoutPrescriptionGrid>div{
+  min-width:0;
+  padding:12px;
+  border:1px solid #29292d;
+  border-radius:9px;
+  background:#111114;
+}
+
+.workoutPrescriptionGrid small{
+  display:block;
+  margin-bottom:6px;
+  color:#777;
+  font-size:10px;
+  font-weight:800;
+  letter-spacing:.08em;
+}
+
+.workoutPrescriptionGrid b{
+  display:block;
+  color:#eee;
+  line-height:1.45;
+  white-space:normal;
+  overflow-wrap:anywhere;
+}
+
+.workoutCoachNotes,
+.exerciseTechnique{
+  margin-top:14px;
+  padding:14px;
+  border-left:3px solid #7f1d1d;
+  border-radius:0 8px 8px 0;
+  background:#131011;
+}
+
+.workoutCoachNotes small,
+.exerciseTechnique small{
+  color:#e11d1d;
+  font-size:10px;
+  font-weight:900;
+  letter-spacing:.08em;
+}
+
+.workoutCoachNotes p,
+.exerciseTechnique p{
+  margin:8px 0 0;
+  color:#b1b1b6;
+  line-height:1.7;
+  white-space:pre-wrap;
+  overflow-wrap:anywhere;
+}
+
+.exerciseTechnique ul{
+  margin:10px 0 0;
+  padding-left:18px;
+  color:#9b9ba1;
+  line-height:1.65;
+}
+
+.workoutDeleteButton{
+  border:1px solid #522;
+  background:#190b0b;
+  color:#ef9a9a;
+  border-radius:7px;
+  padding:8px 10px;
+  cursor:pointer;
+  white-space:nowrap;
+}
+
+.workoutDeleteButton:hover,
+.dangerButton:hover{
+  border-color:#9f2424;
+  color:#fff;
+}
+
+.dangerButton{
+  border-color:#522!important;
+  color:#d98c8c!important;
+}
+
+.workoutPlanCard>.btn.full{
+  margin:0 18px 18px;
+  width:calc(100% - 36px);
+}
+
+.clientWorkoutPlan{
+  grid-column:1/-1;
+}
+
+.clientExercise.workoutDetailCard{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(280px,420px);
+  gap:20px;
+  align-items:start;
+}
+
+.clientExerciseContent{
+  min-width:0;
+}
+
+.clientWorkoutVideo{
+  width:100%;
+  overflow:hidden;
+  border-radius:10px;
+  background:#050505;
+}
+
+.clientWorkoutVideo video{
+  display:block;
+  width:100%;
+  max-height:420px;
+  object-fit:contain;
+}
+
+.workoutAlternatives{
+  display:block;
+  margin-top:14px;
+  color:#888;
+}
+
+@media(max-width:760px){
+  .workoutPlanHeader{
+    flex-direction:column;
+    padding:18px;
+  }
+
+  .workoutPlanHeader .dangerButton{
+    width:100%;
+  }
+
+  .workoutPlanExerciseList{
+    padding:12px;
+  }
+
+  .workoutDetailTop{
+    flex-direction:column;
+  }
+
+  .workoutDeleteButton{
+    width:100%;
+  }
+
+  .workoutPrescriptionGrid{
+    grid-template-columns:1fr;
+  }
+
+  .clientExercise.workoutDetailCard{
+    grid-template-columns:1fr;
+  }
+
+  .clientWorkoutVideo{
+    order:-1;
+  }
+}

@@ -1524,15 +1524,312 @@ function AdminExercises({setNotice}:{setNotice:(s:string)=>void}){
 }
 
 function AdminWorkouts({setNotice}:{setNotice:(s:string)=>void}){
-  const [plans,setPlans]=useState<any[]>([]),[exercises,setExercises]=useState<any[]>([]),[show,setShow]=useState(false),[addTo,setAddTo]=useState<any|null>(null);
-  async function load(){const [p,e]=await Promise.all([api<any[]>("/admin/workout-plans"),api<any[]>("/admin/exercises")]);setPlans(p);setExercises(e)}
-  useEffect(()=>{load().catch(e=>setNotice(e.message))},[]);
-  async function create(e:FormEvent<HTMLFormElement>){e.preventDefault();const f=new FormData(e.currentTarget);try{await api("/admin/workout-plans",{method:"POST",body:JSON.stringify({name:f.get("name"),description:f.get("description")})});setShow(false);setNotice("Workout plan created.");load()}catch(e:any){setNotice(e.message)}}
-  async function addExercise(e:FormEvent<HTMLFormElement>){e.preventDefault();const f=new FormData(e.currentTarget);try{await api(`/admin/workout-plans/${addTo.id}/exercises`,{method:"POST",body:JSON.stringify({exerciseId:f.get("exerciseId"),dayLabel:f.get("dayLabel"),position:Number(f.get("position")),sets:Number(f.get("sets"))||undefined,reps:f.get("reps"),restSeconds:Number(f.get("restSeconds"))||undefined,notes:f.get("notes")})});setAddTo(null);setNotice("Exercise added to split.");load()}catch(e:any){setNotice(e.message)}}
-  return <><div className="toolbar"><p className="muted">Build reusable workout splits, then assign them from a client's profile.</p><button className="btn red" onClick={()=>setShow(true)}>+ New Workout Plan</button></div><div className="planGrid">{plans.map(p=><div className="planCard" key={p.id}><div><h3>{p.name}</h3><p>{p.description||"No description"}</p></div>{p.exercises?.length?p.exercises.map((x:any)=><div className="planRow" key={x.id}><span>{x.dayLabel}</span><b>{x.position}. {x.exercise.name}</b><small>{x.sets||"—"} sets · {x.reps||"—"} reps · {x.restSeconds||"—"}s rest</small></div>):<Empty text="No exercises added yet."/>}<button className="btn ghost full" onClick={()=>setAddTo(p)}>+ Add Exercise</button></div>)}</div>
-  {show&&<Dialog title="New Workout Plan" close={()=>setShow(false)}><form onSubmit={create}><input name="name" placeholder="e.g. Push Pull Legs" required/><textarea name="description" placeholder="Description"/><button className="btn red full">Create Plan</button></form></Dialog>}
-  {addTo&&<Dialog title={`Add to ${addTo.name}`} close={()=>setAddTo(null)}><form onSubmit={addExercise}><select name="exerciseId" required defaultValue=""><option value="" disabled>Select exercise</option>{exercises.map(x=><option key={x.id} value={x.id}>{x.name}</option>)}</select><input name="dayLabel" placeholder="Day label, e.g. Push Day" required/><div className="formGrid"><input name="position" type="number" min="1" placeholder="Order" required/><input name="sets" type="number" min="1" placeholder="Sets"/></div><div className="formGrid"><input name="reps" placeholder="Reps, e.g. 8-12"/><input name="restSeconds" type="number" placeholder="Rest seconds"/></div><textarea name="notes" placeholder="Coach notes"/><button className="btn red full">Add Exercise</button></form></Dialog>}
-  </>
+  const [plans,setPlans]=useState<any[]>([]),
+    [exercises,setExercises]=useState<any[]>([]),
+    [show,setShow]=useState(false),
+    [addTo,setAddTo]=useState<any|null>(null);
+
+  async function load(){
+    const [p,e]=await Promise.all([
+      api<any[]>("/admin/workout-plans"),
+      api<any[]>("/admin/exercises")
+    ]);
+    setPlans(p);
+    setExercises(e);
+  }
+
+  useEffect(()=>{
+    load().catch(e=>setNotice(e.message));
+  },[]);
+
+  async function create(e:FormEvent<HTMLFormElement>){
+    e.preventDefault();
+    const f=new FormData(e.currentTarget);
+
+    try{
+      await api("/admin/workout-plans",{
+        method:"POST",
+        body:JSON.stringify({
+          name:f.get("name"),
+          description:f.get("description")
+        })
+      });
+
+      setShow(false);
+      setNotice("Workout plan created.");
+      load();
+    }catch(e:any){
+      setNotice(e.message);
+    }
+  }
+
+  async function addExercise(e:FormEvent<HTMLFormElement>){
+    e.preventDefault();
+
+    if(!addTo)return;
+
+    const f=new FormData(e.currentTarget);
+
+    try{
+      await api(`/admin/workout-plans/${addTo.id}/exercises`,{
+        method:"POST",
+        body:JSON.stringify({
+          exerciseId:f.get("exerciseId"),
+          dayLabel:String(f.get("dayLabel")||"").trim(),
+          position:Number(f.get("position")),
+          sets:String(f.get("sets")||"").trim()||undefined,
+          reps:String(f.get("reps")||"").trim()||undefined,
+          restSeconds:String(f.get("restSeconds")||"").trim()||undefined,
+          notes:String(f.get("notes")||"").trim()||undefined
+        })
+      });
+
+      setAddTo(null);
+      setNotice("Exercise added to workout plan.");
+      load();
+    }catch(e:any){
+      setNotice(e.message);
+    }
+  }
+
+  async function deleteWorkoutExercise(planId:string,itemId:string){
+    if(!window.confirm("Remove this exercise from the workout plan?"))return;
+
+    try{
+      await api(`/admin/workout-plans/${planId}/exercises/${itemId}`,{
+        method:"DELETE"
+      });
+
+      setNotice("Exercise removed from workout plan.");
+      load();
+    }catch(e:any){
+      setNotice(e.message);
+    }
+  }
+
+  async function deleteWorkoutPlan(planId:string){
+    if(!window.confirm(
+      "Delete this entire workout plan? Any assignments using this plan will also be removed."
+    ))return;
+
+    try{
+      await api(`/admin/workout-plans/${planId}`,{
+        method:"DELETE"
+      });
+
+      setNotice("Workout plan deleted.");
+      load();
+    }catch(e:any){
+      setNotice(e.message);
+    }
+  }
+
+  return <>
+    <div className="toolbar">
+      <div>
+        <h2 style={{margin:"0 0 6px"}}>Workout Plans</h2>
+        <p className="muted" style={{margin:0}}>
+          Build detailed workout prescriptions and assign them to clients.
+        </p>
+      </div>
+
+      <button className="btn red" onClick={()=>setShow(true)}>
+        + New Workout Plan
+      </button>
+    </div>
+
+    <div className="planGrid workoutPlanGrid">
+      {plans.map(p=>
+        <article className="planCard workoutPlanCard" key={p.id}>
+          <div className="workoutPlanHeader">
+            <div>
+              <small className="redText">WORKOUT PLAN</small>
+              <h2>{p.name}</h2>
+              <p className="workoutPlanDescription">
+                {p.description||"No plan description added yet."}
+              </p>
+            </div>
+
+            <button
+              className="btn ghost dangerButton"
+              type="button"
+              onClick={()=>deleteWorkoutPlan(p.id)}
+            >
+              Delete Plan
+            </button>
+          </div>
+
+          <div className="workoutPlanExerciseList">
+            {p.exercises?.length?
+              p.exercises.map((x:any)=>
+                <div className="workoutDetailCard" key={x.id}>
+                  <div className="workoutDetailTop">
+                    <div>
+                      <span className="pill">{x.dayLabel}</span>
+                      <h3>
+                        <span className="exercisePosition">
+                          {x.position}.
+                        </span>{" "}
+                        {x.exercise.name}
+                      </h3>
+                    </div>
+
+                    <button
+                      type="button"
+                      className="workoutDeleteButton"
+                      onClick={()=>deleteWorkoutExercise(p.id,x.id)}
+                    >
+                      Delete Exercise
+                    </button>
+                  </div>
+
+                  <div className="workoutPrescriptionGrid">
+                    <div>
+                      <small>SETS</small>
+                      <b>{x.sets||"—"}</b>
+                    </div>
+
+                    <div>
+                      <small>REPS</small>
+                      <b>{x.reps||"—"}</b>
+                    </div>
+
+                    <div>
+                      <small>REST</small>
+                      <b>{x.restSeconds||"—"}</b>
+                    </div>
+                  </div>
+
+                  {x.notes&&
+                    <div className="workoutCoachNotes">
+                      <small>COACH INSTRUCTIONS</small>
+                      <p>{x.notes}</p>
+                    </div>
+                  }
+                </div>
+              )
+              :
+              <Empty text="No exercises added yet."/>
+            }
+          </div>
+
+          <button
+            className="btn ghost full"
+            onClick={()=>setAddTo(p)}
+          >
+            + Add Exercise
+          </button>
+        </article>
+      )}
+    </div>
+
+    {show&&
+      <Dialog title="New Workout Plan" wide close={()=>setShow(false)}>
+        <form onSubmit={create}>
+          <label>
+            Workout plan name
+            <input
+              name="name"
+              placeholder="e.g. Push Pull Legs — Phase 1"
+              required
+            />
+          </label>
+
+          <label>
+            Plan description
+            <textarea
+              name="description"
+              rows={7}
+              placeholder="Add the purpose of the plan, weekly structure, progression instructions, intensity guidance, or anything else Jay wants the client to know."
+            />
+          </label>
+
+          <button className="btn red full">
+            Create Plan
+          </button>
+        </form>
+      </Dialog>
+    }
+
+    {addTo&&
+      <Dialog title={`Add Exercise — ${addTo.name}`} wide close={()=>setAddTo(null)}>
+        <form onSubmit={addExercise}>
+          <label>
+            Exercise
+            <select name="exerciseId" required defaultValue="">
+              <option value="" disabled>Select exercise</option>
+              {exercises.map(x=>
+                <option key={x.id} value={x.id}>
+                  {x.name}
+                </option>
+              )}
+            </select>
+          </label>
+
+          <div className="formGrid">
+            <label>
+              Day / section
+              <input
+                name="dayLabel"
+                placeholder="e.g. Push Day / Chest Focus"
+                required
+              />
+            </label>
+
+            <label>
+              Display order
+              <input
+                name="position"
+                type="number"
+                min="1"
+                placeholder="1"
+                required
+              />
+            </label>
+          </div>
+
+          <div className="formGrid">
+            <label>
+              Sets
+              <input
+                name="sets"
+                placeholder="e.g. 2 warm-up + 3 working sets"
+              />
+            </label>
+
+            <label>
+              Reps
+              <input
+                name="reps"
+                placeholder="e.g. 8–12, last set to failure"
+              />
+            </label>
+          </div>
+
+          <label>
+            Rest
+            <input
+              name="restSeconds"
+              placeholder="e.g. 2–3 min / until breathing is controlled"
+            />
+          </label>
+
+          <label>
+            Detailed coaching instructions
+            <textarea
+              name="notes"
+              rows={7}
+              placeholder="Example: Keep shoulder blades retracted. Control the eccentric for 3 seconds. Pause briefly at the bottom. Stop the set if form breaks."
+            />
+          </label>
+
+          <button className="btn red full">
+            Add Exercise
+          </button>
+        </form>
+      </Dialog>
+    }
+  </>;
 }
 
 function AdminNutrition({setNotice}:{setNotice:(s:string)=>void}){
@@ -2115,7 +2412,99 @@ function ClientDashboard({data}:any){
   </div>;
 }
 
-function ClientTraining({data}:any){return <div className="planGrid">{data?.length?data.map((a:any)=><div className="planCard" key={a.id}><h2>{a.workoutPlan.name}</h2>{a.workoutPlan.exercises.map((x:any)=><div className="clientExercise" key={x.id}><div><span className="pill">{x.dayLabel}</span><h3>{x.exercise.name}</h3><p>{x.sets||"—"} sets × {x.reps||"—"} · Rest {x.restSeconds||"—"} sec</p><p>{x.exercise.instructions}</p><ul>{x.exercise.formCues.map((c:string)=><li key={c}>{c}</li>)}</ul>{x.exercise.alternatives?.length>0&&<small>Alternatives: {x.exercise.alternatives.map((alt:any)=>alt.alternativeExercise.name).join(", ")}</small>}</div>{x.exercise.videoUrl&&<ProtectedVideo src={x.exercise.videoUrl}/>}</div>)}</div>):<Empty text="Jay hasn't assigned a workout plan yet."/>}</div>}
+function ClientTraining({data}:any){
+  return <div className="planGrid workoutPlanGrid">
+    {data?.length?
+      data.map((a:any)=>
+        <article className="planCard workoutPlanCard clientWorkoutPlan" key={a.id}>
+          <div className="workoutPlanHeader">
+            <div>
+              <small className="redText">YOUR TRAINING PLAN</small>
+              <h2>{a.workoutPlan.name}</h2>
+
+              {a.workoutPlan.description&&
+                <p className="workoutPlanDescription">
+                  {a.workoutPlan.description}
+                </p>
+              }
+            </div>
+          </div>
+
+          <div className="workoutPlanExerciseList">
+            {a.workoutPlan.exercises.map((x:any)=>
+              <div className="clientExercise workoutDetailCard" key={x.id}>
+                <div className="clientExerciseContent">
+                  <span className="pill">{x.dayLabel}</span>
+
+                  <h3>
+                    <span className="exercisePosition">{x.position}.</span>{" "}
+                    {x.exercise.name}
+                  </h3>
+
+                  <div className="workoutPrescriptionGrid">
+                    <div>
+                      <small>SETS</small>
+                      <b>{x.sets||"—"}</b>
+                    </div>
+
+                    <div>
+                      <small>REPS</small>
+                      <b>{x.reps||"—"}</b>
+                    </div>
+
+                    <div>
+                      <small>REST</small>
+                      <b>{x.restSeconds||"—"}</b>
+                    </div>
+                  </div>
+
+                  {x.notes&&
+                    <div className="workoutCoachNotes">
+                      <small>JAY'S INSTRUCTIONS</small>
+                      <p>{x.notes}</p>
+                    </div>
+                  }
+
+                  <div className="exerciseTechnique">
+                    <small>EXERCISE TECHNIQUE</small>
+                    <p>{x.exercise.instructions}</p>
+
+                    {!!x.exercise.formCues?.length&&
+                      <ul>
+                        {x.exercise.formCues.map((c:string)=>
+                          <li key={c}>{c}</li>
+                        )}
+                      </ul>
+                    }
+                  </div>
+
+                  {x.exercise.alternatives?.length>0&&
+                    <small className="workoutAlternatives">
+                      Alternatives: {
+                        x.exercise.alternatives
+                          .map((alt:any)=>alt.alternativeExercise.name)
+                          .join(", ")
+                      }
+                    </small>
+                  }
+                </div>
+
+                {x.exercise.videoUrl&&
+                  <div className="clientWorkoutVideo">
+                    <ProtectedVideo src={x.exercise.videoUrl}/>
+                  </div>
+                }
+              </div>
+            )}
+          </div>
+        </article>
+      )
+      :
+      <Empty text="Jay hasn't assigned a workout plan yet."/>
+    }
+  </div>;
+}
+
 function ClientExerciseLibrary(){
   const [items,setItems]=useState<any[]>([]);
   const [loading,setLoading]=useState(true);
