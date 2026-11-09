@@ -1514,7 +1514,12 @@ function AdminExercises({setNotice}:{setNotice:(s:string)=>void}){
     )}
   </select>
 </div></article>)}</div>
-    {show&&<Dialog title="Add Exercise" wide close={()=>setShow(false)}><form onSubmit={create}><div className="formGrid"><input name="name" placeholder="Exercise name" required/><input name="muscleGroup" placeholder="Muscle group" required/></div><textarea name="instructions" placeholder="Exercise instructions" required/><textarea name="formCues" placeholder={"Form cues — one per line\nExample: Keep shoulder blades retracted"}/><label>Client visibility<select name="audience" defaultValue="BOTH"><option value="BOTH">All subscribers</option><option value="NATURAL">Natural clients only</option><option value="ENHANCED">Enhanced clients only</option></select></label><label className="uploadLabel">Upload demo video<input type="file" accept="video/mp4,video/quicktime,video/webm" onChange={e=>e.target.files?.[0]&&uploadVideo(e.target.files[0])}/></label>{uploading&&<small>Uploading…</small>}{videoUrl&&<small className="successText">Video ready ✓</small>}<input name="videoUrl" placeholder="Or paste external video URL"/><button className="btn red full">Save Exercise</button></form></Dialog>}
+    {show&&<Dialog title="Add Exercise" wide close={()=>setShow(false)}><form onSubmit={create}><div className="formGrid"><input name="name" placeholder="Exercise name" required/><input name="muscleGroup" placeholder="Muscle group" required/></div><textarea name="instructions" placeholder="Exercise instructions" required/><textarea name="formCues" placeholder={"Form cues — one per line\nExample: Keep shoulder blades retracted"}/><label>Client visibility<select name="audience" defaultValue="BOTH"><option value="BOTH">All subscribers</option><option value="NATURAL">Natural clients only</option><option value="ENHANCED">Enhanced clients only</option></select></label><label className="uploadLabel">Upload demo video<input type="file" accept="video/mp4,video/quicktime,video/webm" onChange={e=>e.target.files?.[0]&&uploadVideo(e.target.files[0])}/></label>{uploading&&<small>Uploading…</small>}{videoUrl&&<small className="successText">Video ready ✓</small>}<input name="videoUrl" placeholder="Or paste external video URL"/><button
+  className="btn red full"
+  disabled={uploading}
+>
+  {uploading ? "Uploading video…" : "Save Exercise"}
+</button></form></Dialog>}
   </>
 }
 
