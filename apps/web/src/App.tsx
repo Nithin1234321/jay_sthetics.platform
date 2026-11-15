@@ -423,7 +423,7 @@ export default function App(){
           </a>
         </div>
       </section>
-      <section className="about" id="about"><img src="/assets/jay-stage-2.jpeg" alt="Jay"/><div><p className="eyebrow redText">ABOUT JAY</p><h2>COACH. ATHLETE. MENTOR.</h2><p>Structured training, practical nutrition, accountability and measurable progress.</p><div className="stats"><b>1:1<span>Coaching</span></b><b>WEEKLY<span>Check-ins</span></b><b>24/7<span>Dashboard access</span></b></div></div></section>
+      <section className="about aboutNoImage" id="about"><div><p className="eyebrow redText">ABOUT JAY</p><h2>COACH. ATHLETE. MENTOR.</h2><p>Structured training, practical nutrition, accountability and measurable progress.</p><div className="stats"><b>1:1<span>Coaching</span></b><b>WEEKLY<span>Check-ins</span></b><b>24/7<span>Dashboard access</span></b></div></div></section>
       <section className="section"><p className="eyebrow redText">MEMBERS ONLY</p><h2>YOUR COACHING HUB</h2>
         <div className="hubGrid">{["Training & Form Videos","Exercise Alternatives","Nutrition & Macro Options","Weekly Check-ins","Progress Tracking","Private Chat","Coaching Calls"].map(x=><div key={x}><span>🔒</span><b>{x}</b><small>Active subscribers only</small></div>)}</div>
       </section>
@@ -980,6 +980,23 @@ function AdminClients({setNotice}:{setNotice:(s:string)=>void}){
     }
   }
 
+  async function deleteCustomOffer(offerId:string){
+    if(!window.confirm(
+      "Delete this unused custom offer permanently? Used offers are protected."
+    ))return;
+
+    try{
+      await api(`/admin/custom-plans/${offerId}`,{
+        method:"DELETE"
+      });
+
+      setNotice("Custom offer deleted.");
+      refresh();
+    }catch(e:any){
+      setNotice(e.message);
+    }
+  }
+
   async function copyCustomCheckout(programId:string){
     const url=
       `${location.origin}/checkout?programId=${programId}`;
@@ -1442,6 +1459,18 @@ function AdminClients({setNotice}:{setNotice:(s:string)=>void}){
                       Disable Offer
                     </button>
                   }
+
+                  <button
+                    className="btn dangerBtn"
+                    type="button"
+                    onClick={()=>
+                      deleteCustomOffer(
+                        offer.id
+                      )
+                    }
+                  >
+                    Delete Offer
+                  </button>
                 </div>
               </form>
             </div>
@@ -2093,6 +2122,7 @@ function AdminPrograms({setNotice}:{setNotice:(s:string)=>void}){
   async function create(e:FormEvent<HTMLFormElement>){
     e.preventDefault();
     const f=new FormData(e.currentTarget);
+
     try{
       await api("/admin/programs",{
         method:"POST",
@@ -2104,10 +2134,34 @@ function AdminPrograms({setNotice}:{setNotice:(s:string)=>void}){
           durationDays:Number(f.get("days"))
         })
       });
+
       setShowNew(false);
       setNotice("Programme created.");
       load();
-    }catch(e:any){setNotice(e.message)}
+    }catch(e:any){
+      setNotice(e.message);
+    }
+  }
+
+  async function deleteProgramme(program:Program){
+    if(!window.confirm(
+      `Delete "${program.name}" permanently? Programmes with subscription history are protected and cannot be deleted.`
+    ))return;
+
+    try{
+      await api(`/admin/programs/${program.id}`,{
+        method:"DELETE"
+      });
+
+      if(editing?.id===program.id){
+        setEditing(null);
+      }
+
+      setNotice("Programme deleted.");
+      load();
+    }catch(e:any){
+      setNotice(e.message);
+    }
   }
 
   const group=(title:string,subtitle:string,list:Program[])=><section className="programmeGroup">
@@ -2122,8 +2176,26 @@ function AdminPrograms({setNotice}:{setNotice:(s:string)=>void}){
           <div className="programmeTitleLine"><h3>{p.name}</h3><span className={`statusDot ${p.isActive?"live":"off"}`}>{p.isActive?"LIVE":"HIDDEN"}</span></div>
           <p>{p.description}</p>
         </div>
-        <div className="programmePrice"><small>PRICE</small><b>{money(p.pricePaise)}</b></div>
-        <button className="btn ghost editBtn" onClick={()=>setEditing(p)}>Edit</button>
+        <div className="programmePrice">
+          <small>PRICE</small>
+          <b>{money(p.pricePaise)}</b>
+        </div>
+
+        <div className="programmeRowActions">
+          <button
+            className="btn ghost editBtn"
+            onClick={()=>setEditing(p)}
+          >
+            Edit
+          </button>
+
+          <button
+            className="btn dangerBtn"
+            onClick={()=>deleteProgramme(p)}
+          >
+            Delete
+          </button>
+        </div>
       </div>)}
       {!list.length&&<Empty text={`No ${title.toLowerCase()} programmes.`}/>}
     </div>

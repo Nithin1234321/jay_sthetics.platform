@@ -1629,3 +1629,239 @@ button.tr{width:100%;color:inherit;border:0;text-align:left;cursor:pointer}
     align-items:flex-start;
   }
 }
+
+
+/* MOBILE PROGRAMME MANAGEMENT FIX */
+
+.aboutNoImage{
+  grid-template-columns:1fr!important;
+}
+
+.aboutNoImage>div{
+  width:min(1100px,100%);
+  margin:0 auto;
+  padding-left:clamp(24px,6vw,100px);
+  padding-right:clamp(24px,6vw,100px);
+}
+
+.programmeRowActions{
+  display:flex;
+  gap:8px;
+  align-items:center;
+  justify-content:flex-end;
+  flex-wrap:wrap;
+}
+
+@media(max-width:760px){
+
+  /* Make admin programme header actions reachable */
+
+  .programmeTop{
+    align-items:stretch!important;
+    flex-direction:column!important;
+  }
+
+  .programmeTop>.btn{
+    width:100%;
+    min-height:48px;
+  }
+
+  /* Programme cards become simple mobile cards */
+
+  .programmeRows{
+    padding:0 12px;
+  }
+
+  .programmeRow{
+    display:grid!important;
+    grid-template-columns:58px 1fr!important;
+    gap:12px!important;
+    align-items:start!important;
+    padding:16px 0!important;
+  }
+
+  .programmeMain{
+    min-width:0;
+  }
+
+  .programmeTitleLine{
+    align-items:flex-start;
+    flex-wrap:wrap;
+  }
+
+  .programmeTitleLine h3{
+    width:100%;
+    font-size:15px;
+    line-height:1.35;
+  }
+
+  .programmeMain p{
+    word-break:break-word;
+  }
+
+  .programmePrice{
+    grid-column:2!important;
+    text-align:left!important;
+  }
+
+  .programmeRowActions{
+    grid-column:1/-1!important;
+    display:grid!important;
+    grid-template-columns:1fr 1fr;
+    width:100%;
+    gap:8px;
+  }
+
+  .programmeRowActions .btn{
+    width:100%;
+    min-height:44px;
+  }
+
+  /* Add/Edit programme modal works on a phone */
+
+  .modal{
+    overflow-y:auto!important;
+    align-items:flex-start!important;
+    padding:
+      calc(12px + env(safe-area-inset-top))
+      12px
+      calc(18px + env(safe-area-inset-bottom))!important;
+  }
+
+  .modalCard,
+  .modalCard.wide{
+    width:100%!important;
+    max-width:100%!important;
+    max-height:none!important;
+    margin:auto 0!important;
+    padding:24px 16px 20px!important;
+    overflow:visible!important;
+  }
+
+  .programmeEditForm{
+    display:grid;
+    gap:14px;
+    width:100%;
+  }
+
+  .programmeEditForm .formGrid{
+    grid-template-columns:1fr!important;
+  }
+
+  .programmeEditForm input,
+  .programmeEditForm textarea,
+  .programmeEditForm select{
+    width:100%;
+    min-width:0;
+    font-size:16px;
+  }
+
+  .programmeEditForm textarea{
+    min-height:120px;
+  }
+
+  .dialogActions{
+    position:sticky;
+    bottom:0;
+    z-index:5;
+    display:grid!important;
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+    margin:
+      8px -16px -20px!important;
+    padding:
+      12px
+      16px
+      calc(12px + env(safe-area-inset-bottom));
+    background:rgba(17,17,17,.97);
+    border-top:1px solid #2e2e32;
+    backdrop-filter:blur(12px);
+  }
+
+  .dialogActions .btn{
+    width:100%;
+    min-height:46px;
+  }
+
+  /* Custom client offer tools */
+
+  .customOfferAdmin{
+    padding:16px!important;
+    margin:18px 0!important;
+  }
+
+  .customOfferForm,
+  .customOfferEdit{
+    width:100%;
+  }
+
+  .customOfferForm .formGrid,
+  .customOfferEdit .formGrid{
+    grid-template-columns:1fr!important;
+  }
+
+  .customOfferForm input,
+  .customOfferForm textarea,
+  .customOfferForm select,
+  .customOfferEdit input,
+  .customOfferEdit textarea,
+  .customOfferEdit select{
+    width:100%!important;
+    min-width:0!important;
+    font-size:16px!important;
+  }
+
+  .customOfferForm .btn{
+    width:100%;
+    min-height:48px;
+  }
+
+  .customOfferActions{
+    display:grid!important;
+    grid-template-columns:1fr!important;
+  }
+
+  .customOfferActions .btn{
+    width:100%!important;
+    min-height:44px;
+  }
+
+  /* Public custom coaching */
+
+  .customCoachingSection{
+    overflow:hidden;
+  }
+
+  .customCoachingCard{
+    grid-template-columns:1fr!important;
+    padding:18px!important;
+    gap:20px!important;
+  }
+
+  .customCoachingAction{
+    padding:18px!important;
+  }
+
+  .customCoachingPoints{
+    grid-template-columns:1fr!important;
+  }
+
+  /* Client workspace subscription tab */
+
+  .clientWorkspaceTop{
+    grid-template-columns:1fr!important;
+    align-items:flex-start!important;
+  }
+
+  .clientTopActions{
+    width:100%!important;
+    display:grid!important;
+    grid-template-columns:1fr!important;
+  }
+
+  .clientTopActions .btn,
+  .clientAccessBadge{
+    width:100%;
+    text-align:center;
+  }
+}

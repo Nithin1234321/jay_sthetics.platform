@@ -558,6 +558,52 @@ adminRouter.post("/programs", async (req, res) => {
   res.status(201).json(item);
 });
 
+adminRouter.delete("/programs/:id", async (req,res) => {
+  const programId=String(req.params.id);
+
+  const program=await prisma.program.findUnique({
+    where:{id:programId}
+  });
+
+  if(!program){
+    return res.status(404).json({
+      error:"Programme not found"
+    });
+  }
+
+  if(program.slug.startsWith("custom-")){
+    return res.status(400).json({
+      error:"Use the custom offer delete action for private offers."
+    });
+  }
+
+  const subscriptionCount=await prisma.subscription.count({
+    where:{programId}
+  });
+
+  if(subscriptionCount>0){
+    return res.status(409).json({
+      error:"This programme already has client subscription history and cannot be permanently deleted. Hide it instead."
+    });
+  }
+
+  await prisma.program.delete({
+    where:{id:programId}
+  });
+
+  await audit(
+    req.auth!.sub,
+    "DELETE",
+    "PROGRAM",
+    programId,
+    {
+      name:program.name
+    }
+  );
+
+  res.json({ok:true});
+});
+
 adminRouter.patch("/programs/:id", async (req, res) => {
   const parsed = z.object({
     name: z.string().min(2).optional(),
@@ -638,6 +684,46 @@ adminRouter.post("/clients/:id/custom-plan", async (req, res) => {
     ...item,
     checkoutPath:`/checkout?programId=${item.id}`
   });
+});
+
+adminRouter.delete("/custom-plans/:id", async (req,res) => {
+  const offerId=String(req.params.id);
+
+  const offer=await prisma.program.findUnique({
+    where:{id:offerId}
+  });
+
+  if(!offer || !offer.slug.startsWith("custom-")){
+    return res.status(404).json({
+      error:"Custom offer not found"
+    });
+  }
+
+  const subscriptionCount=await prisma.subscription.count({
+    where:{programId:offerId}
+  });
+
+  if(subscriptionCount>0){
+    return res.status(409).json({
+      error:"This custom offer has already been used and cannot be permanently deleted. Disable it instead."
+    });
+  }
+
+  await prisma.program.delete({
+    where:{id:offerId}
+  });
+
+  await audit(
+    req.auth!.sub,
+    "DELETE",
+    "CUSTOM_PROGRAM",
+    offerId,
+    {
+      name:offer.name
+    }
+  );
+
+  res.json({ok:true});
 });
 
 adminRouter.patch("/custom-plans/:id", async (req,res) => {
