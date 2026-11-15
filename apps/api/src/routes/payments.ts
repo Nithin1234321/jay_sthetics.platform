@@ -53,13 +53,49 @@ async function activatePayment(orderId:string,paymentId:string) {
   return payment;
 }
 
+paymentsRouter.get("/program/:id", requireAuth, async (req,res) => {
+  if(req.auth!.role!=="CLIENT"){
+    return res.status(403).json({error:"Client account required"});
+  }
+
+  const program=await prisma.program.findFirst({
+    where:{
+      id:String(req.params.id),
+      isActive:true
+    }
+  });
+
+  if(!program){
+    return res.status(404).json({error:"Programme not found"});
+  }
+
+  if(
+    program.slug.startsWith("custom-") &&
+    !program.slug.startsWith(`custom-${req.auth!.sub}-`)
+  ){
+    return res.status(404).json({error:"Programme not found"});
+  }
+
+  res.json(program);
+});
+
 paymentsRouter.post("/create-order", requireAuth, async (req,res) => {
   if(req.auth!.role!=="CLIENT")return res.status(403).json({error:"Client account required"});
   const parsed=z.object({programId:z.string().min(1)}).safeParse(req.body);
   if(!parsed.success)return res.status(400).json({error:"Invalid programme"});
 
-  const program=await prisma.program.findFirst({where:{id:parsed.data.programId,isActive:true}});
+  const program=await prisma.program.findFirst({
+    where:{id:parsed.data.programId,isActive:true}
+  });
+
   if(!program)return res.status(404).json({error:"Programme not found"});
+
+  if(
+    program.slug.startsWith("custom-") &&
+    !program.slug.startsWith(`custom-${req.auth!.sub}-`)
+  ){
+    return res.status(404).json({error:"Programme not found"});
+  }
 
   const alreadyActive=await prisma.subscription.findFirst({
     where:{userId:req.auth!.sub,programId:program.id,status:"ACTIVE",OR:[{endsAt:null},{endsAt:{gt:new Date()}}]}
@@ -134,8 +170,18 @@ paymentsRouter.post("/mock-success", requireAuth, async (req,res) => {
   const parsed=z.object({programId:z.string().min(1)}).safeParse(req.body);
   if(!parsed.success)return res.status(400).json({error:"Invalid programme"});
 
-  const program=await prisma.program.findFirst({where:{id:parsed.data.programId,isActive:true}});
+  const program=await prisma.program.findFirst({
+    where:{id:parsed.data.programId,isActive:true}
+  });
+
   if(!program)return res.status(404).json({error:"Programme not found"});
+
+  if(
+    program.slug.startsWith("custom-") &&
+    !program.slug.startsWith(`custom-${req.auth!.sub}-`)
+  ){
+    return res.status(404).json({error:"Programme not found"});
+  }
 
   const existing=await prisma.subscription.findFirst({
     where:{userId:req.auth!.sub,programId:program.id,status:"ACTIVE",OR:[{endsAt:null},{endsAt:{gt:new Date()}}]}

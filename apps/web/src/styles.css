@@ -1335,3 +1335,297 @@ button.tr{width:100%;color:inherit;border:0;text-align:left;cursor:pointer}
     order:-1;
   }
 }
+
+
+/* CUSTOM COACHING + DELETE CONTROLS */
+
+.homeCoachingCopy{
+  max-width:720px;
+  color:#929296;
+  line-height:1.7;
+  margin-bottom:24px;
+}
+
+.customCoachingCard{
+  display:grid;
+  grid-template-columns:
+    minmax(0,1.4fr)
+    minmax(260px,.6fr);
+  gap:32px;
+  padding:30px;
+  border:1px solid #4a2222;
+  border-radius:14px;
+  background:
+    radial-gradient(
+      circle at 90% 15%,
+      rgba(120,20,20,.22),
+      transparent 32%
+    ),
+    linear-gradient(
+      145deg,
+      #151113,
+      #0d0d0f
+    );
+}
+
+.customCoachingCard h2{
+  margin:8px 0 12px;
+  font-size:32px;
+}
+
+.customCoachingCard>div>p{
+  color:#99999e;
+  line-height:1.7;
+  max-width:760px;
+}
+
+.customCoachingPoints{
+  display:grid;
+  grid-template-columns:
+    1fr 1fr;
+  gap:10px 18px;
+  margin-top:22px;
+}
+
+.customCoachingPoints span{
+  color:#c7c7cb;
+  font-size:12px;
+}
+
+.customCoachingAction{
+  align-self:stretch;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  padding:24px;
+  border:1px solid #3d2929;
+  border-radius:12px;
+  background:#100d0e;
+}
+
+.customCoachingAction small{
+  color:#777;
+  font-weight:900;
+  letter-spacing:.1em;
+}
+
+.customCoachingAction strong{
+  font-size:28px;
+  margin:7px 0;
+}
+
+.customCoachingAction p{
+  color:#777;
+  font-size:11px;
+  line-height:1.55;
+  margin:0 0 18px;
+}
+
+.customOfferAdmin{
+  margin:28px 0;
+  padding:22px;
+  border:1px solid #432424;
+  border-radius:14px;
+  background:
+    linear-gradient(
+      145deg,
+      #171011,
+      #0e0e10
+    );
+}
+
+.customOfferAdminHead h3{
+  margin:5px 0 6px;
+}
+
+.customOfferForm{
+  display:grid;
+  gap:14px;
+  margin-top:18px;
+}
+
+.customOfferForm label,
+.customOfferEdit label{
+  display:grid;
+  gap:7px;
+  color:#aaa;
+  font-size:12px;
+}
+
+.customOfferList{
+  display:grid;
+  gap:12px;
+  margin-top:26px;
+}
+
+.customOfferCard{
+  padding:18px;
+  border:1px solid #303034;
+  border-radius:12px;
+  background:#0c0c0e;
+}
+
+.customOfferTitle{
+  display:flex;
+  justify-content:
+    space-between;
+  gap:18px;
+  align-items:flex-start;
+}
+
+.customOfferTitle h4{
+  margin:7px 0 6px;
+  font-size:17px;
+}
+
+.customOfferTitle p{
+  margin:0;
+  color:#888;
+  line-height:1.6;
+}
+
+.customOfferTitle>strong{
+  font-size:21px;
+  white-space:nowrap;
+}
+
+.offerStatus{
+  display:inline-flex;
+  padding:5px 8px;
+  border-radius:99px;
+  font-size:8px;
+  font-weight:900;
+  letter-spacing:.08em;
+}
+
+.offerStatus.active{
+  color:#7de3a7;
+  border:1px solid #24543a;
+  background:#0d1e15;
+}
+
+.offerStatus.inactive{
+  color:#888;
+  border:1px solid #333;
+  background:#151515;
+}
+
+.customOfferEdit{
+  display:grid;
+  gap:12px;
+  margin-top:18px;
+  padding-top:18px;
+  border-top:1px solid #26262a;
+}
+
+.customOfferActions{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+}
+
+.clientTopActions{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+  justify-content:flex-end;
+}
+
+.dangerBtn{
+  border:
+    1px solid #692727!important;
+  background:
+    #1e0c0c!important;
+  color:
+    #ff8e8e!important;
+}
+
+.dangerBtn:hover{
+  border-color:
+    #a63b3b!important;
+  background:
+    #321010!important;
+  color:
+    #fff!important;
+}
+
+.recordDeleteTop{
+  display:flex;
+  justify-content:
+    space-between;
+  align-items:center;
+  gap:15px;
+  margin-bottom:8px;
+}
+
+.checkHeadDelete,
+.checkRowDelete{
+  grid-template-columns:
+    minmax(180px,1.3fr)
+    .7fr
+    .6fr
+    .6fr
+    .6fr
+    .7fr
+    .65fr!important;
+}
+
+.callHeadDelete,
+.callRowDelete{
+  grid-template-columns:
+    1.1fr
+    1.1fr
+    1fr
+    .8fr
+    .55fr!important;
+}
+
+@media(max-width:800px){
+  .customCoachingCard{
+    grid-template-columns:1fr;
+    padding:20px;
+  }
+
+  .customCoachingPoints{
+    grid-template-columns:1fr;
+  }
+
+  .customOfferTitle{
+    flex-direction:column;
+  }
+
+  .customOfferTitle>strong{
+    font-size:19px;
+  }
+
+  .customOfferActions{
+    display:grid;
+    grid-template-columns:1fr;
+  }
+
+  .customOfferActions .btn{
+    width:100%;
+  }
+
+  .clientTopActions{
+    justify-content:flex-start;
+    width:100%;
+  }
+
+  .checkHeadDelete,
+  .callHeadDelete{
+    display:none!important;
+  }
+
+  .checkRowDelete,
+  .callRowDelete{
+    grid-template-columns:
+      1fr!important;
+    gap:10px!important;
+  }
+
+  .recordDeleteTop{
+    align-items:flex-start;
+  }
+}

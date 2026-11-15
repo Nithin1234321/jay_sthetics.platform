@@ -5,7 +5,14 @@ export const programsRouter = Router();
 
 programsRouter.get("/", async (_req, res) => {
   const programs = await prisma.program.findMany({
-    where: { isActive: true },
+    where: {
+      isActive: true,
+      NOT: {
+        slug: {
+          startsWith: "custom-"
+        }
+      }
+    },
     orderBy: { pricePaise: "asc" }
   });
   res.json(programs);

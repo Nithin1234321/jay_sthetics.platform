@@ -82,7 +82,20 @@ export default function App(){
   }|null>(null);
   const path=location.pathname;
 
-  useEffect(()=>{api<Program[]>("/programs").then(setPrograms).catch(()=>{})},[]);
+  useEffect(()=>{
+    api<Program[]>("/programs")
+      .then(setPrograms)
+      .catch(()=>{})
+  },[]);
+
+  useEffect(()=>{
+    if(
+      path==="/" &&
+      new URLSearchParams(location.search).get("talk")==="1"
+    ){
+      setModal("call");
+    }
+  },[path]);
 
   function session(token:string,u:User,next?:string){
     // Remove legacy shared login values.
@@ -186,9 +199,52 @@ export default function App(){
     catch(e:any){setNotice(e.message)}
   }
   async function schedulePublicCall(e:FormEvent<HTMLFormElement>){
-    e.preventDefault();const f=new FormData(e.currentTarget);
-    try{await api("/appointments",{method:"POST",body:JSON.stringify({fullName:f.get("fullName"),email:f.get("email"),phone:f.get("phone"),preferredAt:new Date(`${f.get("date")}T${f.get("time")}:00+05:30`).toISOString(),reason:f.get("reason")})});setNotice("Call request submitted.");setModal(null)}
-    catch(e:any){setNotice(e.message)}
+    e.preventDefault();
+
+    const f=new FormData(e.currentTarget);
+
+    const requestedDate=String(
+      f.get("date")||""
+    );
+
+    const requestedTime=String(
+      f.get("time")||""
+    );
+
+    const reason=String(
+      f.get("reason")||""
+    ).trim();
+
+    const message=[
+      "Talk to Jay / consultation request",
+      requestedDate&&requestedTime
+        ?`Preferred call: ${requestedDate} at ${requestedTime} IST`
+        :"",
+      reason
+        ?`What they want to discuss: ${reason}`
+        :""
+    ].filter(Boolean).join("\n");
+
+    try{
+      await api("/leads",{
+        method:"POST",
+        body:JSON.stringify({
+          fullName:f.get("fullName"),
+          email:f.get("email"),
+          phone:f.get("phone"),
+          fitnessGoal:"Consultation / Custom Coaching",
+          message
+        })
+      });
+
+      setNotice(
+        "Request sent. Jay can contact you directly."
+      );
+
+      setModal(null);
+    }catch(e:any){
+      setNotice(e.message);
+    }
   }
 
   function logout(){
@@ -289,7 +345,26 @@ export default function App(){
     <header>
       <a className="brand" href="/"><b>jay.</b><span>__sthetics</span></a>
       <nav><a href="#home">Home</a><a href="#about">About Jay</a><a href="/programs">Programs</a><a href="#contact">Contact</a></nav>
-      <div className="actions">{user?.role==="CLIENT"?<a className="btn ghost" href="/dashboard">My Dashboard</a>:<button className="btn ghost" onClick={()=>setModal("login")}>Client Login</button>}<a className="btn red" href="/programs">Get Started</a></div>
+      <div className="actions">
+        {user?.role==="CLIENT"
+          ?<a className="btn ghost" href="/dashboard">
+            My Dashboard
+          </a>
+          :<button
+            className="btn ghost"
+            onClick={()=>setModal("login")}
+          >
+            Client Login
+          </button>
+        }
+
+        <button
+          className="btn red"
+          onClick={()=>setModal("call")}
+        >
+          Talk to Jay
+        </button>
+      </div>
     </header>
     {notice&&<div className="notice" onClick={()=>setNotice("")}>{notice} ×</div>}
     <main>
@@ -297,36 +372,103 @@ export default function App(){
         <p className="eyebrow">TRANSFORM YOUR <i>BODY.</i><br/>ELEVATE YOUR <i>LIFE.</i></p>
         <h1>jay.<br/><span>__sthetics</span></h1><h2>Online Coaching. Real Results.</h2>
         <p className="muted">Personalized training, nutrition, weekly check-ins and direct coaching support in one platform.</p>
-        <div className="heroButtons"><a className="btn red" href="/programs">View Coaching →</a><button className="btn ghost" onClick={()=>setModal("call")}>Schedule a Call</button></div>
+        <div className="heroButtons">
+          <button
+            className="btn red"
+            onClick={()=>setModal("call")}
+          >
+            Talk to Jay →
+          </button>
+
+          <a
+            className="btn ghost"
+            href="/programs"
+          >
+            View Coaching Options
+          </a>
+        </div>
       </div></section>
-      <section className="section" id="programs"><p className="eyebrow redText">COACHING PROGRAMMES</p><h2>CHOOSE YOUR PROGRAMME</h2>
-        <div className="cards">{programs.filter(p=>p.isActive!==false).map((p,i)=><article className="card" key={p.id}>
-          <img
-            src={
-              p.slug === "natural-6-months"
-                ? "/programs/natural-6m.jpeg"
-                : p.slug === "enhanced-6-months"
-                  ? "/programs/enhanced-6m.jpeg"
-                  : p.slug.includes("natural")
-                    ? "/assets/jay-stage-1.jpeg"
-                    : "/assets/jay-stage-2.jpeg"
-            }
-            alt={p.name}
-          />
-          <div className="cardBody"><div className="pill">{p.name.includes("Natural")?"NATURAL":"ENHANCED"}</div><h3>{p.name}</h3><p>{p.description}</p><strong>{money(p.pricePaise)}</strong><button className="btn red full" onClick={()=>chooseProgram(p)}>Join Coaching</button></div>
-        </article>)}</div>
+      <section
+        className="section homeCoachingIntro"
+        id="programs"
+      >
+        <p className="eyebrow redText">
+          1:1 ONLINE COACHING
+        </p>
+
+        <h2>
+          BUILT AROUND YOU.
+        </h2>
+
+        <p className="homeCoachingCopy">
+          Training, nutrition, accountability and progress
+          management tailored around your body, experience and
+          goal. Speak with Jay first, then choose the coaching
+          route that makes sense for you.
+        </p>
+
+        <div className="heroButtons">
+          <button
+            className="btn red"
+            onClick={()=>setModal("call")}
+          >
+            Talk to Jay
+          </button>
+
+          <a
+            className="btn ghost"
+            href="/programs"
+          >
+            Explore Coaching
+          </a>
+        </div>
       </section>
       <section className="about" id="about"><img src="/assets/jay-stage-2.jpeg" alt="Jay"/><div><p className="eyebrow redText">ABOUT JAY</p><h2>COACH. ATHLETE. MENTOR.</h2><p>Structured training, practical nutrition, accountability and measurable progress.</p><div className="stats"><b>1:1<span>Coaching</span></b><b>WEEKLY<span>Check-ins</span></b><b>24/7<span>Dashboard access</span></b></div></div></section>
       <section className="section"><p className="eyebrow redText">MEMBERS ONLY</p><h2>YOUR COACHING HUB</h2>
         <div className="hubGrid">{["Training & Form Videos","Exercise Alternatives","Nutrition & Macro Options","Weekly Check-ins","Progress Tracking","Private Chat","Coaching Calls"].map(x=><div key={x}><span>🔒</span><b>{x}</b><small>Active subscribers only</small></div>)}</div>
       </section>
-      <section className="cta" id="contact"><div><h2>READY TO TRANSFORM?</h2><p>Choose your programme or speak with Jay before joining.</p><a className="btn red" href="/programs">Choose Programme</a><button className="btn ghost" onClick={()=>setModal("call")}>Schedule a Call</button><button className="btn ghost" onClick={()=>setModal("message")}>Message Jay</button></div></section>
+      <section
+        className="cta"
+        id="contact"
+      >
+        <div>
+          <h2>
+            READY TO TRANSFORM?
+          </h2>
+
+          <p>
+            Speak with Jay about your goal, coaching needs and
+            the best way to get started.
+          </p>
+
+          <button
+            className="btn red"
+            onClick={()=>setModal("call")}
+          >
+            Talk to Jay
+          </button>
+
+          <a
+            className="btn ghost"
+            href="/programs"
+          >
+            View Coaching Options
+          </a>
+
+          <button
+            className="btn ghost"
+            onClick={()=>setModal("message")}
+          >
+            Send a Message
+          </button>
+        </div>
+      </section>
     </main>
     <footer><div className="brand"><b>jay.</b><span>__sthetics</span></div><span>© 2026 jay.__sthetics</span></footer>
     {modal&&<div className="modal" onMouseDown={e=>e.target===e.currentTarget&&setModal(null)}><div className="modalCard"><button className="close" onClick={()=>setModal(null)}>×</button>
       {modal==="login"&&<><div className="modalAuthHead"><span>WELCOME BACK</span><h2>Client Login</h2><p>Access your training, nutrition, progress and coaching support.</p></div><form className="authForm compact" onSubmit={login}><label>Email address<input name="email" type="email" placeholder="name@example.com" autoComplete="email" required/></label><label>Password<PasswordField placeholder="Enter your password" autoComplete="current-password"/></label><div className="authOptions"><span>Your account is protected</span><a href="/forgot-password">Forgot password?</a></div><button className="btn red full authSubmit">Sign In</button></form><div className="modalLoginFooter"><span>Don't have an account?</span><button onClick={()=>{setModal(null);location.href="/programs"}}>View programmes</button></div></>}
       {modal==="signup"&&<><h2>Start Coaching</h2>{selectedProgram&&<div className="selectedPlanMini"><small>SELECTED PROGRAMME</small><b>{selectedProgram.name}</b><span>{money(selectedProgram.pricePaise)}</span></div>}<form onSubmit={register}><input name="fullName" placeholder="Full name" required/><input name="email" type="email" placeholder="Email" required/><input name="phone" placeholder="Phone" required/><PasswordField placeholder="Create password" autoComplete="new-password" minLength={8}/><button className="btn red full">Create Account</button></form>{selectedProgram&&<div className="modalLoginFooter"><span>Already have an account?</span><button onClick={()=>setModal("login")}>Sign in instead</button></div>}</>}
-      {modal==="call"&&<><div className="modalAuthHead"><span>CONSULTATION</span><h2>Schedule a Call</h2><p>Talk with Jay before choosing your coaching programme. Times are shown in India Standard Time (IST).</p></div><form className="authForm compact" onSubmit={schedulePublicCall}><label>Full name<input name="fullName" required/></label><label>Email<input name="email" type="email" required/></label><label>Phone<input name="phone" required/></label><div className="formGrid"><label>Date<input name="date" type="date" required/></label><label>Time (IST)<input name="time" type="time" required/></label></div><label>What do you want to discuss?<textarea name="reason"/></label><button className="btn red full">Request Call</button></form></>}
+      {modal==="call"&&<><div className="modalAuthHead"><span>PERSONAL CONSULTATION</span><h2>Talk to Jay</h2><p>Tell Jay what you're looking for and choose a preferred time to be contacted. Your enquiry will appear directly in Jay's Leads section.</p></div><form className="authForm compact" onSubmit={schedulePublicCall}><label>Full name<input name="fullName" required/></label><label>Email<input name="email" type="email" required/></label><label>Phone<input name="phone" required/></label><div className="formGrid"><label>Date<input name="date" type="date" required/></label><label>Time (IST)<input name="time" type="time" required/></label></div><label>What do you want to discuss?<textarea name="reason" placeholder="Your goal, preferred duration, questions or anything Jay should know."/></label><button className="btn red full">Send Request to Jay</button></form></>}
       {modal==="message"&&<><div className="modalAuthHead"><span>CONTACT JAY</span><h2>Send a Message</h2><p>Leave your details and Jay can follow up.</p></div><form className="authForm compact" onSubmit={submitLead}><label>Full name<input name="fullName" required/></label><label>Email<input name="email" type="email" required/></label><label>Phone<input name="phone"/></label><label>Goal<input name="goal" placeholder="e.g. fat loss / muscle gain"/></label><label>Message<textarea name="message" required/></label><button className="btn red full">Send Message</button></form></>}
     </div></div>}
   </div>;
@@ -458,7 +600,11 @@ function CoachPanel({user,logout}:{user:User;logout:()=>void}){
       {tab==="exercise library"&&<AdminExercises setNotice={setNotice}/>}
       {tab==="workout plans"&&<AdminWorkouts setNotice={setNotice}/>}
       {tab==="nutrition"&&<AdminNutrition setNotice={setNotice}/>}
-      {tab==="check-ins"&&<AdminCheckins/>}
+      {tab==="check-ins"&&
+        <AdminCheckins
+          setNotice={setNotice}
+        />
+      }
       {tab==="calls"&&<AdminCalls setNotice={setNotice}/>}
       {tab==="messages"&&<AdminMessages/>}
       {tab==="payments"&&<AdminPayments/>}
@@ -756,6 +902,203 @@ function AdminClients({setNotice}:{setNotice:(s:string)=>void}){
       setNotice(e.message);
     }
   }
+  async function createCustomOffer(e:FormEvent<HTMLFormElement>){
+    e.preventDefault();
+
+    if(!selected)return;
+
+    const form=e.currentTarget;
+    const f=new FormData(form);
+
+    try{
+      const result=await api<any>(
+        `/admin/clients/${selected.id}/custom-plan`,
+        {
+          method:"POST",
+          body:JSON.stringify({
+            coachingType:f.get("coachingType"),
+            durationMonths:Number(f.get("durationMonths")),
+            priceRupees:Number(f.get("priceRupees")),
+            description:String(f.get("description")||"")
+          })
+        }
+      );
+
+      setNotice(
+        `Custom offer created: ${money(result.pricePaise)}`
+      );
+
+      form.reset();
+      refresh();
+    }catch(e:any){
+      setNotice(e.message);
+    }
+  }
+
+  async function updateCustomOffer(
+    offerId:string,
+    e:FormEvent<HTMLFormElement>
+  ){
+    e.preventDefault();
+
+    const f=new FormData(e.currentTarget);
+
+    try{
+      await api(`/admin/custom-plans/${offerId}`,{
+        method:"PATCH",
+        body:JSON.stringify({
+          durationMonths:Number(f.get("durationMonths")),
+          priceRupees:Number(f.get("priceRupees")),
+          description:String(f.get("description")||"")
+        })
+      });
+
+      setNotice("Custom offer updated.");
+      refresh();
+    }catch(e:any){
+      setNotice(e.message);
+    }
+  }
+
+  async function disableCustomOffer(offerId:string){
+    if(!window.confirm(
+      "Disable this custom checkout offer?"
+    ))return;
+
+    try{
+      await api(`/admin/custom-plans/${offerId}`,{
+        method:"PATCH",
+        body:JSON.stringify({
+          isActive:false
+        })
+      });
+
+      setNotice("Custom offer disabled.");
+      refresh();
+    }catch(e:any){
+      setNotice(e.message);
+    }
+  }
+
+  async function copyCustomCheckout(programId:string){
+    const url=
+      `${location.origin}/checkout?programId=${programId}`;
+
+    try{
+      await navigator.clipboard.writeText(url);
+      setNotice("Private checkout link copied.");
+    }catch{
+      setNotice(url);
+    }
+  }
+
+  async function deleteClient(){
+    if(!selected)return;
+
+    if(!window.confirm(
+      `Delete ${selected.fullName}? Paid clients with successful payment history will automatically be protected from permanent deletion.`
+    ))return;
+
+    if(!window.confirm(
+      "Final confirmation: permanently delete this unpaid/demo client?"
+    ))return;
+
+    try{
+      await api(`/admin/clients/${selected.id}`,{
+        method:"DELETE"
+      });
+
+      setNotice("Client deleted.");
+      setSelected(null);
+      load();
+    }catch(e:any){
+      setNotice(e.message);
+    }
+  }
+
+  async function deleteCheckIn(id:string){
+    if(!window.confirm(
+      "Delete this check-in permanently?"
+    ))return;
+
+    try{
+      await api(`/admin/check-ins/${id}`,{
+        method:"DELETE"
+      });
+
+      setNotice("Check-in deleted.");
+      refresh();
+    }catch(e:any){
+      setNotice(e.message);
+    }
+  }
+
+  async function deleteNote(id:string){
+    if(!selected)return;
+
+    if(!window.confirm(
+      "Delete this private coach note?"
+    ))return;
+
+    try{
+      await api(
+        `/admin/clients/${selected.id}/notes/${id}`,
+        {
+          method:"DELETE"
+        }
+      );
+
+      setNotice("Note deleted.");
+      refresh();
+    }catch(e:any){
+      setNotice(e.message);
+    }
+  }
+
+  async function deleteWorkoutAssignment(id:string){
+    if(!selected)return;
+
+    if(!window.confirm(
+      "Remove this workout assignment from the client?"
+    ))return;
+
+    try{
+      await api(
+        `/admin/clients/${selected.id}/workouts/${id}`,
+        {
+          method:"DELETE"
+        }
+      );
+
+      setNotice("Workout assignment removed.");
+      refresh();
+    }catch(e:any){
+      setNotice(e.message);
+    }
+  }
+
+  async function deleteNutritionAssignment(id:string){
+    if(!selected)return;
+
+    if(!window.confirm(
+      "Remove this nutrition assignment from the client?"
+    ))return;
+
+    try{
+      await api(
+        `/admin/clients/${selected.id}/nutrition/${id}`,
+        {
+          method:"DELETE"
+        }
+      );
+
+      setNotice("Nutrition assignment removed.");
+      refresh();
+    }catch(e:any){
+      setNotice(e.message);
+    }
+  }
+
   async function assignWorkout(workoutPlanId:string){if(!selected||!workoutPlanId)return;await api(`/admin/clients/${selected.id}/workout`,{method:"POST",body:JSON.stringify({workoutPlanId})});setNotice("Workout assigned.");refresh()}
   async function assignNutrition(nutritionPlanId:string){if(!selected||!nutritionPlanId)return;await api(`/admin/clients/${selected.id}/nutrition`,{method:"POST",body:JSON.stringify({nutritionPlanId})});setNotice("Nutrition assigned.");refresh()}
   async function saveProfile(e:FormEvent<HTMLFormElement>){e.preventDefault();if(!selected)return;const f=new FormData(e.currentTarget);try{await api(`/admin/clients/${selected.id}/profile`,{method:"PATCH",body:JSON.stringify({fullName:f.get("fullName"),phone:f.get("phone"),dateOfBirth:f.get("dob"),heightCm:Number(f.get("height")),currentWeightKg:Number(f.get("weight")),fitnessGoal:f.get("goal"),trainingExperience:f.get("experience")})});setNotice("Client details updated.");refresh()}catch(e:any){setNotice(e.message)}}
@@ -802,8 +1145,18 @@ function AdminClients({setNotice}:{setNotice:(s:string)=>void}){
   </div>
 </div>
 
-<div className="clientAccessBadge">
-  {selected.subscriptions?.[0]?.status||"NO PLAN"}
+<div className="clientTopActions">
+  <div className="clientAccessBadge">
+    {selected.subscriptions?.[0]?.status||"NO PLAN"}
+  </div>
+
+  <button
+    type="button"
+    className="btn dangerBtn"
+    onClick={deleteClient}
+  >
+    Delete Client
+  </button>
 </div></div>
       <div className="clientTabs">{["overview","profile","subscription","workout","nutrition","progress","check-ins","calls","payments","notes"].map(t=><button key={t} className={clientTab===t?"active":""} onClick={()=>setClientTab(t)}>{t}</button>)}</div><div className="clientWorkspaceBody">
       {clientTab==="overview"&&<div className="clientOverviewGrid"><div className="clientHeroCard"><small>COACHING STATUS</small><h2>{selected.subscriptions?.[0]?.program?.name||"No programme assigned"}</h2><p>{selected.subscriptions?.[0]?.status||"No coaching access yet."}</p></div><Info k="Goal" v={selected.clientProfile?.fitnessGoal||"Not added"}/><Info k="Weight" v={selected.clientProfile?.currentWeightKg?`${selected.clientProfile.currentWeightKg} kg`:"Not added"}/><Info k="Height" v={selected.clientProfile?.heightCm?`${selected.clientProfile.heightCm} cm`:"Not added"}/><Info k="Experience" v={selected.clientProfile?.trainingExperience||selected.clientProfile?.experienceLevel||"Not added"}/></div>}
@@ -837,7 +1190,11 @@ function AdminClients({setNotice}:{setNotice:(s:string)=>void}){
             Choose programme…
           </option>
 
-          {programs.filter(p=>p.isActive).map(p=>
+          {programs.filter(
+            p=>
+              p.isActive &&
+              !p.slug.startsWith("custom-")
+          ).map(p=>
             <option key={p.id} value={p.id}>
               {p.name} · {money(p.pricePaise)}
             </option>
@@ -873,6 +1230,225 @@ function AdminClients({setNotice}:{setNotice:(s:string)=>void}){
         Activate Existing Client
       </button>
     </form>
+
+    <div className="customOfferAdmin">
+      <div className="customOfferAdminHead">
+        <small className="redText">
+          PRIVATE CLIENT OFFER
+        </small>
+
+        <h3>
+          Custom Coaching Plan
+        </h3>
+
+        <p className="muted">
+          Create a custom duration and agreed price for this
+          specific client. These offers never appear publicly.
+        </p>
+      </div>
+
+      <form
+        onSubmit={createCustomOffer}
+        className="customOfferForm"
+      >
+        <div className="formGrid">
+          <label>
+            Coaching type
+
+            <select
+              name="coachingType"
+              defaultValue="NATURAL"
+              required
+            >
+              <option value="NATURAL">
+                Natural Coaching
+              </option>
+
+              <option value="ENHANCED">
+                Enhanced Coaching
+              </option>
+            </select>
+          </label>
+
+          <label>
+            Duration (months)
+
+            <input
+              name="durationMonths"
+              type="number"
+              min="1"
+              max="24"
+              placeholder="2, 4, 5..."
+              required
+            />
+          </label>
+        </div>
+
+        <label>
+          Agreed price (₹)
+
+          <input
+            name="priceRupees"
+            type="number"
+            min="1"
+            placeholder="12000"
+            required
+          />
+        </label>
+
+        <label>
+          Offer description
+
+          <textarea
+            name="description"
+            placeholder="Custom coaching details..."
+          />
+        </label>
+
+        <button
+          className="btn red"
+          type="submit"
+        >
+          Create Private Checkout Offer
+        </button>
+      </form>
+
+      {!!selected.customOffers?.length&&
+        <div className="customOfferList">
+          <h4>
+            Custom Offers for {selected.fullName}
+          </h4>
+
+          {selected.customOffers.map((offer:any)=>{
+            const months=
+              offer.durationDays
+                ?Math.round(offer.durationDays/30)
+                :0;
+
+            return <div
+              className="customOfferCard"
+              key={offer.id}
+            >
+              <div className="customOfferTitle">
+                <div>
+                  <span
+                    className={`offerStatus ${
+                      offer.isActive
+                        ?"active"
+                        :"inactive"
+                    }`}
+                  >
+                    {offer.isActive
+                      ?"ACTIVE OFFER"
+                      :"DISABLED"
+                    }
+                  </span>
+
+                  <h4>
+                    {offer.name}
+                  </h4>
+
+                  <p>
+                    {offer.description}
+                  </p>
+                </div>
+
+                <strong>
+                  {money(offer.pricePaise)}
+                </strong>
+              </div>
+
+              <form
+                className="customOfferEdit"
+                onSubmit={e=>
+                  updateCustomOffer(
+                    offer.id,
+                    e
+                  )
+                }
+              >
+                <div className="formGrid">
+                  <label>
+                    Duration (months)
+
+                    <input
+                      name="durationMonths"
+                      type="number"
+                      min="1"
+                      max="24"
+                      defaultValue={months}
+                      required
+                    />
+                  </label>
+
+                  <label>
+                    Price (₹)
+
+                    <input
+                      name="priceRupees"
+                      type="number"
+                      min="1"
+                      defaultValue={
+                        offer.pricePaise/100
+                      }
+                      required
+                    />
+                  </label>
+                </div>
+
+                <label>
+                  Description
+
+                  <textarea
+                    name="description"
+                    defaultValue={
+                      offer.description
+                    }
+                  />
+                </label>
+
+                <div className="customOfferActions">
+                  <button
+                    className="btn ghost"
+                    type="submit"
+                  >
+                    Save Changes
+                  </button>
+
+                  {offer.isActive&&
+                    <button
+                      className="btn red"
+                      type="button"
+                      onClick={()=>
+                        copyCustomCheckout(
+                          offer.id
+                        )
+                      }
+                    >
+                      Copy Checkout Link
+                    </button>
+                  }
+
+                  {offer.isActive&&
+                    <button
+                      className="btn ghost"
+                      type="button"
+                      onClick={()=>
+                        disableCustomOffer(
+                          offer.id
+                        )
+                      }
+                    >
+                      Disable Offer
+                    </button>
+                  }
+                </div>
+              </form>
+            </div>
+          })}
+        </div>
+      }
+    </div>
 
     <h3>Subscription History</h3>
 
@@ -967,8 +1543,118 @@ function AdminClients({setNotice}:{setNotice:(s:string)=>void}){
     }
   </div>
 }
-      {clientTab==="workout"&&<div className="clientSection"><h3>Workout</h3><select className="largeSelect" defaultValue="" onChange={e=>assignWorkout(e.target.value)}><option value="" disabled>Assign workout plan…</option>{workouts.map(x=><option key={x.id} value={x.id}>{x.name}</option>)}</select>{selected.workouts?.map((x:any)=><div className="managementRow" key={x.id}><b>{x.workoutPlan.name}</b><small>{new Date(x.assignedAt).toLocaleDateString()}</small></div>)}</div>}
-      {clientTab==="nutrition"&&<div className="clientSection"><h3>Nutrition</h3><select className="largeSelect" defaultValue="" onChange={e=>assignNutrition(e.target.value)}><option value="" disabled>Assign nutrition plan…</option>{nutrition.map(x=><option key={x.id} value={x.id}>{x.name} · {x.calories||"—"} kcal</option>)}</select>{selected.nutrition?.map((x:any)=><div className="managementRow" key={x.id}><b>{x.nutritionPlan.name}</b><small>{x.nutritionPlan.calories||"—"} kcal</small></div>)}</div>}
+      {clientTab==="workout"&&
+        <div className="clientSection">
+          <h3>Workout</h3>
+
+          <select
+            className="largeSelect"
+            defaultValue=""
+            onChange={e=>
+              assignWorkout(e.target.value)
+            }
+          >
+            <option value="" disabled>
+              Assign workout plan…
+            </option>
+
+            {workouts.map(x=>
+              <option
+                key={x.id}
+                value={x.id}
+              >
+                {x.name}
+              </option>
+            )}
+          </select>
+
+          {selected.workouts?.map((x:any)=>
+            <div
+              className="managementRow"
+              key={x.id}
+            >
+              <div>
+                <b>
+                  {x.workoutPlan.name}
+                </b>
+
+                <small>
+                  {new Date(
+                    x.assignedAt
+                  ).toLocaleDateString()}
+                </small>
+              </div>
+
+              <button
+                className="btn dangerBtn"
+                onClick={()=>
+                  deleteWorkoutAssignment(
+                    x.id
+                  )
+                }
+              >
+                Remove
+              </button>
+            </div>
+          )}
+        </div>
+      }
+      {clientTab==="nutrition"&&
+        <div className="clientSection">
+          <h3>Nutrition</h3>
+
+          <select
+            className="largeSelect"
+            defaultValue=""
+            onChange={e=>
+              assignNutrition(
+                e.target.value
+              )
+            }
+          >
+            <option value="" disabled>
+              Assign nutrition plan…
+            </option>
+
+            {nutrition.map(x=>
+              <option
+                key={x.id}
+                value={x.id}
+              >
+                {x.name} · {x.calories||"—"} kcal
+              </option>
+            )}
+          </select>
+
+          {selected.nutrition?.map((x:any)=>
+            <div
+              className="managementRow"
+              key={x.id}
+            >
+              <div>
+                <b>
+                  {x.nutritionPlan.name}
+                </b>
+
+                <small>
+                  {x.nutritionPlan.calories||"—"} kcal
+                </small>
+              </div>
+
+              <button
+                className="btn dangerBtn"
+                onClick={()=>
+                  deleteNutritionAssignment(
+                    x.id
+                  )
+                }
+              >
+                Remove
+              </button>
+            </div>
+          )}
+        </div>
+      }
       {clientTab==="progress"&&<div className="clientSection"><h3>Progress History</h3>{selected.measurements?.length?selected.measurements.map((x:any)=><div className="managementRow" key={x.id}><b>{x.metric}: {String(x.value)} {x.unit}</b><small>{new Date(x.measuredAt).toLocaleDateString()}</small></div>):<Empty text="No measurements yet."/>}</div>}
       {clientTab==="check-ins"&&
   <div className="clientSection">
@@ -976,7 +1662,24 @@ function AdminClients({setNotice}:{setNotice:(s:string)=>void}){
 
     {selected.checkIns?.length?
       selected.checkIns.map((x:any)=>
-        <div className="checkinCard" key={x.id}>
+        <div
+          className="checkinCard"
+          key={x.id}
+        >
+          <div className="recordDeleteTop">
+            <span></span>
+
+            <button
+              type="button"
+              className="btn dangerBtn"
+              onClick={()=>
+                deleteCheckIn(x.id)
+              }
+            >
+              Delete Check-in
+            </button>
+          </div>
+
           <b>
             {new Date(x.createdAt).toLocaleDateString()} · {x.weightKg?`${x.weightKg} kg`:"Check-in"}
           </b>
@@ -1008,7 +1711,35 @@ function AdminClients({setNotice}:{setNotice:(s:string)=>void}){
 }
       {clientTab==="calls"&&<div className="clientSection"><h3>Calls</h3>{selected.appointments?.length?selected.appointments.map((x:any)=><div className="managementRow" key={x.id}><b>{date(x.preferredAt)}</b><span>{x.status}</span></div>):<Empty text="No calls yet."/>}</div>}
       {clientTab==="payments"&&<div className="clientSection"><h3>Payments</h3>{selected.payments?.length?selected.payments.map((x:any)=><div className="managementRow" key={x.id}><b>{money(x.amountPaise)}</b><span>{x.status}</span><small>{new Date(x.createdAt).toLocaleDateString()}</small></div>):<Empty text="No payments yet."/>}</div>}
-      {clientTab==="notes"&&<div className="clientSection"><h3>Private Coach Notes</h3><p className="muted">Only Jay can see these.</p><form onSubmit={addNote} className="noteComposer"><textarea name="body" placeholder="Add a private note…" required/><button className="btn red">Save Note</button></form><div className="noteList">{selected.notes?.length?selected.notes.map((x:any)=><div className="coachNote" key={x.id}><small>{date(x.createdAt)}</small><p>{x.body}</p></div>):<Empty text="No private notes yet."/>}</div></div>}
+      {clientTab==="notes"&&<div className="clientSection"><h3>Private Coach Notes</h3><p className="muted">Only Jay can see these.</p><form onSubmit={addNote} className="noteComposer"><textarea name="body" placeholder="Add a private note…" required/><button className="btn red">Save Note</button></form><div className="noteList">{selected.notes?.length
+  ?selected.notes.map((x:any)=>
+    <div
+      className="coachNote"
+      key={x.id}
+    >
+      <div className="recordDeleteTop">
+        <small>
+          {date(x.createdAt)}
+        </small>
+
+        <button
+          type="button"
+          className="btn dangerBtn"
+          onClick={()=>
+            deleteNote(x.id)
+          }
+        >
+          Delete
+        </button>
+      </div>
+
+      <p>
+        {x.body}
+      </p>
+    </div>
+  )
+  :<Empty text="No private notes yet."/>
+}</div></div>}
       </div></div></div>}
   </div>
 }
@@ -1033,6 +1764,26 @@ function AdminLeads({setNotice}:{setNotice:(s:string)=>void}){
       });
 
       setNotice("Lead status updated.");
+      load();
+    }catch(e:any){
+      setNotice(e.message);
+    }
+  }
+
+  async function remove(id:string){
+    if(!window.confirm(
+      "Delete this lead enquiry permanently?"
+    ))return;
+
+    try{
+      await api(
+        `/admin/leads/${id}`,
+        {
+          method:"DELETE"
+        }
+      );
+
+      setNotice("Lead deleted.");
       load();
     }catch(e:any){
       setNotice(e.message);
@@ -1262,6 +2013,16 @@ function AdminLeads({setNotice}:{setNotice:(s:string)=>void}){
                   Call Lead
                 </a>
               }
+
+              <button
+                type="button"
+                className="btn dangerBtn full"
+                onClick={()=>
+                  remove(x.id)
+                }
+              >
+                Delete Lead
+              </button>
             </div>
           </article>
         )}
@@ -1280,9 +2041,33 @@ function AdminPrograms({setNotice}:{setNotice:(s:string)=>void}){
   async function load(){setItems(await api<Program[]>("/admin/programs"))}
   useEffect(()=>{load().catch(e=>setNotice(e.message))},[]);
 
-  const natural=items.filter(p=>p.name.toLowerCase().includes("natural"));
-  const enhanced=items.filter(p=>p.name.toLowerCase().includes("enhanced"));
-  const other=items.filter(p=>!p.name.toLowerCase().includes("natural")&&!p.name.toLowerCase().includes("enhanced"));
+  const publicItems=items.filter(
+    p=>!p.slug.startsWith("custom-")
+  );
+
+  const natural=publicItems.filter(
+    p=>
+      p.name.toLowerCase().includes(
+        "natural"
+      )
+  );
+
+  const enhanced=publicItems.filter(
+    p=>
+      p.name.toLowerCase().includes(
+        "enhanced"
+      )
+  );
+
+  const other=publicItems.filter(
+    p=>
+      !p.name.toLowerCase().includes(
+        "natural"
+      ) &&
+      !p.name.toLowerCase().includes(
+        "enhanced"
+      )
+  );
 
   async function save(e:FormEvent<HTMLFormElement>){
     e.preventDefault();
@@ -1355,10 +2140,61 @@ function AdminPrograms({setNotice}:{setNotice:(s:string)=>void}){
     </div>
 
     <div className="programmeSummary">
-      <div><small>TOTAL PROGRAMMES</small><b>{items.length}</b></div>
-      <div><small>ACTIVE</small><b>{items.filter(p=>p.isActive).length}</b></div>
-      <div><small>LOWEST PRICE</small><b>{items.length?money(Math.min(...items.map(p=>p.pricePaise))):"—"}</b></div>
-      <div><small>HIGHEST PRICE</small><b>{items.length?money(Math.max(...items.map(p=>p.pricePaise))):"—"}</b></div>
+      <div>
+        <small>
+          TOTAL PROGRAMMES
+        </small>
+        <b>
+          {publicItems.length}
+        </b>
+      </div>
+
+      <div>
+        <small>
+          ACTIVE
+        </small>
+        <b>
+          {publicItems.filter(
+            p=>p.isActive
+          ).length}
+        </b>
+      </div>
+
+      <div>
+        <small>
+          LOWEST PRICE
+        </small>
+        <b>
+          {publicItems.length
+            ?money(
+              Math.min(
+                ...publicItems.map(
+                  p=>p.pricePaise
+                )
+              )
+            )
+            :"—"
+          }
+        </b>
+      </div>
+
+      <div>
+        <small>
+          HIGHEST PRICE
+        </small>
+        <b>
+          {publicItems.length
+            ?money(
+              Math.max(
+                ...publicItems.map(
+                  p=>p.pricePaise
+                )
+              )
+            )
+            :"—"
+          }
+        </b>
+      </div>
     </div>
 
     {group("Natural","Natural athlete coaching plans.",natural)}
@@ -1903,39 +2739,336 @@ function AdminNutrition({setNotice}:{setNotice:(s:string)=>void}){
   </>
 }
 
-function AdminCheckins(){
+function AdminCheckins({setNotice}:{setNotice:(s:string)=>void}){
   const [items,setItems]=useState<any[]>([]);
-  useEffect(()=>{api<any[]>("/admin/check-ins").then(setItems)},[]);
-  const exportRows=items.map(c=>({Client:c.user.fullName,Email:c.user.email,Date:new Date(c.createdAt).toLocaleDateString(),Weight_kg:c.weightKg?Number(c.weightKg):null,Body_Fat_Percent:c.bodyFat?Number(c.bodyFat):null,Sleep_Hours:c.sleepHours?Number(c.sleepHours):null,Energy_1_to_10:c.energyLevel??null,Diet_Adherence_Percent:c.dietAdherence??null,Notes:c.notes||""}));
-  return <><div className="toolbar"><p className="muted">Weekly client progress submissions.</p><button className="btn ghost" onClick={()=>downloadExcel("jay-sthetics-checkins.xlsx",[{name:"Weekly Check-ins",rows:exportRows}])}>↓ Download Excel</button></div><div className="dataTable"><div className="tr checkHead"><span>Client</span><span>Date</span><span>Weight</span><span>Sleep</span><span>Energy</span><span>Adherence</span></div>{items.map(c=><div className="tr checkRow" key={c.id}>
-  <span>
-    <b>{c.user.fullName}</b>
-    <small>{c.user.email}</small>
 
-    {!!c.photoUrls?.length&&
-      <div className="progressPhotos" style={{marginTop:"10px"}}>
-        {c.photoUrls.map((u:string)=>
-          <ProtectedImage key={u} src={u}/>
-        )}
-      </div>
+  async function load(){
+    setItems(
+      await api<any[]>("/admin/check-ins")
+    );
+  }
+
+  useEffect(()=>{
+    load().catch(
+      e=>setNotice(e.message)
+    );
+  },[]);
+
+  async function remove(id:string){
+    if(!window.confirm(
+      "Delete this check-in permanently?"
+    ))return;
+
+    try{
+      await api(
+        `/admin/check-ins/${id}`,
+        {
+          method:"DELETE"
+        }
+      );
+
+      setNotice(
+        "Check-in deleted."
+      );
+
+      load();
+    }catch(e:any){
+      setNotice(e.message);
     }
-  </span>
+  }
 
-  <span>{new Date(c.createdAt).toLocaleDateString()}</span>
-  <span>{c.weightKg?`${c.weightKg} kg`:"—"}</span>
-  <span>{c.sleepHours?`${c.sleepHours}h`:"—"}</span>
-  <span>{c.energyLevel||"—"}/10</span>
-  <span>{c.dietAdherence??"—"}%</span>
-</div>)}</div></>
+  const exportRows=items.map(c=>({
+    Client:c.user.fullName,
+    Email:c.user.email,
+    Date:new Date(
+      c.createdAt
+    ).toLocaleDateString(),
+    Weight_kg:c.weightKg
+      ?Number(c.weightKg)
+      :null,
+    Body_Fat_Percent:c.bodyFat
+      ?Number(c.bodyFat)
+      :null,
+    Sleep_Hours:c.sleepHours
+      ?Number(c.sleepHours)
+      :null,
+    Energy_1_to_10:
+      c.energyLevel??null,
+    Diet_Adherence_Percent:
+      c.dietAdherence??null,
+    Notes:c.notes||""
+  }));
+
+  return <>
+    <div className="toolbar">
+      <p className="muted">
+        Weekly client progress submissions.
+      </p>
+
+      <button
+        className="btn ghost"
+        onClick={()=>downloadExcel(
+          "jay-sthetics-checkins.xlsx",
+          [{
+            name:"Weekly Check-ins",
+            rows:exportRows
+          }]
+        )}
+      >
+        ↓ Download Excel
+      </button>
+    </div>
+
+    <div className="dataTable">
+      <div className="tr checkHead checkHeadDelete">
+        <span>Client</span>
+        <span>Date</span>
+        <span>Weight</span>
+        <span>Sleep</span>
+        <span>Energy</span>
+        <span>Adherence</span>
+        <span>Action</span>
+      </div>
+
+      {items.map(c=>
+        <div
+          className="tr checkRow checkRowDelete"
+          key={c.id}
+        >
+          <span>
+            <b>
+              {c.user.fullName}
+            </b>
+
+            <small>
+              {c.user.email}
+            </small>
+
+            {!!c.photoUrls?.length&&
+              <div
+                className="progressPhotos"
+                style={{
+                  marginTop:"10px"
+                }}
+              >
+                {c.photoUrls.map(
+                  (u:string)=>
+                    <ProtectedImage
+                      key={u}
+                      src={u}
+                    />
+                )}
+              </div>
+            }
+          </span>
+
+          <span>
+            {new Date(
+              c.createdAt
+            ).toLocaleDateString()}
+          </span>
+
+          <span>
+            {c.weightKg
+              ?`${c.weightKg} kg`
+              :"—"
+            }
+          </span>
+
+          <span>
+            {c.sleepHours
+              ?`${c.sleepHours}h`
+              :"—"
+            }
+          </span>
+
+          <span>
+            {c.energyLevel||"—"}/10
+          </span>
+
+          <span>
+            {c.dietAdherence??"—"}%
+          </span>
+
+          <span>
+            <button
+              className="btn dangerBtn"
+              onClick={()=>
+                remove(c.id)
+              }
+            >
+              Delete
+            </button>
+          </span>
+        </div>
+      )}
+    </div>
+  </>;
 }
 
 function AdminCalls({setNotice}:{setNotice:(s:string)=>void}){
   const [items,setItems]=useState<any[]>([]);
-  async function load(){setItems(await api<any[]>("/admin/appointments"))}
-  useEffect(()=>{load().catch(e=>setNotice(e.message))},[]);
-  async function status(id:string,status:string){try{await api(`/admin/appointments/${id}`,{method:"PATCH",body:JSON.stringify({status})});setNotice("Call updated.");load()}catch(e:any){setNotice(e.message)}}
-  const exportRows=items.map(c=>({Name:c.fullName,Email:c.email,Phone:c.phone||"",Requested_Date_Time:date(c.preferredAt),Reason:c.reason||"",Status:c.status,Meeting_Link:c.meetingUrl||""}));
-  return <><div className="toolbar"><p className="muted">Consultation and coaching call requests.</p><button className="btn ghost" onClick={()=>downloadExcel("jay-sthetics-calls.xlsx",[{name:"Calls",rows:exportRows}])}>↓ Download Excel</button></div><div className="dataTable"><div className="tr head"><span>Client</span><span>Contact</span><span>Requested time</span><span>Status</span></div>{items.map(c=><div className="tr" key={c.id}><span><b>{c.fullName}</b><small>{c.reason||"No reason"}</small></span><span>{c.email}<small>{c.phone||"—"}</small></span><span>{date(c.preferredAt)}</span><span><select value={c.status} onChange={e=>status(c.id,e.target.value)}><option>REQUESTED</option><option>CONFIRMED</option><option>RESCHEDULED</option><option>COMPLETED</option><option>CANCELLED</option></select></span></div>)}</div></>
+
+  async function load(){
+    setItems(
+      await api<any[]>(
+        "/admin/appointments"
+      )
+    );
+  }
+
+  useEffect(()=>{
+    load().catch(
+      e=>setNotice(e.message)
+    );
+  },[]);
+
+  async function status(
+    id:string,
+    status:string
+  ){
+    try{
+      await api(
+        `/admin/appointments/${id}`,
+        {
+          method:"PATCH",
+          body:JSON.stringify({
+            status
+          })
+        }
+      );
+
+      setNotice("Call updated.");
+      load();
+    }catch(e:any){
+      setNotice(e.message);
+    }
+  }
+
+  async function remove(id:string){
+    if(!window.confirm(
+      "Delete this call record?"
+    ))return;
+
+    try{
+      await api(
+        `/admin/appointments/${id}`,
+        {
+          method:"DELETE"
+        }
+      );
+
+      setNotice(
+        "Call record deleted."
+      );
+
+      load();
+    }catch(e:any){
+      setNotice(e.message);
+    }
+  }
+
+  const exportRows=items.map(c=>({
+    Name:c.fullName,
+    Email:c.email,
+    Phone:c.phone||"",
+    Requested_Date_Time:
+      date(c.preferredAt),
+    Reason:c.reason||"",
+    Status:c.status,
+    Meeting_Link:
+      c.meetingUrl||""
+  }));
+
+  return <>
+    <div className="toolbar">
+      <p className="muted">
+        Coaching calls for existing clients.
+        Public Talk to Jay enquiries are under Leads.
+      </p>
+
+      <button
+        className="btn ghost"
+        onClick={()=>downloadExcel(
+          "jay-sthetics-calls.xlsx",
+          [{
+            name:"Calls",
+            rows:exportRows
+          }]
+        )}
+      >
+        ↓ Download Excel
+      </button>
+    </div>
+
+    <div className="dataTable">
+      <div className="tr callHeadDelete">
+        <span>Client</span>
+        <span>Contact</span>
+        <span>Requested time</span>
+        <span>Status</span>
+        <span>Action</span>
+      </div>
+
+      {items.map(c=>
+        <div
+          className="tr callRowDelete"
+          key={c.id}
+        >
+          <span>
+            <b>
+              {c.fullName}
+            </b>
+
+            <small>
+              {c.reason||"No reason"}
+            </small>
+          </span>
+
+          <span>
+            {c.email}
+
+            <small>
+              {c.phone||"—"}
+            </small>
+          </span>
+
+          <span>
+            {date(c.preferredAt)}
+          </span>
+
+          <span>
+            <select
+              value={c.status}
+              onChange={e=>
+                status(
+                  c.id,
+                  e.target.value
+                )
+              }
+            >
+              <option>REQUESTED</option>
+              <option>CONFIRMED</option>
+              <option>RESCHEDULED</option>
+              <option>COMPLETED</option>
+              <option>CANCELLED</option>
+            </select>
+          </span>
+
+          <span>
+            <button
+              className="btn dangerBtn"
+              onClick={()=>
+                remove(c.id)
+              }
+            >
+              Delete
+            </button>
+          </span>
+        </div>
+      )}
+    </div>
+  </>;
 }
 
 function AdminMessages(){
@@ -2852,8 +3985,97 @@ function ProgramsPage({programs,user,chooseProgram}:{programs:Program[];user:Use
         <div className="fullProgramGrid">{natural.map(card)}</div>
       </section>
       <section className="programCategory">
-        <div className="programCategoryTitle"><span>02</span><div><h2>Enhanced Training</h2><p>Detailed coaching and progress management for enhanced athletes.</p></div></div>
-        <div className="fullProgramGrid">{enhanced.map(card)}</div>
+        <div className="programCategoryTitle">
+          <span>02</span>
+
+          <div>
+            <h2>Enhanced Training</h2>
+            <p>
+              Detailed coaching and progress management
+              for enhanced athletes.
+            </p>
+          </div>
+        </div>
+
+        <div className="fullProgramGrid">
+          {enhanced.map(card)}
+        </div>
+      </section>
+
+      <section
+        className="programCategory customCoachingSection"
+      >
+        <div className="programCategoryTitle">
+          <span>03</span>
+
+          <div>
+            <h2>Custom Coaching</h2>
+            <p>
+              A coaching timeline built around your
+              specific situation.
+            </p>
+          </div>
+        </div>
+
+        <article className="customCoachingCard">
+          <div>
+            <span className="programType">
+              PERSONALIZED COACHING
+            </span>
+
+            <h2>
+              Need a different duration?
+            </h2>
+
+            <p>
+              Looking for 2 months, 4 months, contest prep,
+              or another custom timeline? Speak directly
+              with Jay first. Jay can agree the duration,
+              coaching type and price with you, then create
+              a private checkout specifically for your account.
+            </p>
+
+            <div className="customCoachingPoints">
+              <span>
+                ✓ Flexible coaching duration
+              </span>
+
+              <span>
+                ✓ Natural or enhanced coaching
+              </span>
+
+              <span>
+                ✓ Pricing discussed directly with Jay
+              </span>
+
+              <span>
+                ✓ Private client-specific checkout
+              </span>
+            </div>
+          </div>
+
+          <div className="customCoachingAction">
+            <small>
+              CUSTOM COACHING
+            </small>
+
+            <strong>
+              Talk to Jay
+            </strong>
+
+            <p>
+              Duration and pricing are decided after
+              discussing your requirements.
+            </p>
+
+            <a
+              className="btn red full"
+              href="/?talk=1"
+            >
+              Talk to Jay →
+            </a>
+          </div>
+        </article>
       </section>
     </main>
   </div>;
@@ -2911,10 +4133,14 @@ function CheckoutPage({user}:{user:User}){
   const [busy,setBusy]=useState(false);
 
   useEffect(()=>{
-    api<Program[]>("/programs").then(items=>{
-      const p=items.find(x=>x.id===programId);
-      if(p)setProgram(p); else setStatus("Programme not found.");
-    }).catch((e:any)=>setStatus(e.message));
+    if(!programId){
+      setStatus("Programme not found.");
+      return;
+    }
+
+    api<Program>(`/payments/program/${programId}`)
+      .then(setProgram)
+      .catch((e:any)=>setStatus(e.message));
   },[programId]);
 
   function loadRazorpay():Promise<boolean>{

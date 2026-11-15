@@ -184,7 +184,7 @@ adminRouter.get("/clients/:id", async (req, res) => {
   });
   if (!client) return res.status(404).json({ error: "Client not found" });
 
-  const [workouts, nutrition, measurements, strength, payments, appointments, notes] = await Promise.all([
+  const [workouts, nutrition, measurements, strength, payments, appointments, notes, customOffers] = await Promise.all([
     prisma.workoutAssignment.findMany({
       where: { userId: client.id },
       include: { workoutPlan: true },
@@ -203,10 +203,28 @@ adminRouter.get("/clients/:id", async (req, res) => {
     prisma.strengthRecord.findMany({ where: { userId: client.id }, orderBy: { performedAt: "desc" }, take: 100 }),
     prisma.payment.findMany({ where:{userId:client.id}, include:{subscription:{include:{program:true}}}, orderBy:{createdAt:"desc"}, take:100 }),
     prisma.appointment.findMany({ where:{OR:[{userId:client.id},{email:client.email}]}, orderBy:{preferredAt:"desc"}, take:100 }),
-    prisma.coachNote.findMany({ where:{userId:client.id}, orderBy:{createdAt:"desc"}, take:100 })
+    prisma.coachNote.findMany({ where:{userId:client.id}, orderBy:{createdAt:"desc"}, take:100 }),
+    prisma.program.findMany({
+      where:{
+        slug:{
+          startsWith:`custom-${client.id}-`
+        }
+      },
+      orderBy:{createdAt:"desc"}
+    })
   ]);
 
-  res.json({ ...client, workouts, nutrition, measurements, strength, payments, appointments, notes });
+  res.json({
+    ...client,
+    workouts,
+    nutrition,
+    measurements,
+    strength,
+    payments,
+    appointments,
+    notes,
+    customOffers
+  });
 });
 
 adminRouter.post("/clients", async (req, res) => {
@@ -244,6 +262,283 @@ adminRouter.patch("/clients/:id/status", async (req, res) => {
   res.json({ id: user.id, isActive: user.isActive });
 });
 
+// ADMIN DELETE CONTROLS
+
+adminRouter.delete("/clients/:id", async (req,res) => {
+  const clientId=String(req.params.id);
+
+  const client=await prisma.user.findFirst({
+    where:{
+      id:clientId,
+      role:"CLIENT"
+    },
+    select:{
+      id:true,
+      fullName:true,
+      email:true
+    }
+  });
+
+  if(!client){
+    return res.status(404).json({
+      error:"Client not found"
+    });
+  }
+
+  const successfulPayments=await prisma.payment.count({
+    where:{
+      userId:clientId,
+      status:"SUCCESS"
+    }
+  });
+
+  if(successfulPayments>0){
+    return res.status(409).json({
+      error:"This client has successful payment history and cannot be permanently deleted. Disable the account instead so financial records remain intact."
+    });
+  }
+
+  await prisma.$transaction(async tx=>{
+    await tx.workoutAssignment.deleteMany({
+      where:{userId:clientId}
+    });
+
+    await tx.nutritionAssignment.deleteMany({
+      where:{userId:clientId}
+    });
+
+    await tx.progressMeasurement.deleteMany({
+      where:{userId:clientId}
+    });
+
+    await tx.strengthRecord.deleteMany({
+      where:{userId:clientId}
+    });
+
+    await tx.appointment.deleteMany({
+      where:{userId:clientId}
+    });
+
+    await tx.user.delete({
+      where:{id:clientId}
+    });
+
+    await tx.program.deleteMany({
+      where:{
+        slug:{
+          startsWith:`custom-${clientId}-`
+        }
+      }
+    });
+  });
+
+  await audit(
+    req.auth!.sub,
+    "DELETE",
+    "CLIENT",
+    clientId,
+    {
+      name:client.fullName,
+      email:client.email
+    }
+  );
+
+  res.json({ok:true});
+});
+
+adminRouter.delete("/check-ins/:id", async (req,res) => {
+  const item=await prisma.checkIn.findUnique({
+    where:{id:req.params.id}
+  });
+
+  if(!item){
+    return res.status(404).json({
+      error:"Check-in not found"
+    });
+  }
+
+  await prisma.checkIn.delete({
+    where:{id:item.id}
+  });
+
+  for(const url of item.photoUrls){
+    if(!url.startsWith("/api/media/"))continue;
+
+    const filename=url.split("/").pop();
+
+    if(filename){
+      const filePath=safeUploadPath(filename);
+
+      if(fs.existsSync(filePath)){
+        try{
+          fs.unlinkSync(filePath);
+        }catch{}
+      }
+    }
+  }
+
+  await audit(
+    req.auth!.sub,
+    "DELETE",
+    "CHECK_IN",
+    item.id,
+    {
+      clientId:item.userId
+    }
+  );
+
+  res.json({ok:true});
+});
+
+adminRouter.delete("/leads/:id", async (req,res) => {
+  const existing=await prisma.lead.findUnique({
+    where:{id:req.params.id}
+  });
+
+  if(!existing){
+    return res.status(404).json({
+      error:"Lead not found"
+    });
+  }
+
+  await prisma.lead.delete({
+    where:{id:existing.id}
+  });
+
+  await audit(
+    req.auth!.sub,
+    "DELETE",
+    "LEAD",
+    existing.id,
+    {
+      email:existing.email
+    }
+  );
+
+  res.json({ok:true});
+});
+
+adminRouter.delete("/appointments/:id", async (req,res) => {
+  const existing=await prisma.appointment.findUnique({
+    where:{id:req.params.id}
+  });
+
+  if(!existing){
+    return res.status(404).json({
+      error:"Call record not found"
+    });
+  }
+
+  await prisma.appointment.delete({
+    where:{id:existing.id}
+  });
+
+  await audit(
+    req.auth!.sub,
+    "DELETE",
+    "APPOINTMENT",
+    existing.id,
+    {
+      email:existing.email
+    }
+  );
+
+  res.json({ok:true});
+});
+
+adminRouter.delete("/clients/:clientId/notes/:noteId", async (req,res) => {
+  const note=await prisma.coachNote.findFirst({
+    where:{
+      id:req.params.noteId,
+      userId:req.params.clientId
+    }
+  });
+
+  if(!note){
+    return res.status(404).json({
+      error:"Note not found"
+    });
+  }
+
+  await prisma.coachNote.delete({
+    where:{id:note.id}
+  });
+
+  await audit(
+    req.auth!.sub,
+    "DELETE",
+    "COACH_NOTE",
+    note.id,
+    {
+      clientId:req.params.clientId
+    }
+  );
+
+  res.json({ok:true});
+});
+
+adminRouter.delete("/clients/:clientId/workouts/:assignmentId", async (req,res) => {
+  const item=await prisma.workoutAssignment.findFirst({
+    where:{
+      id:req.params.assignmentId,
+      userId:req.params.clientId
+    }
+  });
+
+  if(!item){
+    return res.status(404).json({
+      error:"Workout assignment not found"
+    });
+  }
+
+  await prisma.workoutAssignment.delete({
+    where:{id:item.id}
+  });
+
+  await audit(
+    req.auth!.sub,
+    "DELETE",
+    "WORKOUT_ASSIGNMENT",
+    item.id,
+    {
+      clientId:req.params.clientId
+    }
+  );
+
+  res.json({ok:true});
+});
+
+adminRouter.delete("/clients/:clientId/nutrition/:assignmentId", async (req,res) => {
+  const item=await prisma.nutritionAssignment.findFirst({
+    where:{
+      id:req.params.assignmentId,
+      userId:req.params.clientId
+    }
+  });
+
+  if(!item){
+    return res.status(404).json({
+      error:"Nutrition assignment not found"
+    });
+  }
+
+  await prisma.nutritionAssignment.delete({
+    where:{id:item.id}
+  });
+
+  await audit(
+    req.auth!.sub,
+    "DELETE",
+    "NUTRITION_ASSIGNMENT",
+    item.id,
+    {
+      clientId:req.params.clientId
+    }
+  );
+
+  res.json({ok:true});
+});
+
 // PROGRAMMES / PRICING
 adminRouter.get("/programs", async (_req, res) => {
   res.json(await prisma.program.findMany({ orderBy: [{ isActive: "desc" }, { pricePaise: "asc" }] }));
@@ -275,6 +570,144 @@ adminRouter.patch("/programs/:id", async (req, res) => {
   const item = await prisma.program.update({ where: { id: req.params.id }, data: parsed.data });
   await audit(req.auth!.sub, "UPDATE", "PROGRAM", item.id, parsed.data);
   res.json(item);
+});
+
+// PRIVATE CUSTOM COACHING OFFERS
+adminRouter.post("/clients/:id/custom-plan", async (req, res) => {
+  const parsed = z.object({
+    coachingType: z.enum(["NATURAL","ENHANCED"]),
+    durationMonths: z.number().int().min(1).max(24),
+    priceRupees: z.number().int().positive(),
+    description: z.string().max(3000).optional()
+  }).safeParse(req.body);
+
+  if(!parsed.success){
+    return res.status(400).json({
+      error:"Invalid custom plan details"
+    });
+  }
+
+  const client = await prisma.user.findFirst({
+    where:{
+      id:req.params.id,
+      role:"CLIENT"
+    },
+    select:{
+      id:true,
+      fullName:true
+    }
+  });
+
+  if(!client){
+    return res.status(404).json({error:"Client not found"});
+  }
+
+  const months=parsed.data.durationMonths;
+
+  const typeLabel=
+    parsed.data.coachingType==="ENHANCED"
+      ?"Enhanced"
+      :"Natural";
+
+  const item=await prisma.program.create({
+    data:{
+      slug:`custom-${client.id}-${Date.now()}`,
+      name:`Custom ${typeLabel} Coaching — ${months} ${months===1?"Month":"Months"}`,
+      description:
+        parsed.data.description?.trim() ||
+        `Private ${months}-month custom coaching offer prepared by Jay for ${client.fullName}.`,
+      pricePaise:parsed.data.priceRupees*100,
+      durationDays:months*30,
+      isActive:true
+    }
+  });
+
+  await audit(
+    req.auth!.sub,
+    "CREATE_CUSTOM_OFFER",
+    "PROGRAM",
+    item.id,
+    {
+      clientId:client.id,
+      durationMonths:months,
+      pricePaise:item.pricePaise
+    }
+  );
+
+  res.status(201).json({
+    ...item,
+    checkoutPath:`/checkout?programId=${item.id}`
+  });
+});
+
+adminRouter.patch("/custom-plans/:id", async (req,res) => {
+  const parsed=z.object({
+    durationMonths:z.number().int().min(1).max(24).optional(),
+    priceRupees:z.number().int().positive().optional(),
+    description:z.string().max(3000).optional(),
+    isActive:z.boolean().optional()
+  }).safeParse(req.body);
+
+  if(!parsed.success){
+    return res.status(400).json({
+      error:"Invalid custom plan details"
+    });
+  }
+
+  const existing=await prisma.program.findUnique({
+    where:{id:req.params.id}
+  });
+
+  if(!existing || !existing.slug.startsWith("custom-")){
+    return res.status(404).json({
+      error:"Custom offer not found"
+    });
+  }
+
+  const update:any={};
+
+  if(parsed.data.durationMonths!==undefined){
+    update.durationDays=parsed.data.durationMonths*30;
+
+    const typeLabel=
+      existing.name.toLowerCase().includes("enhanced")
+        ?"Enhanced"
+        :"Natural";
+
+    update.name=`Custom ${typeLabel} Coaching — ${parsed.data.durationMonths} ${
+      parsed.data.durationMonths===1?"Month":"Months"
+    }`;
+  }
+
+  if(parsed.data.priceRupees!==undefined){
+    update.pricePaise=parsed.data.priceRupees*100;
+  }
+
+  if(parsed.data.description!==undefined){
+    update.description=parsed.data.description.trim();
+  }
+
+  if(parsed.data.isActive!==undefined){
+    update.isActive=parsed.data.isActive;
+  }
+
+  const item=await prisma.program.update({
+    where:{id:existing.id},
+    data:update
+  });
+
+  await audit(
+    req.auth!.sub,
+    "UPDATE_CUSTOM_OFFER",
+    "PROGRAM",
+    item.id,
+    update
+  );
+
+  res.json({
+    ...item,
+    checkoutPath:`/checkout?programId=${item.id}`
+  });
 });
 
 // SUBSCRIPTIONS / ASSIGNMENT
