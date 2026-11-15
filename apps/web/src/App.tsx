@@ -388,79 +388,159 @@ export default function App(){
           </a>
         </div>
       </div></section>
-      <section
-        className="section homeCoachingIntro"
-        id="programs"
-      >
-        <p className="eyebrow redText">
-          1:1 ONLINE COACHING
-        </p>
+      <section className="homeValueSection">
+        <div className="homeSectionInner">
+          <div className="homeSectionHeading">
+            <p className="eyebrow redText">
+              1:1 ONLINE COACHING
+            </p>
 
-        <h2>
-          BUILT AROUND YOU.
-        </h2>
+            <h2>
+              EVERYTHING YOU NEED.<br/>
+              <span>BUILT AROUND YOU.</span>
+            </h2>
 
-        <p className="homeCoachingCopy">
-          Training, nutrition, accountability and progress
-          management tailored around your body, experience and
-          goal. Speak with Jay first, then choose the coaching
-          route that makes sense for you.
-        </p>
+            <p>
+              A complete coaching system combining structured
+              training, practical nutrition, accountability and
+              measurable progress.
+            </p>
+          </div>
 
-        <div className="heroButtons">
-          <button
-            className="btn red"
-            onClick={()=>setModal("call")}
-          >
-            Talk to Jay
-          </button>
-
-          <a
-            className="btn ghost"
-            href="/programs"
-          >
-            Explore Coaching
-          </a>
+          <div className="homeValueGrid">
+            {[
+              ["01","Training","Programming designed around your experience, physique and goals."],
+              ["02","Nutrition","Practical nutrition targets and meal options you can actually follow."],
+              ["03","Weekly Check-ins","Regular progress reviews so adjustments are made when they matter."],
+              ["04","Progress Tracking","Track bodyweight, measurements, performance and overall progress."],
+              ["05","Direct Support","Private communication with Jay throughout your coaching journey."],
+              ["06","Accountability","A structured system that keeps you consistent and moving forward."]
+            ].map(([number,title,copy])=>
+              <article className="homeValueCard" key={title}>
+                <span>{number}</span>
+                <h3>{title}</h3>
+                <p>{copy}</p>
+              </article>
+            )}
+          </div>
         </div>
       </section>
-      <section className="about aboutNoImage" id="about"><div><p className="eyebrow redText">ABOUT JAY</p><h2>COACH. ATHLETE. MENTOR.</h2><p>Structured training, practical nutrition, accountability and measurable progress.</p><div className="stats"><b>1:1<span>Coaching</span></b><b>WEEKLY<span>Check-ins</span></b><b>24/7<span>Dashboard access</span></b></div></div></section>
-      <section className="section"><p className="eyebrow redText">MEMBERS ONLY</p><h2>YOUR COACHING HUB</h2>
-        <div className="hubGrid">{["Training & Form Videos","Exercise Alternatives","Nutrition & Macro Options","Weekly Check-ins","Progress Tracking","Private Chat","Coaching Calls"].map(x=><div key={x}><span>🔒</span><b>{x}</b><small>Active subscribers only</small></div>)}</div>
-      </section>
+
       <section
-        className="cta"
+        className="homeAboutSection"
+        id="about"
+      >
+        <div className="homeAboutInner">
+          <div className="homeAboutCopy">
+            <p className="eyebrow redText">
+              ABOUT JAY
+            </p>
+
+            <h2>
+              COACH.<br/>
+              ATHLETE.<br/>
+              <span>MENTOR.</span>
+            </h2>
+          </div>
+
+          <div className="homeAboutDetails">
+            <p>
+              Coaching focused on structure, consistency and
+              measurable improvement — with training, nutrition
+              and accountability managed in one place.
+            </p>
+
+            <div className="homeAboutStats">
+              <div>
+                <strong>1:1</strong>
+                <span>Personal Coaching</span>
+              </div>
+
+              <div>
+                <strong>WEEKLY</strong>
+                <span>Progress Check-ins</span>
+              </div>
+
+              <div>
+                <strong>24/7</strong>
+                <span>Dashboard Access</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="homeHubSection">
+        <div className="homeSectionInner">
+          <div className="homeSectionHeading">
+            <p className="eyebrow redText">
+              YOUR COACHING PLATFORM
+            </p>
+
+            <h2>
+              EVERYTHING IN<br/>
+              <span>ONE PLACE.</span>
+            </h2>
+
+            <p>
+              Active coaching clients get access to the tools
+              needed to stay consistent and connected.
+            </p>
+          </div>
+
+          <div className="homeHubGrid">
+            {[
+              ["Training","Workout plans, exercise instructions and form videos."],
+              ["Nutrition","Nutrition plans, macros and practical meal options."],
+              ["Progress","Weekly check-ins, measurements and performance tracking."],
+              ["Private Chat","Direct communication with Jay inside your dashboard."],
+              ["Coaching Calls","Request and manage coaching calls when needed."]
+            ].map(([title,copy])=>
+              <article className="homeHubCard" key={title}>
+                <div className="homeHubIcon">+</div>
+                <h3>{title}</h3>
+                <p>{copy}</p>
+                <small>ACTIVE CLIENTS</small>
+              </article>
+            )}
+          </div>
+        </div>
+      </section>
+
+      <section
+        className="homeFinalCta"
         id="contact"
       >
-        <div>
+        <div className="homeFinalCtaInner">
+          <p className="eyebrow">
+            READY WHEN YOU ARE
+          </p>
+
           <h2>
-            READY TO TRANSFORM?
+            BUILD YOUR<br/>
+            <span>BEST PHYSIQUE.</span>
           </h2>
 
           <p>
-            Speak with Jay about your goal, coaching needs and
-            the best way to get started.
+            Speak directly with Jay about your goal and find
+            the coaching option that fits you.
           </p>
 
-          <button
-            className="btn red"
-            onClick={()=>setModal("call")}
-          >
-            Talk to Jay
-          </button>
+          <div className="homeFinalActions">
+            <button
+              className="btn red"
+              onClick={()=>setModal("call")}
+            >
+              Talk to Jay →
+            </button>
 
-          <a
-            className="btn ghost"
-            href="/programs"
-          >
-            View Coaching Options
-          </a>
-
-          <button
-            className="btn ghost"
-            onClick={()=>setModal("message")}
-          >
-            Send a Message
-          </button>
+            <a
+              className="btn ghost"
+              href="/programs"
+            >
+              Explore Coaching
+            </a>
+          </div>
         </div>
       </section>
     </main>

@@ -1865,3 +1865,880 @@ button.tr{width:100%;color:inherit;border:0;text-align:left;cursor:pointer}
     text-align:center;
   }
 }
+
+
+/* CLEAN HOMEPAGE V2 */
+
+.homeSectionInner{
+  width:min(1180px,88vw);
+  margin:0 auto;
+}
+
+.homeSectionHeading{
+  max-width:720px;
+  margin-bottom:46px;
+}
+
+.homeSectionHeading h2,
+.homeAboutCopy h2,
+.homeFinalCta h2{
+  margin:8px 0 16px;
+  font-size:clamp(42px,5vw,72px);
+  line-height:.95;
+  letter-spacing:-2px;
+}
+
+.homeSectionHeading h2 span,
+.homeAboutCopy h2 span,
+.homeFinalCta h2 span{
+  color:#e11d1d;
+}
+
+.homeSectionHeading>p:last-child{
+  max-width:640px;
+  color:#8d8d92;
+  line-height:1.75;
+  font-size:15px;
+}
+
+
+/* WHAT YOU GET */
+
+.homeValueSection{
+  padding:110px 0;
+  background:#080809;
+  border-top:1px solid #202023;
+  border-bottom:1px solid #202023;
+}
+
+.homeValueGrid{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  border-top:1px solid #29292d;
+  border-left:1px solid #29292d;
+}
+
+.homeValueCard{
+  min-height:220px;
+  padding:28px;
+  border-right:1px solid #29292d;
+  border-bottom:1px solid #29292d;
+  background:#0d0d0f;
+}
+
+.homeValueCard>span{
+  display:block;
+  color:#e11d1d;
+  font-size:10px;
+  font-weight:900;
+  letter-spacing:1px;
+  margin-bottom:42px;
+}
+
+.homeValueCard h3{
+  margin:0 0 10px;
+  font-size:20px;
+}
+
+.homeValueCard p{
+  margin:0;
+  color:#808086;
+  font-size:13px;
+  line-height:1.7;
+}
+
+
+/* ABOUT */
+
+.homeAboutSection{
+  padding:120px 0;
+  background:
+    radial-gradient(
+      circle at 15% 50%,
+      rgba(120,15,15,.16),
+      transparent 34%
+    ),
+    #0a0a0b;
+}
+
+.homeAboutInner{
+  width:min(1180px,88vw);
+  margin:0 auto;
+  display:grid;
+  grid-template-columns:.8fr 1.2fr;
+  gap:90px;
+  align-items:center;
+}
+
+.homeAboutCopy h2{
+  font-size:clamp(50px,6vw,86px);
+}
+
+.homeAboutDetails>p{
+  max-width:620px;
+  color:#98989d;
+  font-size:17px;
+  line-height:1.85;
+  margin:0 0 42px;
+}
+
+.homeAboutStats{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  border-top:1px solid #303034;
+}
+
+.homeAboutStats>div{
+  padding:26px 20px 10px 0;
+}
+
+.homeAboutStats strong{
+  display:block;
+  color:#fff;
+  font-size:25px;
+  margin-bottom:7px;
+}
+
+.homeAboutStats span{
+  color:#77777d;
+  font-size:11px;
+  text-transform:uppercase;
+  letter-spacing:.6px;
+}
+
+
+/* COACHING HUB */
+
+.homeHubSection{
+  padding:110px 0;
+  background:#070708;
+}
+
+.homeHubGrid{
+  display:grid;
+  grid-template-columns:repeat(5,minmax(0,1fr));
+  gap:12px;
+}
+
+.homeHubCard{
+  min-height:250px;
+  padding:24px;
+  border:1px solid #29292d;
+  border-radius:10px;
+  background:linear-gradient(
+    160deg,
+    #121214,
+    #0b0b0c
+  );
+  display:flex;
+  flex-direction:column;
+}
+
+.homeHubIcon{
+  width:32px;
+  height:32px;
+  display:grid;
+  place-items:center;
+  border:1px solid #4b2424;
+  border-radius:50%;
+  color:#e11d1d;
+  margin-bottom:36px;
+}
+
+.homeHubCard h3{
+  margin:0 0 10px;
+  font-size:18px;
+}
+
+.homeHubCard p{
+  margin:0;
+  color:#808086;
+  line-height:1.65;
+  font-size:12px;
+}
+
+.homeHubCard small{
+  margin-top:auto;
+  padding-top:28px;
+  color:#55555a;
+  font-size:8px;
+  letter-spacing:1px;
+  font-weight:900;
+}
+
+
+/* FINAL CTA */
+
+.homeFinalCta{
+  padding:130px 20px;
+  text-align:center;
+  background:
+    radial-gradient(
+      circle at center,
+      #421010 0,
+      #170909 32%,
+      #080808 68%
+    );
+  border-top:1px solid #302020;
+}
+
+.homeFinalCtaInner{
+  width:min(820px,100%);
+  margin:0 auto;
+}
+
+.homeFinalCta .eyebrow{
+  color:#d3a2a2;
+}
+
+.homeFinalCta h2{
+  font-size:clamp(52px,7vw,94px);
+}
+
+.homeFinalCtaInner>p:not(.eyebrow){
+  width:min(560px,100%);
+  margin:0 auto 28px;
+  color:#aaa;
+  line-height:1.7;
+}
+
+.homeFinalActions{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  flex-wrap:wrap;
+}
+
+.homeFinalActions .btn{
+  min-width:190px;
+}
+
+
+/* MOBILE */
+
+@media(max-width:900px){
+
+  .homeValueGrid{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+
+  .homeAboutInner{
+    grid-template-columns:1fr;
+    gap:40px;
+  }
+
+  .homeHubGrid{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+}
+
+@media(max-width:600px){
+
+  .homeSectionInner,
+  .homeAboutInner{
+    width:calc(100% - 32px);
+  }
+
+  .homeValueSection,
+  .homeHubSection{
+    padding:74px 0;
+  }
+
+  .homeAboutSection{
+    padding:78px 0;
+  }
+
+  .homeSectionHeading{
+    margin-bottom:30px;
+  }
+
+  .homeSectionHeading h2,
+  .homeAboutCopy h2{
+    font-size:42px;
+    letter-spacing:-1.5px;
+  }
+
+  .homeValueGrid{
+    grid-template-columns:1fr;
+  }
+
+  .homeValueCard{
+    min-height:auto;
+    padding:22px;
+  }
+
+  .homeValueCard>span{
+    margin-bottom:28px;
+  }
+
+  .homeAboutDetails>p{
+    font-size:15px;
+  }
+
+  .homeAboutStats{
+    grid-template-columns:1fr;
+  }
+
+  .homeAboutStats>div{
+    border-bottom:1px solid #28282c;
+    padding:18px 0;
+  }
+
+  .homeHubGrid{
+    grid-template-columns:1fr;
+  }
+
+  .homeHubCard{
+    min-height:200px;
+  }
+
+  .homeFinalCta{
+    padding:90px 18px;
+  }
+
+  .homeFinalCta h2{
+    font-size:50px;
+    letter-spacing:-2px;
+  }
+
+  .homeFinalActions{
+    display:grid;
+    grid-template-columns:1fr;
+  }
+
+  .homeFinalActions .btn{
+    width:100%;
+    min-height:48px;
+  }
+}
+
+/* ==========================================================
+   HOMEPAGE FINAL POLISH
+   ========================================================== */
+
+.publicPage{
+  background:#070708;
+  color:#fff;
+}
+
+/* ---------- HEADER ---------- */
+
+.publicPage>header{
+  height:78px;
+  padding:0 clamp(18px,5vw,72px);
+  background:rgba(6,6,7,.92);
+  border-bottom:1px solid rgba(255,255,255,.07);
+  backdrop-filter:blur(18px);
+}
+
+.publicPage>header .brand{
+  flex:0 0 auto;
+}
+
+.publicPage>header nav{
+  gap:30px;
+}
+
+.publicPage>header nav a{
+  color:#8e8e94;
+  font-size:12px;
+  font-weight:800;
+  letter-spacing:.04em;
+  transition:.2s ease;
+}
+
+.publicPage>header nav a:hover{
+  color:#fff;
+}
+
+.publicPage>header .actions{
+  gap:9px;
+}
+
+.publicPage>header .btn{
+  min-height:42px;
+  padding:0 18px;
+}
+
+
+/* ---------- HERO ---------- */
+
+.publicPage .hero{
+  min-height:calc(100vh - 78px);
+  display:flex;
+  align-items:center;
+  position:relative;
+  overflow:hidden;
+}
+
+.publicPage .hero:after{
+  content:"";
+  position:absolute;
+  inset:auto 0 0;
+  height:180px;
+  background:linear-gradient(
+    to bottom,
+    transparent,
+    #070708
+  );
+  pointer-events:none;
+}
+
+.publicPage .heroInner{
+  position:relative;
+  z-index:2;
+  width:min(1180px,88vw);
+  margin:0 auto;
+  padding:100px 0 140px;
+}
+
+.publicPage .hero .eyebrow{
+  margin-bottom:18px;
+  color:#ddd;
+  font-size:12px;
+  letter-spacing:.12em;
+  line-height:1.6;
+}
+
+.publicPage .hero h1{
+  margin:0;
+  font-size:clamp(76px,10vw,150px);
+  line-height:.76;
+  letter-spacing:-7px;
+}
+
+.publicPage .hero h1 span{
+  color:#e11d1d;
+}
+
+.publicPage .hero h2{
+  margin:30px 0 12px;
+  font-size:clamp(22px,2.3vw,34px);
+  letter-spacing:-.8px;
+}
+
+.publicPage .hero .muted{
+  width:min(580px,100%);
+  margin:0;
+  color:#96969c;
+  font-size:15px;
+  line-height:1.75;
+}
+
+.publicPage .heroButtons{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-top:28px;
+}
+
+.publicPage .heroButtons .btn{
+  min-width:175px;
+  min-height:48px;
+}
+
+
+/* ---------- GLOBAL HOME SECTIONS ---------- */
+
+.homeValueSection,
+.homeAboutSection,
+.homeHubSection{
+  position:relative;
+}
+
+.homeSectionInner,
+.homeAboutInner{
+  max-width:1180px;
+}
+
+.homeSectionHeading .eyebrow,
+.homeAboutCopy .eyebrow{
+  margin-bottom:12px;
+}
+
+.homeSectionHeading h2,
+.homeAboutCopy h2{
+  text-wrap:balance;
+}
+
+.homeSectionHeading p,
+.homeAboutDetails>p{
+  text-wrap:pretty;
+}
+
+
+/* ---------- WHAT YOU GET ---------- */
+
+.homeValueSection{
+  padding:120px 0;
+}
+
+.homeValueGrid{
+  border-radius:14px;
+  overflow:hidden;
+}
+
+.homeValueCard{
+  position:relative;
+  overflow:hidden;
+  transition:
+    transform .2s ease,
+    background .2s ease;
+}
+
+.homeValueCard:after{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:radial-gradient(
+    circle at 85% 10%,
+    rgba(225,29,29,.08),
+    transparent 32%
+  );
+  pointer-events:none;
+}
+
+.homeValueCard:hover{
+  background:#111113;
+}
+
+.homeValueCard h3{
+  position:relative;
+  z-index:1;
+}
+
+.homeValueCard p{
+  position:relative;
+  z-index:1;
+  max-width:320px;
+}
+
+
+/* ---------- ABOUT ---------- */
+
+.homeAboutSection{
+  border-top:1px solid #1f1f22;
+  border-bottom:1px solid #1f1f22;
+}
+
+.homeAboutInner{
+  min-height:520px;
+}
+
+.homeAboutCopy h2{
+  line-height:.88;
+}
+
+.homeAboutDetails{
+  padding-left:20px;
+}
+
+.homeAboutStats{
+  gap:0;
+}
+
+.homeAboutStats>div{
+  min-height:110px;
+  border-right:1px solid #29292d;
+}
+
+.homeAboutStats>div:last-child{
+  border-right:0;
+}
+
+.homeAboutStats strong{
+  letter-spacing:-.7px;
+}
+
+
+/* ---------- COACHING HUB ---------- */
+
+.homeHubSection{
+  padding:120px 0 130px;
+}
+
+.homeHubGrid{
+  gap:14px;
+}
+
+.homeHubCard{
+  position:relative;
+  min-height:265px;
+  overflow:hidden;
+  transition:
+    transform .2s ease,
+    border-color .2s ease,
+    background .2s ease;
+}
+
+.homeHubCard:before{
+  content:"";
+  position:absolute;
+  width:110px;
+  height:110px;
+  top:-55px;
+  right:-55px;
+  border-radius:50%;
+  background:rgba(225,29,29,.07);
+}
+
+.homeHubCard:hover{
+  transform:translateY(-3px);
+  border-color:#4a2929;
+  background:#121214;
+}
+
+.homeHubCard h3,
+.homeHubCard p,
+.homeHubCard small,
+.homeHubIcon{
+  position:relative;
+  z-index:1;
+}
+
+
+/* ---------- FINAL CTA ---------- */
+
+.homeFinalCta{
+  position:relative;
+  overflow:hidden;
+}
+
+.homeFinalCta:before{
+  content:"";
+  position:absolute;
+  width:520px;
+  height:520px;
+  border-radius:50%;
+  top:50%;
+  left:50%;
+  transform:translate(-50%,-50%);
+  border:1px solid rgba(225,29,29,.13);
+  pointer-events:none;
+}
+
+.homeFinalCtaInner{
+  position:relative;
+  z-index:1;
+}
+
+.homeFinalCta h2{
+  margin-top:10px;
+  margin-bottom:20px;
+  line-height:.88;
+}
+
+.homeFinalActions{
+  margin-top:28px;
+}
+
+
+/* ---------- FOOTER ---------- */
+
+.publicPage footer{
+  min-height:100px;
+  padding:32px clamp(20px,5vw,72px);
+  background:#060607;
+  border-top:1px solid #1f1f22;
+}
+
+.publicPage footer>span{
+  font-size:11px;
+  color:#5f5f64;
+}
+
+
+/* ==========================================================
+   TABLET
+   ========================================================== */
+
+@media(max-width:1000px){
+
+  .homeHubGrid{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+
+  .homeHubCard:last-child{
+    grid-column:1/-1;
+  }
+}
+
+
+/* ==========================================================
+   MOBILE
+   ========================================================== */
+
+@media(max-width:700px){
+
+  .publicPage>header{
+    height:68px;
+    padding:0 15px;
+  }
+
+  .publicPage>header .brand{
+    font-size:18px;
+  }
+
+  .publicPage>header .actions{
+    margin-left:auto;
+  }
+
+  .publicPage>header .actions .btn{
+    min-height:40px;
+    padding:0 13px;
+    font-size:10px;
+  }
+
+  .publicPage .hero{
+    min-height:calc(100svh - 68px);
+  }
+
+  .publicPage .heroInner{
+    width:calc(100% - 32px);
+    padding:
+      120px
+      0
+      70px;
+  }
+
+  .publicPage .hero .eyebrow{
+    font-size:10px;
+  }
+
+  .publicPage .hero h1{
+    font-size:clamp(68px,22vw,96px);
+    letter-spacing:-5px;
+  }
+
+  .publicPage .hero h2{
+    margin-top:24px;
+    font-size:24px;
+  }
+
+  .publicPage .hero .muted{
+    font-size:14px;
+    line-height:1.65;
+  }
+
+  .publicPage .heroButtons{
+    display:grid;
+    grid-template-columns:1fr;
+    width:100%;
+  }
+
+  .publicPage .heroButtons .btn{
+    width:100%;
+    min-height:50px;
+  }
+
+
+  /* WHAT YOU GET */
+
+  .homeValueSection{
+    padding:76px 0;
+  }
+
+  .homeValueGrid{
+    border-radius:11px;
+  }
+
+  .homeValueCard{
+    padding:24px 21px;
+  }
+
+  .homeValueCard h3{
+    font-size:19px;
+  }
+
+
+  /* ABOUT */
+
+  .homeAboutSection{
+    padding:82px 0;
+  }
+
+  .homeAboutInner{
+    min-height:0;
+    gap:28px;
+  }
+
+  .homeAboutCopy h2{
+    font-size:48px;
+  }
+
+  .homeAboutDetails{
+    padding-left:0;
+  }
+
+  .homeAboutDetails>p{
+    margin-bottom:28px;
+  }
+
+  .homeAboutStats{
+    border-top:1px solid #2c2c30;
+  }
+
+  .homeAboutStats>div{
+    min-height:0;
+    border-right:0;
+    border-bottom:1px solid #29292d;
+    padding:20px 0;
+  }
+
+  .homeAboutStats>div:last-child{
+    border-bottom:0;
+  }
+
+
+  /* HUB */
+
+  .homeHubSection{
+    padding:78px 0;
+  }
+
+  .homeHubGrid{
+    grid-template-columns:1fr;
+  }
+
+  .homeHubCard,
+  .homeHubCard:last-child{
+    grid-column:auto;
+    min-height:205px;
+  }
+
+
+  /* CTA */
+
+  .homeFinalCta{
+    padding:90px 16px;
+  }
+
+  .homeFinalCta h2{
+    font-size:48px;
+  }
+
+  .homeFinalCtaInner>p:not(.eyebrow){
+    font-size:14px;
+  }
+
+  .homeFinalActions{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:9px;
+  }
+
+  .homeFinalActions .btn{
+    width:100%;
+    min-height:50px;
+  }
+
+
+  /* FOOTER */
+
+  .publicPage footer{
+    min-height:0;
+    padding:28px 18px;
+  }
+}
+
