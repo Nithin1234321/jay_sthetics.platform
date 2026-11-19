@@ -1009,9 +1009,9 @@ adminRouter.post("/exercise-video", upload.single("video"), async (req, res) => 
 
 adminRouter.post("/exercises", async (req, res) => {
   const parsed = z.object({
-    name: z.string().min(2),
-    muscleGroup: z.string().min(2),
-    instructions: z.string().min(2),
+    name: z.string().default("Untitled Exercise"),
+    muscleGroup: z.string().default("General"),
+    instructions: z.string().default("No instructions added yet."),
     formCues: z.array(z.string()).default([]),
     videoUrl: z.string().optional(),
     thumbnailUrl: z.string().optional(),
