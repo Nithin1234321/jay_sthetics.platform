@@ -1967,6 +1967,7 @@ function AdminLeads({setNotice}:{setNotice:(s:string)=>void}){
         {items.map(x=>
           <article
             key={x.id}
+            className="leadEnquiryCard"
             style={{
               border:"1px solid rgba(255,255,255,.10)",
               borderRadius:"16px",
@@ -2010,6 +2011,7 @@ function AdminLeads({setNotice}:{setNotice:(s:string)=>void}){
               </div>
 
               <div
+                className="leadContactGrid"
                 style={{
                   display:"grid",
                   gridTemplateColumns:"repeat(2,minmax(0,1fr))",
@@ -2045,6 +2047,7 @@ function AdminLeads({setNotice}:{setNotice:(s:string)=>void}){
               </div>
 
               <div
+                className="leadDetailsGrid"
                 style={{
                   display:"grid",
                   gridTemplateColumns:"minmax(180px,.7fr) minmax(0,1.3fr)",
