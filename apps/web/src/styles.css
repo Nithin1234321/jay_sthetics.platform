@@ -4837,3 +4837,24 @@ html{
   }
 }
 
+
+
+/* WHITE HUB ICON CIRCLES */
+
+.homeHubIcon,
+.homeHubCard .homeHubIcon,
+.homeHubCard .hubIcon,
+.homeHubCard .iconCircle,
+.homeHubCard > span:first-child{
+  color:#fff!important;
+  border-color:#fff!important;
+}
+
+.homeHubIcon svg,
+.homeHubCard .homeHubIcon svg,
+.homeHubCard .hubIcon svg,
+.homeHubCard .iconCircle svg{
+  stroke:#fff!important;
+  color:#fff!important;
+}
+
