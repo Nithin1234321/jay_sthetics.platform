@@ -715,6 +715,7 @@ function Sidebar({
     programs:"▦",
     "exercise library":"✦",
     "workout plans":"⌁",
+    "workout plan":"⌁",
     nutrition:"◇",
     "check-ins":"✓",
     calls:"☎",
@@ -2146,6 +2147,8 @@ function AdminPrograms({setNotice}:{setNotice:(s:string)=>void}){
   const [items,setItems]=useState<Program[]>([]);
   const [editing,setEditing]=useState<Program|null>(null);
   const [showNew,setShowNew]=useState(false);
+  const [creatingProgram,setCreatingProgram]=useState(false);
+  const [programCreateError,setProgramCreateError]=useState("");
 
   async function load(){setItems(await api<Program[]>("/admin/programs"))}
   useEffect(()=>{load().catch(e=>setNotice(e.message))},[]);
@@ -2201,46 +2204,95 @@ function AdminPrograms({setNotice}:{setNotice:(s:string)=>void}){
 
   async function create(e:FormEvent<HTMLFormElement>){
     e.preventDefault();
-    const f=new FormData(e.currentTarget);
+    e.stopPropagation();
+
+    if(creatingProgram)return;
+
+    const form=e.currentTarget;
+    const f=new FormData(form);
+
+    const name=String(f.get("name")||"").trim();
+
+    const slug=String(f.get("slug")||"")
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g,"-")
+      .replace(/^-+|-+$/g,"");
+
+    const description=String(
+      f.get("description")||""
+    ).trim();
+
+    const rupees=Number(f.get("rupees"));
+    const days=Number(f.get("days"));
+
+    setProgramCreateError("");
+
+    if(name.length<2){
+      setProgramCreateError(
+        "Enter a valid programme name."
+      );
+      return;
+    }
+
+    if(slug.length<2){
+      setProgramCreateError(
+        "Enter a valid slug, for example natural-3-months."
+      );
+      return;
+    }
+
+    if(description.length<2){
+      setProgramCreateError(
+        "Enter a programme description."
+      );
+      return;
+    }
+
+    if(!Number.isFinite(rupees)||rupees<=0){
+      setProgramCreateError(
+        "Enter a valid programme price."
+      );
+      return;
+    }
+
+    if(!Number.isFinite(days)||days<=0){
+      setProgramCreateError(
+        "Enter a valid duration in days."
+      );
+      return;
+    }
+
+    setCreatingProgram(true);
 
     try{
       await api("/admin/programs",{
         method:"POST",
         body:JSON.stringify({
-          slug:f.get("slug"),
-          name:f.get("name"),
-          description:f.get("description"),
-          pricePaise:Number(f.get("rupees"))*100,
-          durationDays:Number(f.get("days"))
+          slug,
+          name,
+          description,
+          pricePaise:Math.round(rupees*100),
+          durationDays:Math.round(days)
         })
       });
 
+      form.reset();
+
+      setProgramCreateError("");
       setShowNew(false);
-      setNotice("Programme created.");
-      load();
+      setNotice("Programme created successfully.");
+
+      await load();
     }catch(e:any){
-      setNotice(e.message);
-    }
-  }
+      const message=
+        e?.message ||
+        "Programme could not be created.";
 
-  async function deleteProgramme(program:Program){
-    if(!window.confirm(
-      `Delete "${program.name}" permanently? Programmes with subscription history are protected and cannot be deleted.`
-    ))return;
-
-    try{
-      await api(`/admin/programs/${program.id}`,{
-        method:"DELETE"
-      });
-
-      if(editing?.id===program.id){
-        setEditing(null);
-      }
-
-      setNotice("Programme deleted.");
-      load();
-    }catch(e:any){
-      setNotice(e.message);
+      setProgramCreateError(message);
+      setNotice(message);
+    }finally{
+      setCreatingProgram(false);
     }
   }
 
@@ -2269,12 +2321,6 @@ function AdminPrograms({setNotice}:{setNotice:(s:string)=>void}){
             Edit
           </button>
 
-          <button
-            className="btn dangerBtn"
-            onClick={()=>deleteProgramme(p)}
-          >
-            Delete
-          </button>
         </div>
       </div>)}
       {!list.length&&<Empty text={`No ${title.toLowerCase()} programmes.`}/>}
@@ -2366,20 +2412,112 @@ function AdminPrograms({setNotice}:{setNotice:(s:string)=>void}){
       </form>
     </Dialog>}
 
-    {showNew&&<Dialog title="New Programme" wide close={()=>setShowNew(false)}>
-      <form onSubmit={create} className="programmeEditForm">
-        <div className="formGrid">
-          <label>Name<input name="name" placeholder="Programme name" required/></label>
-          <label>Slug<input name="slug" placeholder="example-3-months" required/></label>
-        </div>
-        <label>Description<textarea name="description" placeholder="What the client receives" required/></label>
-        <div className="formGrid">
-          <label>Price (₹)<input name="rupees" type="number" required/></label>
-          <label>Duration (days)<input name="days" type="number" required/></label>
-        </div>
-        <div className="dialogActions"><button type="button" className="btn ghost" onClick={()=>setShowNew(false)}>Cancel</button><button className="btn red">Create Programme</button></div>
-      </form>
-    </Dialog>}
+    {showNew&&
+      <Dialog
+        title="New Programme"
+        wide
+        close={()=>{
+          if(creatingProgram)return;
+          setProgramCreateError("");
+          setShowNew(false);
+        }}
+      >
+        <form
+          onSubmit={create}
+          className="programmeEditForm"
+          noValidate
+        >
+          {programCreateError&&
+            <div className="programmeFormError">
+              <b>Programme not created</b>
+              <span>{programCreateError}</span>
+            </div>
+          }
+
+          <div className="formGrid">
+            <label>
+              Name
+              <input
+                name="name"
+                placeholder="Programme name"
+                autoComplete="off"
+              />
+            </label>
+
+            <label>
+              Slug
+              <input
+                name="slug"
+                placeholder="example-3-months"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
+              />
+              <small>
+                Lowercase letters and numbers. Spaces will automatically become hyphens.
+              </small>
+            </label>
+          </div>
+
+          <label>
+            Description
+            <textarea
+              name="description"
+              placeholder="What the client receives"
+            />
+          </label>
+
+          <div className="formGrid">
+            <label>
+              Price (₹)
+              <input
+                name="rupees"
+                type="number"
+                inputMode="decimal"
+                min="1"
+                placeholder="9000"
+              />
+            </label>
+
+            <label>
+              Duration (days)
+              <input
+                name="days"
+                type="number"
+                inputMode="numeric"
+                min="1"
+                placeholder="90"
+              />
+            </label>
+          </div>
+
+          <div className="dialogActions">
+            <button
+              type="button"
+              className="btn ghost"
+              disabled={creatingProgram}
+              onClick={()=>{
+                setProgramCreateError("");
+                setShowNew(false);
+              }}
+            >
+              Cancel
+            </button>
+
+            <button
+              type="submit"
+              className="btn red"
+              disabled={creatingProgram}
+            >
+              {creatingProgram
+                ?"Creating…"
+                :"Create Programme"
+              }
+            </button>
+          </div>
+        </form>
+      </Dialog>
+    }
   </>;
 }
 
@@ -2895,15 +3033,11 @@ function AdminCheckins({setNotice}:{setNotice:(s:string)=>void}){
   const [items,setItems]=useState<any[]>([]);
 
   async function load(){
-    setItems(
-      await api<any[]>("/admin/check-ins")
-    );
+    setItems(await api<any[]>("/admin/check-ins"));
   }
 
   useEffect(()=>{
-    load().catch(
-      e=>setNotice(e.message)
-    );
+    load().catch(e=>setNotice(e.message));
   },[]);
 
   async function remove(id:string){
@@ -2912,17 +3046,11 @@ function AdminCheckins({setNotice}:{setNotice:(s:string)=>void}){
     ))return;
 
     try{
-      await api(
-        `/admin/check-ins/${id}`,
-        {
-          method:"DELETE"
-        }
-      );
+      await api(`/admin/check-ins/${id}`,{
+        method:"DELETE"
+      });
 
-      setNotice(
-        "Check-in deleted."
-      );
-
+      setNotice("Check-in deleted.");
       load();
     }catch(e:any){
       setNotice(e.message);
@@ -2932,30 +3060,40 @@ function AdminCheckins({setNotice}:{setNotice:(s:string)=>void}){
   const exportRows=items.map(c=>({
     Client:c.user.fullName,
     Email:c.user.email,
-    Date:new Date(
-      c.createdAt
-    ).toLocaleDateString(),
-    Weight_kg:c.weightKg
-      ?Number(c.weightKg)
-      :null,
-    Body_Fat_Percent:c.bodyFat
-      ?Number(c.bodyFat)
-      :null,
-    Sleep_Hours:c.sleepHours
-      ?Number(c.sleepHours)
-      :null,
-    Energy_1_to_10:
-      c.energyLevel??null,
-    Diet_Adherence_Percent:
-      c.dietAdherence??null,
+    Date:new Date(c.createdAt).toLocaleDateString(),
+    Weight_kg:c.weightKg?Number(c.weightKg):null,
+    Body_Fat_Percent:c.bodyFat?Number(c.bodyFat):null,
+    Sleep_Hours:c.sleepHours?Number(c.sleepHours):null,
+    Energy_1_to_10:c.energyLevel??null,
+    Diet_Adherence_Percent:c.dietAdherence??null,
+    Training_Performance:c.trainingPerformance||"",
+    Steps_Cardio:c.stepsCardio||"",
+    Training_or_Diet_Issues:c.issues||"",
+    Questions_for_Jay:c.questions||"",
     Notes:c.notes||""
   }));
 
+  const performanceLabel=(value?:string)=>{
+    if(value==="BETTER")return "Better than last week";
+    if(value==="SAME")return "About the same";
+    if(value==="WORSE")return "Worse than last week";
+    return "Not provided";
+  };
+
   return <>
-    <div className="toolbar">
-      <p className="muted">
-        Weekly client progress submissions.
-      </p>
+    <div className="checkinAdminHeader">
+      <div>
+        <p className="eyebrow redText">
+          CLIENT REPORTING
+        </p>
+
+        <h2>Weekly Check-ins</h2>
+
+        <p className="muted">
+          Review each client's full weekly report, coaching
+          questions, adherence and progress photos.
+        </p>
+      </div>
 
       <button
         className="btn ghost"
@@ -2971,90 +3109,184 @@ function AdminCheckins({setNotice}:{setNotice:(s:string)=>void}){
       </button>
     </div>
 
-    <div className="dataTable">
-      <div className="tr checkHead checkHeadDelete">
-        <span>Client</span>
-        <span>Date</span>
-        <span>Weight</span>
-        <span>Sleep</span>
-        <span>Energy</span>
-        <span>Adherence</span>
-        <span>Action</span>
-      </div>
+    {items.length?
+      <div className="adminCheckinList">
+        {items.map(c=>
+          <article
+            className="adminCheckinCard"
+            key={c.id}
+          >
+            <div className="adminCheckinTop">
+              <div className="adminCheckinIdentity">
+                <div className="adminCheckinAvatar">
+                  {c.user.fullName
+                    ?.split(" ")
+                    .map((x:string)=>x[0])
+                    .join("")
+                    .slice(0,2)
+                  }
+                </div>
 
-      {items.map(c=>
-        <div
-          className="tr checkRow checkRowDelete"
-          key={c.id}
-        >
-          <span>
-            <b>
-              {c.user.fullName}
-            </b>
+                <div>
+                  <small className="redText">
+                    WEEKLY CHECK-IN
+                  </small>
 
-            <small>
-              {c.user.email}
-            </small>
+                  <h3>{c.user.fullName}</h3>
+
+                  <p>{c.user.email}</p>
+                </div>
+              </div>
+
+              <div className="adminCheckinDate">
+                <small>SUBMITTED</small>
+                <b>
+                  {new Date(
+                    c.createdAt
+                  ).toLocaleDateString()}
+                </b>
+              </div>
+            </div>
+
+            <div className="adminCheckinMetrics">
+              <div>
+                <small>WEIGHT</small>
+                <strong>
+                  {c.weightKg
+                    ?`${c.weightKg} kg`
+                    :"—"
+                  }
+                </strong>
+              </div>
+
+              <div>
+                <small>BODY FAT</small>
+                <strong>
+                  {c.bodyFat
+                    ?`${c.bodyFat}%`
+                    :"—"
+                  }
+                </strong>
+              </div>
+
+              <div>
+                <small>SLEEP</small>
+                <strong>
+                  {c.sleepHours
+                    ?`${c.sleepHours} hrs`
+                    :"—"
+                  }
+                </strong>
+              </div>
+
+              <div>
+                <small>ENERGY</small>
+                <strong>
+                  {c.energyLevel
+                    ?`${c.energyLevel}/10`
+                    :"—"
+                  }
+                </strong>
+              </div>
+
+              <div>
+                <small>DIET ADHERENCE</small>
+                <strong>
+                  {c.dietAdherence!==null &&
+                   c.dietAdherence!==undefined
+                    ?`${c.dietAdherence}%`
+                    :"—"
+                  }
+                </strong>
+              </div>
+
+              <div>
+                <small>TRAINING</small>
+                <strong>
+                  {performanceLabel(
+                    c.trainingPerformance
+                  )}
+                </strong>
+              </div>
+            </div>
+
+            <div className="adminCheckinAnswers">
+
+              <div className="checkinAnswerBlock">
+                <small>STEPS / CARDIO</small>
+                <p>
+                  {c.stepsCardio||
+                    "No steps or cardio information provided."
+                  }
+                </p>
+              </div>
+
+              <div className="checkinAnswerBlock">
+                <small>TRAINING / DIET PROBLEMS</small>
+                <p>
+                  {c.issues||
+                    "No problems reported this week."
+                  }
+                </p>
+              </div>
+
+              <div className="checkinAnswerBlock highlight">
+                <small>QUESTIONS FOR JAY</small>
+                <p>
+                  {c.questions||
+                    "No questions submitted."
+                  }
+                </p>
+              </div>
+
+              <div className="checkinAnswerBlock">
+                <small>OTHER WEEKLY NOTES</small>
+                <p>
+                  {c.notes||
+                    "No additional notes."
+                  }
+                </p>
+              </div>
+
+            </div>
 
             {!!c.photoUrls?.length&&
-              <div
-                className="progressPhotos"
-                style={{
-                  marginTop:"10px"
-                }}
-              >
-                {c.photoUrls.map(
-                  (u:string)=>
+              <div className="adminCheckinPhotos">
+                <div className="checkinSectionTitle">
+                  <small>PROGRESS PHOTOS</small>
+                  <span>
+                    {c.photoUrls.length} photo{
+                      c.photoUrls.length===1?"":"s"
+                    }
+                  </span>
+                </div>
+
+                <div className="progressPhotos">
+                  {c.photoUrls.map((u:string)=>
                     <ProtectedImage
                       key={u}
                       src={u}
                     />
-                )}
+                  )}
+                </div>
               </div>
             }
-          </span>
 
-          <span>
-            {new Date(
-              c.createdAt
-            ).toLocaleDateString()}
-          </span>
-
-          <span>
-            {c.weightKg
-              ?`${c.weightKg} kg`
-              :"—"
-            }
-          </span>
-
-          <span>
-            {c.sleepHours
-              ?`${c.sleepHours}h`
-              :"—"
-            }
-          </span>
-
-          <span>
-            {c.energyLevel||"—"}/10
-          </span>
-
-          <span>
-            {c.dietAdherence??"—"}%
-          </span>
-
-          <span>
-            <button
-              className="btn dangerBtn"
-              onClick={()=>
-                remove(c.id)
-              }
-            >
-              Delete
-            </button>
-          </span>
-        </div>
-      )}
-    </div>
+            <div className="adminCheckinFooter">
+              <button
+                type="button"
+                className="btn dangerBtn"
+                onClick={()=>remove(c.id)}
+              >
+                Delete Check-in
+              </button>
+            </div>
+          </article>
+        )}
+      </div>
+      :
+      <Empty text="No weekly check-ins have been submitted yet."/>
+    }
   </>;
 }
 
@@ -3471,7 +3703,16 @@ function AdminSettings({setNotice}:{setNotice:(s:string)=>void}){
 }
 
 function ClientPanel({user,logout}:{user:User;logout:()=>void}){
-  const tabs=["dashboard","onboarding","training","nutrition","progress","weekly check-in","chat","calls"];
+  const tabs=[
+    "dashboard",
+    "onboarding",
+    "workout plan",
+    "exercise library",
+    "nutrition",
+    "weekly check-in",
+    "chat",
+    "calls"
+  ];
   const [tab,setTab]=useState("dashboard"),[data,setData]=useState<any>(null),[notice,setNotice]=useState("");
   const [clientUnread,setClientUnread]=useState(0);
 
@@ -3494,10 +3735,22 @@ function ClientPanel({user,logout}:{user:User;logout:()=>void}){
   async function load(){try{
     if(tab==="dashboard")setData(await api("/client/dashboard"));
     if(tab==="onboarding")setData(await api("/client/onboarding"));
-    if(tab==="training")setData(await api("/client/training"));
-    if(tab==="nutrition")setData(await api("/client/nutrition"));
-    if(tab==="progress")setData(await api("/client/progress"));
-    if(tab==="calls")setData(await api("/client/availability"));
+
+    if(tab==="workout plan"){
+      setData(await api("/client/training"));
+    }
+
+    if(tab==="exercise library"){
+      setData(null);
+    }
+
+    if(tab==="nutrition"){
+      setData(await api("/client/nutrition"));
+    }
+
+    if(tab==="calls"){
+      setData(await api("/client/availability"));
+    }
   }catch(e:any){setData({error:e.message})}}
   async function onboarding(e:FormEvent<HTMLFormElement>){e.preventDefault();const f=new FormData(e.currentTarget);try{await api("/client/onboarding",{method:"PATCH",body:JSON.stringify({dateOfBirth:f.get("dob"),heightCm:Number(f.get("height")),weightKg:Number(f.get("weight")),fitnessGoal:f.get("goal"),trainingExperience:f.get("experience"),phone:f.get("phone")})});setNotice("Coaching profile saved.");setData(await api("/client/onboarding"))}catch(e:any){setNotice(e.message)}}
   async function uploadProfilePhoto(file:File){
@@ -3558,12 +3811,17 @@ function ClientPanel({user,logout}:{user:User;logout:()=>void}){
   </div>
 
   <form onSubmit={onboarding}><div className="formGrid"><label>Date of birth<input name="dob" type="date" defaultValue={data?.clientProfile?.dateOfBirth?String(data.clientProfile.dateOfBirth).slice(0,10):""} required/></label><label>Contact number<input name="phone" defaultValue={data?.phone||""} required/></label></div><div className="formGrid"><label>Height (cm)<input name="height" type="number" step=".1" defaultValue={data?.clientProfile?.heightCm||""} required/></label><label>Weight (kg)<input name="weight" type="number" step=".1" defaultValue={data?.clientProfile?.currentWeightKg||""} required/></label></div><label>Goal<textarea name="goal" defaultValue={data?.clientProfile?.fitnessGoal||""} required/></label><label>Training experience<input name="experience" defaultValue={data?.clientProfile?.trainingExperience||data?.clientProfile?.experienceLevel||""} required/></label><button className="btn red">Save Details</button></form></div>}
-    {tab==="training"&&!data?.error&&<>
+    {tab==="workout plan"&&!data?.error&&
       <ClientTraining data={data}/>
+    }
+
+    {tab==="exercise library"&&
       <ClientExerciseLibrary/>
-    </>}
-    {tab==="nutrition"&&!data?.error&&<ClientNutrition data={data}/>}
-    {tab==="progress"&&!data?.error&&<ClientProgress data={data}/>}
+    }
+
+    {tab==="nutrition"&&!data?.error&&
+      <ClientNutrition data={data}/>
+    }
     {tab==="weekly check-in"&&<div className="settingsCard"><h2>Weekly Check-In</h2><form onSubmit={checkin}><div className="formGrid"><input name="weight" type="number" step=".1" placeholder="Current weight kg"/><select name="performance" defaultValue=""><option value="" disabled>Training performance</option><option value="BETTER">Better</option><option value="SAME">Same</option><option value="WORSE">Worse</option></select></div><div className="formGrid"><input name="adherence" type="number" min="0" max="100" placeholder="Diet adherence %"/><input name="energy" type="number" min="1" max="10" placeholder="Energy 1–10"/></div><div className="formGrid"><input name="sleep" type="number" step=".1" placeholder="Average sleep hours"/><input name="steps" placeholder="Steps / cardio completed"/></div><textarea name="issues" placeholder="Any problems with training or diet?"/><textarea name="questions" placeholder="Anything you want Jay to know or ask?"/><label className="uploadLabel">Progress photos — front / side / back<input name="photos" type="file" accept="image/jpeg,image/png,image/webp" multiple/></label><textarea name="notes" placeholder="Other weekly notes (optional)"/><button className="btn red">Submit Check-In</button></form></div>}
     {tab==="chat"&&<ClientChat/>}
     {tab==="calls"&&<ClientCalls/>}
@@ -3698,95 +3956,108 @@ function ClientDashboard({data}:any){
 }
 
 function ClientTraining({data}:any){
-  return <div className="planGrid workoutPlanGrid">
-    {data?.length?
-      data.map((a:any)=>
-        <article className="planCard workoutPlanCard clientWorkoutPlan" key={a.id}>
-          <div className="workoutPlanHeader">
-            <div>
-              <small className="redText">YOUR TRAINING PLAN</small>
-              <h2>{a.workoutPlan.name}</h2>
+  return <div className="clientWorkoutPage">
+    <div className="clientPageIntro">
+      <small className="redText">
+        YOUR COACHING
+      </small>
 
-              {a.workoutPlan.description&&
-                <p className="workoutPlanDescription">
-                  {a.workoutPlan.description}
-                </p>
-              }
-            </div>
-          </div>
+      <h2>Workout Plan</h2>
 
-          <div className="workoutPlanExerciseList">
-            {a.workoutPlan.exercises.map((x:any)=>
-              <div className="clientExercise workoutDetailCard" key={x.id}>
-                <div className="clientExerciseContent">
-                  <span className="pill">{x.dayLabel}</span>
+      <p className="muted">
+        Your assigned training programme and Jay's workout
+        instructions.
+      </p>
+    </div>
 
-                  <h3>
-                    <span className="exercisePosition">{x.position}.</span>{" "}
-                    {x.exercise.name}
-                  </h3>
+    <div className="planGrid workoutPlanGrid">
+      {data?.length?
+        data.map((a:any)=>
+          <article
+            className="planCard workoutPlanCard clientWorkoutPlan"
+            key={a.id}
+          >
+            <div className="workoutPlanHeader">
+              <div>
+                <small className="redText">
+                  ASSIGNED WORKOUT
+                </small>
 
-                  <div className="workoutPrescriptionGrid">
-                    <div>
-                      <small>SETS</small>
-                      <b>{x.sets||"—"}</b>
-                    </div>
+                <h2>
+                  {a.workoutPlan.name}
+                </h2>
 
-                    <div>
-                      <small>REPS</small>
-                      <b>{x.reps||"—"}</b>
-                    </div>
-
-                    <div>
-                      <small>REST</small>
-                      <b>{x.restSeconds||"—"}</b>
-                    </div>
-                  </div>
-
-                  {x.notes&&
-                    <div className="workoutCoachNotes">
-                      <small>JAY'S INSTRUCTIONS</small>
-                      <p>{x.notes}</p>
-                    </div>
-                  }
-
-                  <div className="exerciseTechnique">
-                    <small>EXERCISE TECHNIQUE</small>
-                    <p>{x.exercise.instructions}</p>
-
-                    {!!x.exercise.formCues?.length&&
-                      <ul>
-                        {x.exercise.formCues.map((c:string)=>
-                          <li key={c}>{c}</li>
-                        )}
-                      </ul>
-                    }
-                  </div>
-
-                  {x.exercise.alternatives?.length>0&&
-                    <small className="workoutAlternatives">
-                      Alternatives: {
-                        x.exercise.alternatives
-                          .map((alt:any)=>alt.alternativeExercise.name)
-                          .join(", ")
-                      }
-                    </small>
-                  }
-                </div>
-
-                {x.exercise.videoUrl&&
-                  <div className="clientWorkoutVideo">
-                    <ProtectedVideo src={x.exercise.videoUrl}/>
-                  </div>
+                {a.workoutPlan.description&&
+                  <p className="workoutPlanDescription">
+                    {a.workoutPlan.description}
+                  </p>
                 }
               </div>
-            )}
-          </div>
-        </article>
-      )
-      :
-      <Empty text="Jay hasn't assigned a workout plan yet."/>
-    }
+            </div>
+
+            <div className="workoutPlanExerciseList">
+              {a.workoutPlan.exercises?.length?
+                a.workoutPlan.exercises.map((x:any)=>
+                  <div
+                    className="workoutDetailCard clientWorkoutPrescription"
+                    key={x.id}
+                  >
+                    <div className="workoutDetailTop">
+                      <div>
+                        <span className="pill">
+                          {x.dayLabel}
+                        </span>
+
+                        <h3>
+                          <span className="exercisePosition">
+                            {x.position}.
+                          </span>{" "}
+                          {x.exercise?.name||
+                            x.exerciseName||
+                            "Exercise"
+                          }
+                        </h3>
+                      </div>
+                    </div>
+
+                    <div className="workoutPrescriptionGrid">
+                      <div>
+                        <small>SETS</small>
+                        <b>{x.sets||"—"}</b>
+                      </div>
+
+                      <div>
+                        <small>REPS</small>
+                        <b>{x.reps||"—"}</b>
+                      </div>
+
+                      <div>
+                        <small>REST</small>
+                        <b>{x.restSeconds||"—"}</b>
+                      </div>
+                    </div>
+
+                    {x.notes&&
+                      <div className="workoutCoachNotes">
+                        <small>
+                          JAY'S INSTRUCTIONS
+                        </small>
+
+                        <p>{x.notes}</p>
+                      </div>
+                    }
+                  </div>
+                )
+                :
+                <Empty text="No exercises have been added to this workout plan yet."/>
+              }
+            </div>
+          </article>
+        )
+        :
+        <Empty text="Jay hasn't assigned a workout plan yet."/>
+      }
+    </div>
   </div>;
 }
 
@@ -3805,12 +4076,18 @@ function ClientExerciseLibrary(){
       .finally(()=>setLoading(false));
   },[]);
 
-  return <div style={{marginTop:"32px"}}>
-    <div style={{marginBottom:"16px"}}>
-      <small className="redText">COACHING LIBRARY</small>
-      <h2>Exercise Video Library</h2>
+  return <div className="clientExerciseLibraryPage">
+    <div className="clientPageIntro">
+      <small className="redText">
+        COACHING LIBRARY
+      </small>
+
+      <h2>Exercise Library</h2>
+
       <p className="muted">
-        Browse exercise demonstrations and coaching cues included with your programme.
+        Browse Jay's exercise demonstrations, technique
+        instructions and form cues separately from your
+        assigned workout plan.
       </p>
     </div>
 
