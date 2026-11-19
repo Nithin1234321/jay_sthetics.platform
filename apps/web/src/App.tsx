@@ -550,43 +550,6 @@ export default function App(){
         </div>
       </section>
 
-      <section className="homeHubSection">
-        <div className="homeSectionInner">
-          <div className="homeSectionHeading">
-            <p className="eyebrow redText">
-              YOUR COACHING PLATFORM
-            </p>
-
-            <h2>
-              EVERYTHING IN<br/>
-              <span>ONE PLACE.</span>
-            </h2>
-
-            <p>
-              Active coaching clients get access to the tools
-              needed to stay consistent and connected.
-            </p>
-          </div>
-
-          <div className="homeHubGrid">
-            {[
-              ["Training","Workout plans, exercise instructions and form videos."],
-              ["Nutrition","Nutrition plans, macros and practical meal options."],
-              ["Progress","Weekly check-ins, measurements and performance tracking."],
-              ["Private Chat","Direct communication with Jay inside your dashboard."],
-              ["Coaching Calls","Request and manage coaching calls when needed."]
-            ].map(([title,copy])=>
-              <article className="homeHubCard" key={title}>
-                <div className="homeHubIcon">+</div>
-                <h3>{title}</h3>
-                <p>{copy}</p>
-                <small>ACTIVE CLIENTS</small>
-              </article>
-            )}
-          </div>
-        </div>
-      </section>
-
       <section
         className="homeFinalCta"
         id="contact"
