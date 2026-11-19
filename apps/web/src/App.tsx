@@ -4068,6 +4068,27 @@ function ClientExerciseLibrary(){
   const [items,setItems]=useState<any[]>([]);
   const [loading,setLoading]=useState(true);
   const [error,setError]=useState("");
+  const [query,setQuery]=useState("");
+
+  const filteredItems=items.filter((ex:any)=>{
+    const q=query.trim().toLowerCase();
+
+    if(!q)return true;
+
+    const searchable=[
+      ex.name,
+      ex.muscleGroup,
+      ex.instructions,
+      ...(ex.formCues||[]),
+      ...(ex.alternatives||[])
+        .map((a:any)=>a.alternativeExercise?.name)
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
+
+    return searchable.includes(q);
+  });
 
   useEffect(()=>{
     api<any[]>("/client/exercise-library")
@@ -4092,6 +4113,28 @@ function ClientExerciseLibrary(){
         instructions and form cues separately from your
         assigned workout plan.
       </p>
+
+      <div className="clientExerciseSearch">
+        <span>⌕</span>
+
+        <input
+          type="search"
+          value={query}
+          onChange={e=>setQuery(e.target.value)}
+          placeholder="Search exercise name, description, muscle group or form cue..."
+          aria-label="Search exercise library"
+        />
+
+        {query&&
+          <button
+            type="button"
+            onClick={()=>setQuery("")}
+            aria-label="Clear exercise search"
+          >
+            ×
+          </button>
+        }
+      </div>
     </div>
 
     {loading&&<p className="muted">Loading exercise library…</p>}
@@ -4099,9 +4142,9 @@ function ClientExerciseLibrary(){
     {!loading&&error&&<Locked message={error}/>}
 
     {!loading&&!error&&(
-      items.length?
+      filteredItems.length?
       <div className="libraryGrid">
-        {items.map(ex=>
+        {filteredItems.map(ex=>
           <article className="exerciseCard" key={ex.id}>
             <div className="videoBox">
               {ex.videoUrl?
@@ -4141,7 +4184,13 @@ function ClientExerciseLibrary(){
         )}
       </div>
       :
-      <Empty text="No exercise videos are available for your programme yet."/>
+      <Empty
+        text={
+          query
+            ?"No exercises matched your search."
+            :"No exercise videos are available for your programme yet."
+        }
+      />
     )}
   </div>;
 }

@@ -3143,3 +3143,78 @@ button.tr{width:100%;color:inherit;border:0;text-align:left;cursor:pointer}
   }
 }
 
+
+
+/* CLIENT EXERCISE LIBRARY SEARCH */
+
+.clientExerciseSearch{
+  display:flex;
+  align-items:center;
+  gap:10px;
+
+  width:min(720px,100%);
+  margin-top:20px;
+
+  padding:0 14px;
+
+  border:1px solid #303034;
+  border-radius:10px;
+
+  background:#0d0d0f;
+}
+
+.clientExerciseSearch>span{
+  color:#77777d;
+  font-size:20px;
+}
+
+.clientExerciseSearch input{
+  flex:1;
+  min-width:0;
+
+  height:50px;
+
+  border:0!important;
+  outline:0!important;
+
+  background:transparent!important;
+  color:#fff;
+
+  font:inherit;
+}
+
+.clientExerciseSearch input::placeholder{
+  color:#626267;
+}
+
+.clientExerciseSearch button{
+  width:32px;
+  height:32px;
+
+  border:0;
+  border-radius:7px;
+
+  background:#1c1c1f;
+  color:#aaa;
+
+  font-size:20px;
+  cursor:pointer;
+}
+
+.clientExerciseSearch button:hover{
+  background:#321010;
+  color:#fff;
+}
+
+@media(max-width:700px){
+
+  .clientExerciseSearch{
+    width:100%;
+    margin-top:16px;
+  }
+
+  .clientExerciseSearch input{
+    font-size:14px;
+  }
+}
+
