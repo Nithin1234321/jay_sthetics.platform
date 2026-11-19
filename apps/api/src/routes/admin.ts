@@ -18,8 +18,31 @@ const upload = multer({
   dest: uploadDir,
   limits: { fileSize: 250 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
-    const allowed = ["video/mp4", "video/quicktime", "video/webm"];
-    cb(null, allowed.includes(file.mimetype));
+    const extension = path.extname(file.originalname || "").toLowerCase();
+
+    const allowedMimeTypes = [
+      "video/mp4",
+      "video/quicktime",
+      "video/webm",
+      "video/x-m4v",
+      "video/m4v",
+      "application/octet-stream"
+    ];
+
+    const allowedExtensions = [
+      ".mp4",
+      ".mov",
+      ".m4v",
+      ".webm"
+    ];
+
+    const validMime =
+      file.mimetype.startsWith("video/") ||
+      allowedMimeTypes.includes(file.mimetype);
+
+    const validExtension = allowedExtensions.includes(extension);
+
+    cb(null, validMime && validExtension);
   }
 });
 
