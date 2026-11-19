@@ -465,7 +465,7 @@ export default function App(){
 
       <section className="homeGallerySection homeIcnGallery">
         <div className="homeGalleryIntro">
-          <h2>ICN 2025</h2>
+          <h2>ICN 2025 <span className="homeIcnCity">HYDERABAD</span></h2>
           <p>Classic Physique — Silver Medal ×2 · Posing Champion</p>
         </div>
 
@@ -480,7 +480,7 @@ export default function App(){
             if(Math.abs(delta)>45){
               setGalleryIndex(current=>
                 delta<0
-                  ?(current+1)%5
+                  ?(current+1)%4
                   :(current+3)%4
               );
             }
@@ -539,6 +539,72 @@ export default function App(){
               />
             )}
           </div>
+        </div>
+      </section>
+
+
+      <section className="homeSocialBridge" aria-label="Jay social links">
+        <div className="homeSocialBridgeInner">
+
+          <a
+            className="homeSocialLink"
+            href="https://www.instagram.com/jay.__sthetics?bqrl=MXFiMzN0NDBoY2JiNA%3D%3D&utm_source=qr"
+            target="_blank"
+            rel="noreferrer"
+            aria-label="Jay Sthetics on Instagram"
+          >
+            <span className="homeSocialIcon">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <rect x="3" y="3" width="18" height="18" rx="5"/>
+                <circle cx="12" cy="12" r="4"/>
+                <circle cx="17.5" cy="6.5" r="1"/>
+              </svg>
+            </span>
+
+            <span>
+              <small>FOLLOW</small>
+              <strong>Instagram</strong>
+            </span>
+          </a>
+
+          <a
+            className="homeSocialLink"
+            href="mailto:jaystheticscoaching@gmail.com"
+            aria-label="Email Jay Sthetics Coaching"
+          >
+            <span className="homeSocialIcon">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <rect x="3" y="5" width="18" height="14" rx="2"/>
+                <path d="M4 7l8 6 8-6"/>
+              </svg>
+            </span>
+
+            <span>
+              <small>CONTACT</small>
+              <strong>Gmail</strong>
+            </span>
+          </a>
+
+          <a
+            className="homeSocialLink"
+            href="https://youtube.com/@jay_sthetics?si=L1JB9tAZff03qh3H"
+            target="_blank"
+            rel="noreferrer"
+            aria-label="Jay Sthetics on YouTube"
+          >
+            <span className="homeSocialIcon">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <rect x="2.5" y="5" width="19" height="14" rx="4"/>
+                <path d="M10 9l6 3-6 3z"/>
+              </svg>
+            </span>
+
+            <span>
+              <small>WATCH</small>
+              <strong>YouTube</strong>
+            </span>
+          </a>
+
         </div>
       </section>
 
