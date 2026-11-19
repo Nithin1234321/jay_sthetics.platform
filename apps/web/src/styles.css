@@ -3218,3 +3218,52 @@ button.tr{width:100%;color:inherit;border:0;text-align:left;cursor:pointer}
   }
 }
 
+
+
+/* MOBILE HOME CLIENT LOGIN */
+
+@media(max-width:700px){
+
+  /* Existing Client Login button is hidden by an older mobile rule.
+     Show it only in the public homepage header. */
+  .publicPage>header .actions .ghost{
+    display:inline-flex !important;
+    align-items:center;
+    justify-content:center;
+  }
+
+  .publicPage>header{
+    gap:8px;
+  }
+
+  .publicPage>header .actions{
+    gap:6px;
+    flex-shrink:0;
+  }
+
+  .publicPage>header .actions .btn{
+    min-height:38px;
+    padding:0 10px;
+    font-size:9px;
+    white-space:nowrap;
+  }
+
+  .publicPage>header .brand{
+    min-width:0;
+    margin-right:auto;
+  }
+}
+
+@media(max-width:390px){
+
+  .publicPage>header{
+    padding-left:12px;
+    padding-right:12px;
+  }
+
+  .publicPage>header .actions .btn{
+    padding:0 8px;
+    font-size:8px;
+  }
+}
+
