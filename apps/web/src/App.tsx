@@ -449,42 +449,40 @@ export default function App(){
       </section>
 
 
-      <section className="homeGallerySection">
+      <section className="homeGallerySection homeIcnGallery">
         <div className="homeGalleryIntro">
-          <p className="eyebrow">THE WORK. THE STAGE. THE STANDARD.</p>
-          <h2>BUILT THROUGH <span>DISCIPLINE.</span></h2>
-          <p>
-            Training is more than a plan. It is consistency, execution
-            and showing up when it matters.
-          </p>
+          <p className="eyebrow">ICN 2025</p>
+          <h2>BUILT FOR THE <span>STAGE.</span></h2>
+          <p>Classic Physique — Silver Medal ×2 · Posing Champion</p>
         </div>
 
-        <div className="homeGalleryCarousel" aria-label="Jay competition gallery">
-          <div className="homeGalleryTrack">
+        <div className="homeIcnCarousel" aria-label="Jay ICN 2025 gallery">
+          <div className="homeIcnTrack">
             {[
-              "/assets/home-gallery/jay-gallery-1.jpeg",
-              "/assets/home-gallery/jay-gallery-2.jpeg",
-              "/assets/home-gallery/jay-gallery-3.jpeg",
-              "/assets/home-gallery/jay-gallery-4.jpeg"
+              "/assets/icn-2025/icn-2025-1.jpeg",
+              "/assets/icn-2025/icn-2025-2.jpeg",
+              "/assets/icn-2025/icn-2025-3.jpeg",
+              "/assets/icn-2025/icn-2025-4.jpeg",
+              "/assets/icn-2025/icn-2025-5.jpeg"
             ].map((src,index)=>
-              <figure
-                className="homeGalleryCard"
-                key={src}
-              >
+              <figure className="homeIcnCard" key={src}>
                 <img
                   src={src}
-                  alt={`Jay competition and physique photo ${index+1}`}
+                  alt={`Jay at ICN 2025 ${index+1}`}
                   loading={index===0?"eager":"lazy"}
                 />
               </figure>
             )}
           </div>
 
-          <div className="homeGalleryDots" aria-hidden="true">
-            <span></span>
-            <span></span>
-            <span></span>
-            <span></span>
+          <div className="homeIcnMeta">
+            <span>ICN 2025</span>
+            <strong>Classic Physique — Silver Medal ×2</strong>
+            <strong>Posing Champion</strong>
+          </div>
+
+          <div className="homeIcnDots" aria-hidden="true">
+            <span></span><span></span><span></span><span></span><span></span>
           </div>
         </div>
       </section>
