@@ -14,7 +14,29 @@ const fallback:Program[]=[
 ];
 const loadUser=()=>{try{return JSON.parse(sessionStorage.getItem("user")||"null") as User|null}catch{return null}};
 const money=(paise:number)=>`₹${(paise/100).toLocaleString("en-IN")}`;
-const date=(v:string)=>new Date(v).toLocaleString();
+const date=(v:string)=>new Date(v).toLocaleString("en-US",{
+  month:"short",
+  day:"numeric",
+  year:"numeric",
+  hour:"numeric",
+  minute:"2-digit",
+  hour12:true
+});
+
+const time12=(value:string)=>{
+  if(!value)return "—";
+
+  const [h,m]=value.split(":").map(Number);
+
+  const d=new Date();
+  d.setHours(h||0,m||0,0,0);
+
+  return d.toLocaleTimeString("en-US",{
+    hour:"numeric",
+    minute:"2-digit",
+    hour12:true
+  });
+};
 
 function PasswordField({
   name = "password",
@@ -3702,7 +3724,7 @@ function AdminSettings({setNotice}:{setNotice:(s:string)=>void}){
   useEffect(()=>{load().catch(e=>setNotice(e.message))},[]);
   async function create(e:FormEvent<HTMLFormElement>){e.preventDefault();const f=new FormData(e.currentTarget);try{await api("/admin/availability",{method:"POST",body:JSON.stringify({dayOfWeek:Number(f.get("day")),startTime:f.get("start"),endTime:f.get("end"),timezone:"Asia/Kolkata"})});setNotice("Call hours added.");load()}catch(e:any){setNotice(e.message)}}
   async function toggle(x:any){await api(`/admin/availability/${x.id}`,{method:"PATCH",body:JSON.stringify({isActive:!x.isActive})});load()}
-  return <><div className="settingsCard"><h2>Coaching call hours</h2><p className="muted">Clients with active subscriptions can see these hours.</p><form className="availabilityForm" onSubmit={create}><select name="day">{days.map((d,i)=><option value={i} key={d}>{d}</option>)}</select><input name="start" type="time" required/><input name="end" type="time" required/><button className="btn red">Add Hours</button></form>{items.map(x=><div className="availabilityRow" key={x.id}><b>{days[x.dayOfWeek]}</b><span>{x.startTime} – {x.endTime}</span><small>{x.timezone}</small><button className="btn ghost" onClick={()=>toggle(x)}>{x.isActive?"Disable":"Enable"}</button></div>)}</div></>
+  return <><div className="settingsCard"><h2>Coaching call hours</h2><p className="muted">Clients with active subscriptions can see these hours.</p><form className="availabilityForm" onSubmit={create}><select name="day">{days.map((d,i)=><option value={i} key={d}>{d}</option>)}</select><input name="start" type="time" required/><input name="end" type="time" required/><button className="btn red">Add Hours</button></form>{items.map(x=><div className="availabilityRow" key={x.id}><b>{days[x.dayOfWeek]}</b><span>{time12(x.startTime)} – {time12(x.endTime)}</span><small>{x.timezone}</small><button className="btn ghost" onClick={()=>toggle(x)}>{x.isActive?"Disable":"Enable"}</button></div>)}</div></>
 }
 
 function ClientPanel({user,logout}:{user:User;logout:()=>void}){
@@ -4383,7 +4405,7 @@ function ClientCalls(){
   async function load(){try{const [a,c,i]=await Promise.all([api<any[]>("/client/availability"),api<any[]>("/client/calls"),api<any>("/client/call-info")]);setAvailability(a);setCalls(c);setCallInfo(i)}catch(e:any){setStatus(e.message)}}
   useEffect(()=>{load()},[]);
   async function request(e:FormEvent<HTMLFormElement>){e.preventDefault();const f=new FormData(e.currentTarget);try{await api("/client/calls",{method:"POST",body:JSON.stringify({preferredAt:new Date(`${f.get("date")}T${f.get("time")}:00+05:30`).toISOString(),reason:f.get("reason")})});setStatus("Call requested.");e.currentTarget.reset();load()}catch(e:any){setStatus(e.message)}}
-  return <div className="callsLayout"><div className="settingsCard"><h2>Jay's coaching call hours</h2>{availability.length?availability.map(x=><div className="availabilityRow" key={x.id}><b>{days[x.dayOfWeek]}</b><span>{x.startTime} – {x.endTime}</span><small>{x.timezone}</small></div>):<Empty text="No call hours configured yet."/>}{callInfo?.availableNow&&callInfo.phone?<a className="btn red full directCall" href={`tel:${callInfo.phone}`}>Call Jay Now</a>:<p className="muted callReason">{callInfo?.reason||""}</p>}</div>
+  return <div className="callsLayout"><div className="settingsCard"><h2>Jay's coaching call hours</h2>{availability.length?availability.map(x=><div className="availabilityRow" key={x.id}><b>{days[x.dayOfWeek]}</b><span>{time12(x.startTime)} – {time12(x.endTime)}</span><small>{x.timezone}</small></div>):<Empty text="No call hours configured yet."/>}{callInfo?.availableNow&&callInfo.phone?<a className="btn red full directCall" href={`tel:${callInfo.phone}`}>Call Jay Now</a>:<p className="muted callReason">{callInfo?.reason||""}</p>}</div>
     <div className="settingsCard"><h2>Request a coaching call</h2><form onSubmit={request}><div className="formGrid"><label>Date<input name="date" type="date" required/></label><label>Time (IST)<input name="time" type="time" required/></label></div><label>Reason<textarea name="reason" placeholder="What do you want to discuss?"/></label><button className="btn red">Request Call</button></form>{status&&<div className="inlineNotice">{status}</div>}<h3>My call requests</h3>{calls.length?calls.map(c=><div className="managementRow" key={c.id}><div><b>{date(c.preferredAt)}</b><small>{c.reason||"Coaching call"}</small></div><span>{c.status}</span></div>):<Empty text="No call requests yet."/>}</div></div>;
 }
 
