@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Oswald:wght@400;500;600;700&display=swap');
 :root{font-family:Inter,system-ui,sans-serif;color:#f5f5f5;background:#070707;--red:#e11d1d;--muted:#aaa}
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:#070707}a{color:inherit;text-decoration:none}button,input,textarea{font:inherit}
 header{height:78px;position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:34px;padding:0 6vw;background:rgba(4,4,4,.94);border-bottom:1px solid #202020;backdrop-filter:blur(12px)}
@@ -5191,6 +5191,218 @@ html{
 
   .btn:active{
     transform:scale(.94)!important;
+  }
+}
+
+
+
+/* ==========================================================
+   PREMIUM FONT SYSTEM V2
+   OSWALD + MANROPE
+   ========================================================== */
+
+html,
+body,
+button,
+input,
+textarea,
+select{
+  font-family:
+    "Manrope",
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif!important;
+}
+
+
+/* ----------------------------------------------------------
+   MAIN DISPLAY HEADINGS
+   ---------------------------------------------------------- */
+
+h1,
+h2,
+.hero h1,
+.homeSectionHeading h2,
+.homeAboutCopy h2,
+.homeFinalCta h2,
+.programsHero h1,
+.authVisualCopy h1,
+.signupBrandContent h1,
+.premiumTop h1,
+.overviewHero h2,
+.clientWelcome h2{
+  font-family:
+    "Oswald",
+    "Arial Narrow",
+    sans-serif!important;
+
+  font-weight:600!important;
+}
+
+
+/* Hero gets slightly stronger styling */
+
+.publicPage .hero h1{
+  font-weight:600!important;
+  letter-spacing:-.025em!important;
+  line-height:.86!important;
+}
+
+
+/* Homepage major section headings */
+
+.homeSectionHeading h2,
+.homeAboutCopy h2,
+.homeFinalCta h2{
+  font-weight:600!important;
+  letter-spacing:-.015em!important;
+  line-height:.98!important;
+}
+
+
+/* Dashboard page titles */
+
+.premiumTop h1,
+.dash>h1{
+  font-family:"Oswald",sans-serif!important;
+  font-weight:600!important;
+  letter-spacing:.01em!important;
+}
+
+
+/* ----------------------------------------------------------
+   CARD TITLES
+   ---------------------------------------------------------- */
+
+.homeValueCard h3,
+.homeHubCard h3,
+.exerciseCard h3,
+.planCard h3,
+.fullProgramCard h2,
+.programmeGroupHead h2{
+  font-family:"Manrope",sans-serif!important;
+  font-weight:800!important;
+  letter-spacing:-.025em!important;
+}
+
+
+/* ----------------------------------------------------------
+   BODY TEXT
+   ---------------------------------------------------------- */
+
+p,
+li,
+small,
+label,
+input,
+textarea,
+select{
+  font-family:"Manrope",sans-serif!important;
+}
+
+
+/* Improve readability */
+
+p{
+  letter-spacing:-.01em;
+}
+
+.homeValueCard p,
+.homeHubCard p,
+.exerciseBody p,
+.planCard p{
+  line-height:1.7!important;
+}
+
+
+/* ----------------------------------------------------------
+   BUTTONS
+   ---------------------------------------------------------- */
+
+.btn,
+.sidebar button,
+.clientTabs button{
+  font-family:"Manrope",sans-serif!important;
+  font-weight:800!important;
+  letter-spacing:.025em!important;
+}
+
+
+/* ----------------------------------------------------------
+   NAV
+   ---------------------------------------------------------- */
+
+.publicPage>header nav a{
+  font-family:"Manrope",sans-serif!important;
+  font-weight:700!important;
+  letter-spacing:.015em!important;
+}
+
+
+/* ----------------------------------------------------------
+   EYEBROWS / LABELS
+   ---------------------------------------------------------- */
+
+.eyebrow,
+.redText,
+.groupTag,
+.programType,
+.overviewKicker,
+.authKicker,
+.homeValueCard>span{
+  font-family:"Manrope",sans-serif!important;
+  font-weight:800!important;
+  letter-spacing:.11em!important;
+}
+
+
+/* ----------------------------------------------------------
+   LOGO TEXT
+   ---------------------------------------------------------- */
+
+.brand b{
+  font-family:"Oswald",sans-serif!important;
+  font-weight:700!important;
+  font-style:italic!important;
+  letter-spacing:-.04em!important;
+}
+
+.brand span{
+  font-family:"Manrope",sans-serif!important;
+  font-weight:800!important;
+  letter-spacing:.18em!important;
+}
+
+
+/* ----------------------------------------------------------
+   MOBILE TYPOGRAPHY
+   ---------------------------------------------------------- */
+
+@media(max-width:700px){
+
+  .publicPage .hero h1{
+    font-size:clamp(58px,17vw,82px)!important;
+    line-height:.88!important;
+  }
+
+  .homeSectionHeading h2,
+  .homeAboutCopy h2,
+  .homeFinalCta h2{
+    font-size:clamp(40px,12vw,58px)!important;
+    line-height:.98!important;
+  }
+
+  .homeValueCard h3,
+  .homeHubCard h3{
+    font-size:21px!important;
+  }
+
+  .homeValueCard p,
+  .homeHubCard p{
+    font-size:13px!important;
+    line-height:1.75!important;
   }
 }
 
