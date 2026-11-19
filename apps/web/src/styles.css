@@ -5435,3 +5435,208 @@ p{
   border-color:#fff!important;
 }
 
+
+
+/* HOMEPAGE CINEMATIC PHOTO SLIDESHOW */
+
+.homeGallerySection{
+  width:min(1380px,92vw);
+  margin:0 auto;
+  padding:120px 0;
+  background:#000;
+}
+
+.homeGalleryIntro{
+  width:min(760px,100%);
+  margin-bottom:36px;
+}
+
+.homeGalleryIntro .eyebrow{
+  margin:0 0 12px;
+  color:#aaa!important;
+  font-size:11px;
+  letter-spacing:.14em;
+  font-weight:800;
+}
+
+.homeGalleryIntro h2{
+  margin:0 0 16px;
+  color:#fff;
+  font-family:"Oswald",sans-serif!important;
+  font-size:clamp(46px,6vw,88px);
+  line-height:.92;
+  font-weight:600;
+  letter-spacing:-.02em;
+}
+
+.homeGalleryIntro h2 span{
+  color:#fff!important;
+}
+
+.homeGalleryIntro>p:last-child{
+  max-width:650px;
+  margin:0;
+  color:#888;
+  font-size:14px;
+  line-height:1.7;
+}
+
+.homeGallerySlider{
+  position:relative;
+  height:min(78vh,820px);
+  min-height:560px;
+  overflow:hidden;
+  border:1px solid #252525;
+  border-radius:18px;
+  background:#050505;
+  isolation:isolate;
+}
+
+.homeGallerySlide{
+  position:absolute;
+  inset:0;
+  margin:0;
+  opacity:0;
+  animation:jayGalleryFade 24s infinite;
+  will-change:opacity;
+}
+
+.homeGallerySlide img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  object-position:center 38%;
+  filter:grayscale(100%) contrast(1.06) brightness(.78);
+  transform:scale(1.06);
+  animation:jayGalleryZoom 6s ease-out infinite alternate;
+}
+
+.homeGallerySlide:after{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:
+    linear-gradient(180deg,rgba(0,0,0,.05),rgba(0,0,0,.18) 55%,rgba(0,0,0,.7)),
+    linear-gradient(90deg,rgba(0,0,0,.35),transparent 35%,transparent 72%,rgba(0,0,0,.18));
+  pointer-events:none;
+}
+
+.homeGallerySlide1{animation-delay:0s}
+.homeGallerySlide2{animation-delay:6s}
+.homeGallerySlide3{animation-delay:12s}
+.homeGallerySlide4{animation-delay:18s}
+
+@keyframes jayGalleryFade{
+  0%{opacity:0}
+  4%{opacity:1}
+  24%{opacity:1}
+  29%{opacity:0}
+  100%{opacity:0}
+}
+
+@keyframes jayGalleryZoom{
+  from{transform:scale(1.04) translate3d(0,0,0)}
+  to{transform:scale(1.10) translate3d(0,-1.5%,0)}
+}
+
+.homeGallerySlider:hover .homeGallerySlide,
+.homeGallerySlider:hover .homeGallerySlide img{
+  animation-play-state:paused!important;
+}
+
+.homeGalleryProgress{
+  position:absolute;
+  z-index:5;
+  left:28px;
+  right:28px;
+  bottom:24px;
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:8px;
+}
+
+.homeGalleryProgress span{
+  height:2px;
+  background:rgba(255,255,255,.25);
+}
+
+.homeGalleryProgress span:after{
+  content:"";
+  display:block;
+  width:100%;
+  height:100%;
+  background:#fff;
+  transform:scaleX(0);
+  transform-origin:left;
+  animation:jayGalleryBar 24s infinite;
+}
+
+.homeGalleryProgress span:nth-child(1):after{animation-delay:0s}
+.homeGalleryProgress span:nth-child(2):after{animation-delay:6s}
+.homeGalleryProgress span:nth-child(3):after{animation-delay:12s}
+.homeGalleryProgress span:nth-child(4):after{animation-delay:18s}
+
+@keyframes jayGalleryBar{
+  0%{transform:scaleX(0)}
+  20%{transform:scaleX(1)}
+  25%,100%{transform:scaleX(1)}
+}
+
+@media(hover:hover) and (pointer:fine){
+  .homeGallerySlider{
+    transition:
+      transform .35s cubic-bezier(.2,.8,.2,1),
+      border-color .35s ease,
+      box-shadow .35s ease!important;
+  }
+
+  .homeGallerySlider:hover{
+    transform:translateY(-6px);
+    border-color:#555;
+    box-shadow:0 26px 70px rgba(255,255,255,.055);
+  }
+}
+
+@media(max-width:700px){
+  .homeGallerySection{
+    width:100%;
+    padding:82px 16px;
+  }
+
+  .homeGalleryIntro{
+    margin-bottom:24px;
+  }
+
+  .homeGalleryIntro h2{
+    font-size:clamp(44px,13vw,64px);
+  }
+
+  .homeGallerySlider{
+    height:72svh;
+    min-height:540px;
+    border-radius:12px;
+  }
+
+  .homeGallerySlide img{
+    object-position:center center;
+    filter:grayscale(100%) contrast(1.08) brightness(.82);
+  }
+
+  .homeGalleryProgress{
+    left:16px;
+    right:16px;
+    bottom:16px;
+  }
+}
+
+@media(prefers-reduced-motion:reduce){
+  .homeGallerySlide,
+  .homeGallerySlide img,
+  .homeGalleryProgress span:after{
+    animation:none!important;
+  }
+
+  .homeGallerySlide1{
+    opacity:1!important;
+  }
+}

@@ -448,6 +448,42 @@ export default function App(){
         </div>
       </section>
 
+
+      <section className="homeGallerySection">
+        <div className="homeGalleryIntro">
+          <p className="eyebrow">THE WORK. THE STAGE. THE STANDARD.</p>
+          <h2>BUILT THROUGH <span>DISCIPLINE.</span></h2>
+          <p>
+            Training is more than a plan. It is consistency, execution
+            and showing up when it matters.
+          </p>
+        </div>
+
+        <div className="homeGallerySlider" aria-label="Jay competition gallery">
+          {[
+            "/assets/home-gallery/jay-gallery-1.jpeg",
+            "/assets/home-gallery/jay-gallery-2.jpeg",
+            "/assets/home-gallery/jay-gallery-3.jpeg",
+            "/assets/home-gallery/jay-gallery-4.jpeg"
+          ].map((src,index)=>
+            <figure
+              className={`homeGallerySlide homeGallerySlide${index+1}`}
+              key={src}
+            >
+              <img
+                src={src}
+                alt={`Jay competition and physique photo ${index+1}`}
+                loading={index===0?"eager":"lazy"}
+              />
+            </figure>
+          )}
+
+          <div className="homeGalleryProgress" aria-hidden="true">
+            <span></span><span></span><span></span><span></span>
+          </div>
+        </div>
+      </section>
+
       <section
         className="homeAboutSection"
         id="about"
