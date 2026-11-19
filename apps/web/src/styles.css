@@ -6672,3 +6672,33 @@ p{
   }
 }
 
+
+/* ==========================================================
+   ICN GALLERY — ZOOM OUT PHOTOS
+   ========================================================== */
+
+.homeIcnCard{
+  background:#050505!important;
+}
+
+.homeIcnCard img{
+  width:100%!important;
+  height:100%!important;
+
+  object-fit:contain!important;
+  object-position:center center!important;
+
+  /* slight visual zoom-out */
+  transform:scale(.94)!important;
+
+  filter:none!important;
+  animation:none!important;
+}
+
+/* A little more space on mobile */
+@media(max-width:700px){
+  .homeIcnCard img{
+    transform:scale(.92)!important;
+  }
+}
+
