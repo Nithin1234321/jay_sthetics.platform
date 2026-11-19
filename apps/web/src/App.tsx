@@ -528,12 +528,6 @@ export default function App(){
             ›
           </button>
 
-          <div className="homeIcnMeta">
-            <span>ICN 2025</span>
-            <strong>Classic Physique — Silver Medal ×2</strong>
-            <strong>Posing Champion</strong>
-          </div>
-
           <div className="homeIcnDots" aria-label="Gallery navigation">
             {[0,1,2,3].map(index=>
               <button
