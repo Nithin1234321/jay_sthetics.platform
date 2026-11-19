@@ -4634,3 +4634,206 @@ html{
   }
 }
 
+
+
+/* ==========================================================
+   HOMEPAGE FINAL MONOCHROME + STRONG HOVER FIX
+   ========================================================== */
+
+
+/* ----------------------------------------------------------
+   REMOVE REMAINING HOMEPAGE RED
+   ---------------------------------------------------------- */
+
+.homeSectionHeading h2 span,
+.homeAboutCopy h2 span,
+.homeFinalCta h2 span,
+.homeValueCard>span,
+.homeHubIcon,
+.publicPage .hero h1 span,
+.publicPage .hero .eyebrow i,
+.homeSectionHeading .eyebrow,
+.homeAboutCopy .eyebrow,
+.homeFinalCta .eyebrow{
+  color:#fff!important;
+}
+
+
+/* Heading highlight should stay white, not red */
+
+.homeSectionHeading h2 span{
+  color:#fff!important;
+}
+
+
+/* Numbers 01 / 02 / 03 / etc */
+
+.homeValueCard>span{
+  color:#aaa!important;
+  transition:
+    color .28s ease,
+    transform .28s ease!important;
+}
+
+
+/* ----------------------------------------------------------
+   STRONGER CARD INTERACTION
+   ---------------------------------------------------------- */
+
+.homeValueCard{
+  position:relative;
+  overflow:hidden;
+  cursor:default;
+
+  transition:
+    transform .32s cubic-bezier(.2,.8,.2,1),
+    background-color .32s ease,
+    border-color .32s ease,
+    color .32s ease,
+    box-shadow .32s ease!important;
+}
+
+
+/* subtle white sweep */
+
+.homeValueCard:before{
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:0;
+
+  background:#fff;
+
+  transform:scaleY(0);
+  transform-origin:bottom;
+
+  transition:
+    transform .34s cubic-bezier(.2,.8,.2,1)!important;
+
+  pointer-events:none;
+}
+
+
+/* keep content above hover layer */
+
+.homeValueCard>span,
+.homeValueCard h3,
+.homeValueCard p{
+  position:relative;
+  z-index:2;
+}
+
+
+/* OBVIOUS DESKTOP HOVER */
+
+@media(hover:hover) and (pointer:fine){
+
+  .homeValueCard:hover{
+    transform:translateY(-7px) scale(1.012)!important;
+
+    border-color:#fff!important;
+
+    box-shadow:
+      0 18px 45px rgba(255,255,255,.06)!important;
+  }
+
+  .homeValueCard:hover:before{
+    transform:scaleY(1);
+  }
+
+  .homeValueCard:hover>span{
+    color:#555!important;
+    transform:translateX(4px);
+  }
+
+  .homeValueCard:hover h3{
+    color:#000!important;
+  }
+
+  .homeValueCard:hover p{
+    color:#555!important;
+  }
+}
+
+
+/* ----------------------------------------------------------
+   HUB CARDS
+   ---------------------------------------------------------- */
+
+.homeHubCard{
+  position:relative;
+
+  transition:
+    transform .3s cubic-bezier(.2,.8,.2,1),
+    border-color .3s ease,
+    background .3s ease!important;
+}
+
+@media(hover:hover) and (pointer:fine){
+
+  .homeHubCard:hover{
+    transform:translateY(-7px)!important;
+    background:#151515!important;
+    border-color:#666!important;
+  }
+}
+
+
+/* ----------------------------------------------------------
+   NAV HOVER — MAKE IT MORE VISIBLE
+   ---------------------------------------------------------- */
+
+.publicPage>header nav a{
+  transition:color .25s ease!important;
+}
+
+.publicPage>header nav a:hover{
+  color:#fff!important;
+}
+
+.publicPage>header nav a:after{
+  height:2px!important;
+  background:#fff!important;
+}
+
+
+/* ----------------------------------------------------------
+   HOMEPAGE BUTTON HOVER
+   ---------------------------------------------------------- */
+
+@media(hover:hover) and (pointer:fine){
+
+  .publicPage .btn:hover{
+    transform:translateY(-3px)!important;
+  }
+
+  .publicPage .btn.red:hover{
+    background:#000!important;
+    color:#fff!important;
+    border-color:#fff!important;
+  }
+
+  .publicPage .btn.ghost:hover{
+    background:#fff!important;
+    color:#000!important;
+    border-color:#fff!important;
+  }
+}
+
+
+/* ----------------------------------------------------------
+   MOBILE
+   No hover dependency on touch devices
+   ---------------------------------------------------------- */
+
+@media(max-width:700px){
+
+  .homeValueCard{
+    transform:none!important;
+  }
+
+  .homeValueCard:before{
+    display:none!important;
+  }
+}
+
