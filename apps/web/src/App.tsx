@@ -465,8 +465,7 @@ export default function App(){
 
       <section className="homeGallerySection homeIcnGallery">
         <div className="homeGalleryIntro">
-          <p className="eyebrow">ICN 2025</p>
-          <h2>BUILT FOR THE <span>STAGE.</span></h2>
+          <h2>ICN 2025</h2>
           <p>Classic Physique — Silver Medal ×2 · Posing Champion</p>
         </div>
 

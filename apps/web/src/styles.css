@@ -6641,3 +6641,34 @@ p{
   .homeIcnArrowLeft{left:22px}
   .homeIcnArrowRight{right:22px}
 }
+
+
+/* ICN 2025 LARGE HEADING */
+
+.homeIcnGallery .homeGalleryIntro h2{
+  font-size:clamp(72px,10vw,150px)!important;
+  line-height:.88!important;
+  letter-spacing:-.03em!important;
+  margin:0 0 20px!important;
+  color:#fff!important;
+  text-align:center!important;
+}
+
+.homeIcnGallery .homeGalleryIntro>p{
+  margin:0 auto!important;
+  color:#aaa!important;
+  text-align:center!important;
+  font-size:14px!important;
+}
+
+@media(max-width:700px){
+  .homeIcnGallery .homeGalleryIntro h2{
+    font-size:clamp(58px,18vw,88px)!important;
+  }
+
+  .homeIcnGallery .homeGalleryIntro>p{
+    font-size:12px!important;
+    line-height:1.6!important;
+  }
+}
+
