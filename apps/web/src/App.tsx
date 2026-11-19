@@ -485,44 +485,61 @@ export default function App(){
       </section>
 
       <section
-        className="homeAboutSection"
+        className="homeAboutSection homeAboutEditorial"
         id="about"
       >
-        <div className="homeAboutInner">
-          <div className="homeAboutCopy">
-            <p className="eyebrow redText">
-              ABOUT JAY
+        <div className="homeAboutEditorialInner">
+          <div className="homeAboutPortrait">
+            <img
+              src="/assets/jay-about-portrait.jpg"
+              alt="Jay"
+              loading="lazy"
+            />
+          </div>
+
+          <div className="homeAboutEditorialCopy">
+            <p className="eyebrow">
+              WHO IS JAY?
             </p>
 
             <h2>
               COACH.<br/>
               ATHLETE.<br/>
-              <span>MENTOR.</span>
+              MENTOR.
             </h2>
-          </div>
 
-          <div className="homeAboutDetails">
             <p>
-              Coaching focused on structure, consistency and
-              measurable improvement — with training, nutrition
-              and accountability managed in one place.
+              Jay's coaching is built around structure,
+              consistency and measurable progress.
             </p>
 
-            <div className="homeAboutStats">
-              <div>
-                <strong>1:1</strong>
-                <span>Personal Coaching</span>
-              </div>
+            <p>
+              Every client gets direct guidance across training,
+              nutrition, weekly check-ins and accountability —
+              all managed in one place.
+            </p>
 
-              <div>
-                <strong>WEEKLY</strong>
-                <span>Progress Check-ins</span>
-              </div>
+            <p>
+              The goal is simple: build a plan you can execute,
+              measure and improve over time.
+            </p>
 
-              <div>
-                <strong>24/7</strong>
-                <span>Dashboard Access</span>
-              </div>
+            <strong className="homeAboutStatement">
+              No generic plans. No unnecessary complexity.
+              Just focused coaching built around you.
+            </strong>
+
+            <div className="homeAboutEditorialActions">
+              <button
+                className="btn red"
+                onClick={()=>setModal("call")}
+              >
+                Start Your Journey
+              </button>
+
+              <a className="btn ghost" href="/programs">
+                View Coaching
+              </a>
             </div>
           </div>
         </div>
