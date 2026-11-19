@@ -4835,18 +4835,7 @@ function CheckoutPage({user}:{user:User}){
   }
 
 
-  async function mockPay(){
-    if(!program)return;
-    setBusy(true); setStatus("");
-    try{
-      await api("/payments/mock-success",{method:"POST",body:JSON.stringify({programId:program.id})});
-      setStatus("Development test payment successful. Coaching access is active.");
-      setTimeout(()=>location.href="/dashboard",800);
-    }catch(e:any){
-      setStatus(e?.message||"Mock payment failed.");
-      setBusy(false);
-    }
-  }
+
 
   if(!program)return <div className="checkoutPage"><div className="checkoutCard"><div className="brand"><b>jay.</b><span>__sthetics</span></div><h2>Checkout</h2><p>{status||"Loading programme…"}</p><a className="btn ghost" href="/programs">Back to programmes</a></div></div>;
 
@@ -4869,8 +4858,6 @@ function CheckoutPage({user}:{user:User}){
           <div className="orderMeta"><span>Duration</span><b>{program.durationDays?`${Math.round(program.durationDays/30)} months`:"Coaching plan"}</b></div>
           <div className="orderTotal"><span>Total</span><b>{money(program.pricePaise)}</b></div>
           <button className="btn red full payButton" disabled={busy} onClick={pay}>{busy?"Opening payment…":`Pay ${money(program.pricePaise)}`}</button>
-          <button className="btn ghost full mockPayButton" disabled={busy} onClick={mockPay}>Use Development Test Payment</button>
-          <div className="mockWarning">Local testing only — no real money is charged.</div>
           <div className="paymentMethods">UPI · Cards · Net Banking · Razorpay</div>
           {status&&<div className="paymentMessage">{status}</div>}
           <a className="changePlan" href="/programs">← Change programme</a>
