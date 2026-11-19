@@ -5806,3 +5806,312 @@ p{
     width:100%;
   }
 }
+
+
+/* ==========================================================
+   PREMIUM PORTRAIT GALLERY V2
+   ========================================================== */
+
+.homeGallerySection{
+  width:min(1400px,94vw)!important;
+  padding:105px 0!important;
+  overflow:hidden!important;
+}
+
+/* Heading stays centered and cleaner */
+
+.homeGalleryIntro{
+  width:min(760px,100%)!important;
+  margin:0 auto 44px!important;
+  text-align:center!important;
+}
+
+.homeGalleryIntro>p:last-child{
+  margin-left:auto!important;
+  margin-right:auto!important;
+}
+
+
+/* ----------------------------------------------------------
+   CAROUSEL OUTER
+   ---------------------------------------------------------- */
+
+.homeGalleryCarousel{
+  position:relative;
+  width:100%;
+  overflow:hidden;
+  padding:8px 0 34px;
+}
+
+
+/* ----------------------------------------------------------
+   TRACK
+   ---------------------------------------------------------- */
+
+.homeGalleryTrack{
+  display:flex;
+  gap:22px;
+
+  width:max-content;
+
+  animation:
+    jayPortraitCarousel 24s
+    cubic-bezier(.65,0,.35,1)
+    infinite;
+
+  will-change:transform;
+}
+
+
+/* ----------------------------------------------------------
+   PORTRAIT CARDS
+   ---------------------------------------------------------- */
+
+.homeGalleryCard{
+  position:relative;
+
+  flex:0 0 clamp(310px,31vw,430px);
+
+  aspect-ratio:4 / 5;
+
+  margin:0;
+
+  overflow:hidden;
+
+  border-radius:22px;
+  border:1px solid #333;
+
+  background:#090909;
+
+  box-shadow:
+    0 20px 65px rgba(0,0,0,.5);
+
+  transition:
+    transform .35s ease,
+    border-color .35s ease,
+    opacity .35s ease!important;
+}
+
+
+/* ORIGINAL PHOTO COLORS */
+
+.homeGalleryCard img{
+  display:block;
+
+  width:100%;
+  height:100%;
+
+  object-fit:contain!important;
+  object-position:center center!important;
+
+  background:#080808;
+
+  filter:none!important;
+
+  transform:none!important;
+
+  animation:none!important;
+}
+
+
+/* subtle frame vignette only */
+
+.homeGalleryCard:after{
+  content:"";
+
+  position:absolute;
+  inset:0;
+
+  pointer-events:none;
+
+  background:
+    linear-gradient(
+      180deg,
+      transparent 70%,
+      rgba(0,0,0,.22) 100%
+    );
+}
+
+
+/* ----------------------------------------------------------
+   DESKTOP HOVER
+   ---------------------------------------------------------- */
+
+@media(hover:hover) and (pointer:fine){
+
+  .homeGalleryCarousel:hover .homeGalleryTrack{
+    animation-play-state:paused;
+  }
+
+  .homeGalleryCard:hover{
+    transform:translateY(-8px)!important;
+    border-color:#777!important;
+
+    box-shadow:
+      0 30px 85px rgba(0,0,0,.7);
+  }
+
+}
+
+
+/* ----------------------------------------------------------
+   SLIDE ANIMATION
+   ---------------------------------------------------------- */
+
+@keyframes jayPortraitCarousel{
+
+  0%,
+  18%{
+    transform:translateX(0);
+  }
+
+  25%,
+  43%{
+    transform:translateX(calc(-1 * (clamp(310px,31vw,430px) + 22px)));
+  }
+
+  50%,
+  68%{
+    transform:translateX(calc(-2 * (clamp(310px,31vw,430px) + 22px)));
+  }
+
+  75%,
+  93%{
+    transform:translateX(calc(-3 * (clamp(310px,31vw,430px) + 22px)));
+  }
+
+  100%{
+    transform:translateX(0);
+  }
+
+}
+
+
+/* ----------------------------------------------------------
+   DOTS
+   ---------------------------------------------------------- */
+
+.homeGalleryDots{
+  display:flex;
+  justify-content:center;
+  gap:8px;
+
+  margin-top:24px;
+}
+
+.homeGalleryDots span{
+  width:7px;
+  height:7px;
+
+  border-radius:50%;
+
+  background:#444;
+
+  animation:jayGalleryDot 24s infinite;
+}
+
+.homeGalleryDots span:nth-child(1){
+  animation-delay:0s;
+}
+
+.homeGalleryDots span:nth-child(2){
+  animation-delay:6s;
+}
+
+.homeGalleryDots span:nth-child(3){
+  animation-delay:12s;
+}
+
+.homeGalleryDots span:nth-child(4){
+  animation-delay:18s;
+}
+
+@keyframes jayGalleryDot{
+
+  0%,24%{
+    background:#fff;
+    transform:scale(1.25);
+  }
+
+  25%,100%{
+    background:#444;
+    transform:scale(1);
+  }
+
+}
+
+
+/* ----------------------------------------------------------
+   MOBILE
+   ---------------------------------------------------------- */
+
+@media(max-width:700px){
+
+  .homeGallerySection{
+    width:100%!important;
+    padding:75px 0!important;
+  }
+
+  .homeGalleryIntro{
+    padding:0 18px;
+    margin-bottom:28px!important;
+  }
+
+  .homeGalleryCarousel{
+    padding-left:18px;
+    padding-right:18px;
+  }
+
+  .homeGalleryTrack{
+    gap:14px;
+  }
+
+  .homeGalleryCard{
+    flex:0 0 82vw;
+
+    max-width:350px;
+
+    aspect-ratio:4 / 5;
+
+    border-radius:16px;
+  }
+
+  @keyframes jayPortraitCarousel{
+
+    0%,
+    18%{
+      transform:translateX(0);
+    }
+
+    25%,
+    43%{
+      transform:translateX(calc(-82vw - 14px));
+    }
+
+    50%,
+    68%{
+      transform:translateX(calc(-164vw - 28px));
+    }
+
+    75%,
+    93%{
+      transform:translateX(calc(-246vw - 42px));
+    }
+
+    100%{
+      transform:translateX(0);
+    }
+
+  }
+
+}
+
+
+/* Remove styling from old slideshow system */
+
+.homeGallerySlider,
+.homeGallerySlide,
+.homeGalleryProgress{
+  display:none!important;
+}
+

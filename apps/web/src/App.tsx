@@ -459,27 +459,32 @@ export default function App(){
           </p>
         </div>
 
-        <div className="homeGallerySlider" aria-label="Jay competition gallery">
-          {[
-            "/assets/home-gallery/jay-gallery-1.jpeg",
-            "/assets/home-gallery/jay-gallery-2.jpeg",
-            "/assets/home-gallery/jay-gallery-3.jpeg",
-            "/assets/home-gallery/jay-gallery-4.jpeg"
-          ].map((src,index)=>
-            <figure
-              className={`homeGallerySlide homeGallerySlide${index+1}`}
-              key={src}
-            >
-              <img
-                src={src}
-                alt={`Jay competition and physique photo ${index+1}`}
-                loading={index===0?"eager":"lazy"}
-              />
-            </figure>
-          )}
+        <div className="homeGalleryCarousel" aria-label="Jay competition gallery">
+          <div className="homeGalleryTrack">
+            {[
+              "/assets/home-gallery/jay-gallery-1.jpeg",
+              "/assets/home-gallery/jay-gallery-2.jpeg",
+              "/assets/home-gallery/jay-gallery-3.jpeg",
+              "/assets/home-gallery/jay-gallery-4.jpeg"
+            ].map((src,index)=>
+              <figure
+                className="homeGalleryCard"
+                key={src}
+              >
+                <img
+                  src={src}
+                  alt={`Jay competition and physique photo ${index+1}`}
+                  loading={index===0?"eager":"lazy"}
+                />
+              </figure>
+            )}
+          </div>
 
-          <div className="homeGalleryProgress" aria-hidden="true">
-            <span></span><span></span><span></span><span></span>
+          <div className="homeGalleryDots" aria-hidden="true">
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
           </div>
         </div>
       </section>
