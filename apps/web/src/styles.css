@@ -5406,3 +5406,32 @@ p{
   }
 }
 
+
+
+/* ==========================================================
+   FINAL AVATAR MONOCHROME FIX
+   Admin + client initials
+   ========================================================== */
+
+.premiumAvatar,
+.avatar.premiumAvatar{
+  color:#000!important;
+  background:#fff!important;
+  border:1px solid #fff!important;
+  box-shadow:none!important;
+}
+
+/* Client workspace initials */
+.clientInitial{
+  color:#000!important;
+  background:#fff!important;
+  border:1px solid #fff!important;
+}
+
+/* Any check-in/avatar variants */
+.adminCheckinAvatar{
+  color:#000!important;
+  background:#fff!important;
+  border-color:#fff!important;
+}
+
