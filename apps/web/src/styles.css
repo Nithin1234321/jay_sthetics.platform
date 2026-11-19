@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800&display=swap');
 :root{font-family:Inter,system-ui,sans-serif;color:#f5f5f5;background:#070707;--red:#e11d1d;--muted:#aaa}
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:#070707}a{color:inherit;text-decoration:none}button,input,textarea{font:inherit}
 header{height:78px;position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:34px;padding:0 6vw;background:rgba(4,4,4,.94);border-bottom:1px solid #202020;backdrop-filter:blur(12px)}
@@ -4135,6 +4135,502 @@ textarea::placeholder{
   .publicPage>header .actions .red{
     color:#000!important;
     background:#fff!important;
+  }
+}
+
+
+
+/* ==========================================================
+   JAY STETHICS — MONO MOTION SYSTEM
+   Strict black / white / gray
+   Typography + premium hover + subtle motion
+   ========================================================== */
+
+
+/* ==========================================================
+   TYPOGRAPHY
+   ========================================================== */
+
+html,
+body{
+  font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,
+  "Segoe UI",sans-serif!important;
+}
+
+h1,
+h2,
+.hero h1,
+.programsHero h1,
+.authVisualCopy h1,
+.signupBrandContent h1,
+.homeFinalCta h2{
+  font-family:"Bebas Neue",Impact,sans-serif!important;
+  font-weight:400!important;
+  letter-spacing:.015em!important;
+}
+
+.hero h1{
+  line-height:.82!important;
+  letter-spacing:-.015em!important;
+}
+
+.hero h2,
+h3,
+.btn,
+.sidebar button,
+.clientTabs button{
+  font-family:Inter,system-ui,sans-serif!important;
+}
+
+.hero h2{
+  font-weight:700!important;
+}
+
+.brand b{
+  font-family:"Bebas Neue",Impact,sans-serif!important;
+  font-style:normal!important;
+  letter-spacing:.02em!important;
+}
+
+
+/* ==========================================================
+   ABSOLUTELY NO COLOR ACCENTS
+   ========================================================== */
+
+:root{
+  --red:#ffffff!important;
+}
+
+.redText,
+.eyebrow i,
+.groupTag,
+.programType,
+.overviewKicker,
+.authKicker,
+.modalAuthHead span,
+.clientWelcome>div:first-child>span,
+.actionCard>span,
+.cardBody strong,
+.planRow span,
+.miniCard span{
+  color:#fff!important;
+}
+
+
+/* Remove colored status indicators */
+
+.topStatus span,
+.heroPulse>span,
+.platformStatus>div>span{
+  background:#fff!important;
+  box-shadow:none!important;
+}
+
+
+/* Payment statuses — monochrome */
+
+.paymentStatus,
+.paymentStatus.success,
+.paymentStatus.failed,
+.paymentStatus.refunded,
+.paymentStatus.created,
+.paymentStatus.pending{
+  color:#ccc!important;
+  background:#101010!important;
+  border-color:#404040!important;
+}
+
+
+/* Programme status */
+
+.statusDot.live,
+.statusDot.off{
+  color:#ccc!important;
+  background:#101010!important;
+  border-color:#3a3a3a!important;
+}
+
+
+/* Errors / notices — grayscale */
+
+.authError,
+.signupError,
+.inlineNotice,
+.notice,
+.paymentMessage{
+  color:#eee!important;
+  background:#111!important;
+  border-color:#444!important;
+}
+
+
+/* Destructive actions — grayscale */
+
+.dangerBtn{
+  color:#fff!important;
+  background:#101010!important;
+  border-color:#666!important;
+}
+
+.dangerBtn:hover{
+  color:#000!important;
+  background:#fff!important;
+  border-color:#fff!important;
+}
+
+
+/* Remove legacy tinted surfaces */
+
+.infoPanel,
+.clientHeroCard,
+.clientWelcome,
+.overviewHero,
+.programStatusCard,
+.heroPulse,
+.selectedPlanMini,
+.coachNote,
+.lockedBox{
+  background:#0b0b0b!important;
+  border-color:#303030!important;
+}
+
+
+/* ==========================================================
+   GLOBAL MOTION
+   ========================================================== */
+
+a,
+button,
+.btn,
+.card,
+.homeValueCard,
+.homeHubCard,
+.exerciseCard,
+.planCard,
+.premiumMetric,
+.premiumPanel,
+.settingsCard,
+.programmeGroup,
+.fullProgramCard,
+.metric,
+.actionCard,
+.quickLinks>div,
+.platformStatus>div,
+input,
+textarea,
+select{
+  transition:
+    transform .24s cubic-bezier(.2,.8,.2,1),
+    border-color .24s ease,
+    background-color .24s ease,
+    color .24s ease,
+    opacity .24s ease,
+    box-shadow .24s ease!important;
+}
+
+
+/* ==========================================================
+   BUTTON HOVER
+   ========================================================== */
+
+.btn{
+  position:relative;
+  overflow:hidden;
+}
+
+.btn:hover{
+  transform:translateY(-2px)!important;
+}
+
+.btn:active{
+  transform:translateY(0) scale(.98)!important;
+}
+
+.btn.red,
+.red.btn{
+  color:#000!important;
+  background:#fff!important;
+  border-color:#fff!important;
+}
+
+.btn.red:hover,
+.red.btn:hover{
+  color:#fff!important;
+  background:#000!important;
+  border-color:#fff!important;
+}
+
+
+/* ==========================================================
+   NAVIGATION HOVER
+   ========================================================== */
+
+.publicPage>header nav a{
+  position:relative;
+  padding:8px 0;
+}
+
+.publicPage>header nav a:after{
+  content:"";
+  position:absolute;
+  left:0;
+  bottom:1px;
+  width:100%;
+  height:1px;
+  background:#fff;
+  transform:scaleX(0);
+  transform-origin:right;
+  transition:transform .28s cubic-bezier(.2,.8,.2,1);
+}
+
+.publicPage>header nav a:hover:after{
+  transform:scaleX(1);
+  transform-origin:left;
+}
+
+
+/* ==========================================================
+   HOMEPAGE CARDS
+   ========================================================== */
+
+.homeValueCard,
+.homeHubCard,
+.card{
+  transform:translateY(0);
+}
+
+.homeValueCard:hover,
+.homeHubCard:hover,
+.card:hover{
+  transform:translateY(-6px)!important;
+  border-color:#555!important;
+  background:#101010!important;
+}
+
+
+/* ==========================================================
+   DASHBOARD CARD HOVERS
+   ========================================================== */
+
+.premiumMetric:hover,
+.premiumPanel:hover,
+.settingsCard:hover,
+.metric:hover,
+.quickLinks>div:hover,
+.platformStatus>div:hover{
+  transform:translateY(-3px);
+  border-color:#444!important;
+}
+
+.exerciseCard:hover,
+.planCard:hover,
+.fullProgramCard:hover{
+  transform:translateY(-5px);
+  border-color:#555!important;
+}
+
+
+/* ==========================================================
+   EXERCISE VIDEO / IMAGES
+   ========================================================== */
+
+.exerciseCard,
+.card,
+.homeHubCard,
+.homeValueCard{
+  overflow:hidden;
+}
+
+.exerciseCard .videoBox video,
+.card img,
+.about img{
+  transition:transform .55s cubic-bezier(.2,.8,.2,1),
+             filter .4s ease!important;
+}
+
+.exerciseCard:hover .videoBox video,
+.card:hover img{
+  transform:scale(1.025);
+}
+
+
+/* ==========================================================
+   SIDEBAR INTERACTIONS
+   ========================================================== */
+
+.premiumSidebar .sidebarNav button{
+  transition:
+    transform .22s ease,
+    background .22s ease,
+    color .22s ease!important;
+}
+
+.premiumSidebar .sidebarNav button:hover{
+  transform:translateX(3px);
+}
+
+.premiumSidebar .sidebarNav button.sideActive{
+  color:#fff!important;
+  background:#161616!important;
+  border-color:#444!important;
+}
+
+.sideActive .sideIcon{
+  color:#000!important;
+  background:#fff!important;
+}
+
+
+/* ==========================================================
+   CLIENT TABS
+   ========================================================== */
+
+.clientTabs button:hover{
+  background:#151515!important;
+  color:#fff!important;
+}
+
+.clientTabs button.active{
+  color:#000!important;
+  background:#fff!important;
+}
+
+
+/* ==========================================================
+   INPUT INTERACTIONS
+   ========================================================== */
+
+input:hover,
+textarea:hover,
+select:hover{
+  border-color:#555!important;
+}
+
+input:focus,
+textarea:focus,
+select:focus{
+  border-color:#888!important;
+  outline:none!important;
+  box-shadow:0 0 0 3px rgba(255,255,255,.055)!important;
+}
+
+
+/* ==========================================================
+   CHAT
+   ========================================================== */
+
+.bubble.mine{
+  color:#000!important;
+  background:#fff!important;
+}
+
+.conversationList button.selected{
+  color:#fff!important;
+  background:#161616!important;
+  border-left-color:#fff!important;
+}
+
+
+/* ==========================================================
+   PAGE ENTRANCE MOTION
+   ========================================================== */
+
+@keyframes jayFadeUp{
+  from{
+    opacity:0;
+    transform:translateY(16px);
+  }
+
+  to{
+    opacity:1;
+    transform:translateY(0);
+  }
+}
+
+@keyframes jayFadeIn{
+  from{
+    opacity:0;
+  }
+
+  to{
+    opacity:1;
+  }
+}
+
+.publicPage .heroInner{
+  animation:jayFadeUp .7s cubic-bezier(.2,.8,.2,1) both;
+}
+
+.homeSectionHeading,
+.homeAboutCopy,
+.homeAboutDetails,
+.premiumTop,
+.overviewHero,
+.clientWelcome{
+  animation:jayFadeUp .55s cubic-bezier(.2,.8,.2,1) both;
+}
+
+.modalCard{
+  animation:jayFadeUp .28s cubic-bezier(.2,.8,.2,1) both;
+}
+
+.modal{
+  animation:jayFadeIn .2s ease both;
+}
+
+
+/* ==========================================================
+   SCROLL / HOVER POLISH
+   ========================================================== */
+
+html{
+  scroll-behavior:smooth;
+}
+
+::selection{
+  color:#000;
+  background:#fff;
+}
+
+
+/* ==========================================================
+   MOBILE
+   Keep animation smaller and faster
+   ========================================================== */
+
+@media(max-width:700px){
+
+  .homeValueCard:hover,
+  .homeHubCard:hover,
+  .card:hover,
+  .exerciseCard:hover,
+  .planCard:hover{
+    transform:none!important;
+  }
+
+  .publicPage .heroInner{
+    animation-duration:.5s;
+  }
+
+  .btn:hover{
+    transform:none!important;
+  }
+}
+
+
+/* ==========================================================
+   ACCESSIBILITY
+   ========================================================== */
+
+@media(prefers-reduced-motion:reduce){
+
+  *,
+  *:before,
+  *:after{
+    animation-duration:.01ms!important;
+    animation-iteration-count:1!important;
+    transition-duration:.01ms!important;
+    scroll-behavior:auto!important;
   }
 }
 
