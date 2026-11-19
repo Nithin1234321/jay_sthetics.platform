@@ -133,6 +133,86 @@ export default function App(){
     }
   },[path]);
 
+  useEffect(()=>{
+    if(path!=="/") return;
+
+    const reduceMotion=window.matchMedia(
+      "(prefers-reduced-motion: reduce)"
+    ).matches;
+
+    const selectors=[
+      ".publicPage .homeSectionHeading",
+      ".publicPage .homeValueCard",
+      ".publicPage .homeGalleryIntro",
+      ".publicPage .homeIcnCarousel",
+      ".publicPage .homeSocialCue",
+      ".publicPage .homeSocialLink",
+      ".publicPage .homeAboutPortrait",
+      ".publicPage .homeAboutEditorialCopy",
+      ".publicPage .homeFinalCtaInner"
+    ];
+
+    const elements=Array.from(
+      document.querySelectorAll<HTMLElement>(
+        selectors.join(",")
+      )
+    );
+
+    document
+      .querySelectorAll<HTMLElement>(".homeValueCard")
+      .forEach((el,index)=>{
+        el.style.setProperty(
+          "--home-motion-delay",
+          `${index*75}ms`
+        );
+      });
+
+    document
+      .querySelectorAll<HTMLElement>(".homeSocialLink")
+      .forEach((el,index)=>{
+        el.style.setProperty(
+          "--home-motion-delay",
+          `${index*90}ms`
+        );
+      });
+
+    if(reduceMotion){
+      elements.forEach(el=>{
+        el.classList.add(
+          "homeMotionTarget",
+          "homeMotionVisible"
+        );
+      });
+      return;
+    }
+
+    elements.forEach(el=>{
+      el.classList.add("homeMotionTarget");
+    });
+
+    const observer=new IntersectionObserver(
+      entries=>{
+        entries.forEach(entry=>{
+          if(!entry.isIntersecting)return;
+
+          entry.target.classList.add(
+            "homeMotionVisible"
+          );
+
+          observer.unobserve(entry.target);
+        });
+      },
+      {
+        threshold:.12,
+        rootMargin:"0px 0px -6% 0px"
+      }
+    );
+
+    elements.forEach(el=>observer.observe(el));
+
+    return ()=>observer.disconnect();
+  },[path]);
+
   function session(token:string,u:User,next?:string){
     // Remove legacy shared login values.
     localStorage.removeItem("token");

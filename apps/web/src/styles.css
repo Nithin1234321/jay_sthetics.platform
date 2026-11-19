@@ -7097,3 +7097,531 @@ p{
   }
 }
 
+
+
+/* ==========================================================
+   HOMEPAGE SCROLL MOTION V3
+   Homepage only
+   ========================================================== */
+
+
+/* ----------------------------------------------------------
+   HERO LOAD SEQUENCE
+   ---------------------------------------------------------- */
+
+.publicPage .hero .eyebrow{
+  opacity:0;
+  transform:translateY(22px);
+
+  animation:
+    homeHeroRise .75s
+    cubic-bezier(.2,.8,.2,1)
+    .08s forwards;
+}
+
+.publicPage .hero h1{
+  opacity:0;
+  transform:
+    translateY(42px)
+    scale(.97);
+
+  animation:
+    homeHeroTitle 1s
+    cubic-bezier(.16,1,.3,1)
+    .18s forwards;
+}
+
+.publicPage .hero h2{
+  opacity:0;
+  transform:translateY(24px);
+
+  animation:
+    homeHeroRise .75s
+    cubic-bezier(.2,.8,.2,1)
+    .43s forwards;
+}
+
+.publicPage .hero>.heroInner>.muted,
+.publicPage .hero .heroInner>.muted{
+  opacity:0;
+  transform:translateY(20px);
+
+  animation:
+    homeHeroRise .75s
+    cubic-bezier(.2,.8,.2,1)
+    .54s forwards;
+}
+
+.publicPage .heroButtons{
+  opacity:0;
+  transform:translateY(24px);
+
+  animation:
+    homeHeroRise .75s
+    cubic-bezier(.2,.8,.2,1)
+    .66s forwards;
+}
+
+
+@keyframes homeHeroRise{
+  from{
+    opacity:0;
+    transform:translateY(24px);
+  }
+
+  to{
+    opacity:1;
+    transform:translateY(0);
+  }
+}
+
+
+@keyframes homeHeroTitle{
+  0%{
+    opacity:0;
+    transform:
+      translateY(46px)
+      scale(.965);
+    letter-spacing:.01em;
+  }
+
+  100%{
+    opacity:1;
+    transform:
+      translateY(0)
+      scale(1);
+  }
+}
+
+
+/* ----------------------------------------------------------
+   HERO SUBTLE AMBIENT MOTION
+   ---------------------------------------------------------- */
+
+.publicPage .hero{
+  position:relative;
+  isolation:isolate;
+  overflow:hidden;
+}
+
+.publicPage .hero:after{
+  content:"";
+
+  position:absolute;
+  z-index:-1;
+
+  width:52vw;
+  height:52vw;
+
+  right:-20vw;
+  bottom:-30vw;
+
+  border-radius:50%;
+
+  background:
+    radial-gradient(
+      circle,
+      rgba(255,255,255,.055),
+      transparent 68%
+    );
+
+  filter:blur(10px);
+
+  animation:
+    homeAmbientFloat 9s
+    ease-in-out
+    infinite alternate;
+
+  pointer-events:none;
+}
+
+@keyframes homeAmbientFloat{
+  from{
+    transform:
+      translate3d(-2%,0,0)
+      scale(.96);
+    opacity:.45;
+  }
+
+  to{
+    transform:
+      translate3d(6%,-8%,0)
+      scale(1.08);
+    opacity:.8;
+  }
+}
+
+
+/* ----------------------------------------------------------
+   GENERAL SCROLL REVEAL
+   ---------------------------------------------------------- */
+
+.publicPage .homeMotionTarget{
+  --home-motion-delay:0ms;
+
+  opacity:0;
+
+  transform:translateY(48px);
+
+  transition:
+    opacity .8s
+      cubic-bezier(.2,.8,.2,1)
+      var(--home-motion-delay),
+    transform .9s
+      cubic-bezier(.16,1,.3,1)
+      var(--home-motion-delay)!important;
+
+  will-change:
+    opacity,
+    transform;
+}
+
+.publicPage .homeMotionTarget.homeMotionVisible{
+  opacity:1;
+  transform:translateY(0);
+}
+
+
+/* ----------------------------------------------------------
+   VALUE CARDS — STAGGER + DEPTH
+   ---------------------------------------------------------- */
+
+.publicPage .homeValueCard.homeMotionTarget{
+  transform:
+    translateY(58px)
+    scale(.965);
+}
+
+.publicPage .homeValueCard.homeMotionVisible{
+  transform:
+    translateY(0)
+    scale(1);
+}
+
+
+/* ----------------------------------------------------------
+   ICN GALLERY
+   ---------------------------------------------------------- */
+
+.publicPage .homeGalleryIntro.homeMotionTarget{
+  transform:
+    translateY(40px)
+    scale(.98);
+}
+
+.publicPage .homeGalleryIntro.homeMotionVisible{
+  transform:
+    translateY(0)
+    scale(1);
+}
+
+.publicPage .homeIcnCarousel.homeMotionTarget{
+  transform:
+    translateY(52px)
+    scale(.975);
+
+  transition-duration:
+    .95s!important;
+}
+
+.publicPage .homeIcnCarousel.homeMotionVisible{
+  transform:
+    translateY(0)
+    scale(1);
+}
+
+
+/* ICN title gets a little extra impact */
+
+.publicPage
+.homeGalleryIntro.homeMotionVisible
+h2{
+  animation:
+    homeIcnTitleSettle
+    .9s
+    cubic-bezier(.16,1,.3,1)
+    both;
+}
+
+@keyframes homeIcnTitleSettle{
+  0%{
+    letter-spacing:.025em;
+    transform:scale(.965);
+  }
+
+  100%{
+    letter-spacing:-.03em;
+    transform:scale(1);
+  }
+}
+
+
+/* ----------------------------------------------------------
+   SOCIAL AREA
+   ---------------------------------------------------------- */
+
+.publicPage .homeSocialCue.homeMotionTarget{
+  transform:translateY(32px);
+}
+
+.publicPage .homeSocialLink.homeMotionTarget{
+  transform:
+    translateY(38px)
+    scale(.96);
+}
+
+.publicPage .homeSocialLink.homeMotionVisible{
+  transform:
+    translateY(0)
+    scale(1);
+}
+
+
+/* Icon pulse after card enters */
+
+.publicPage
+.homeSocialLink.homeMotionVisible
+.homeSocialIcon{
+  animation:
+    homeSocialIconPop
+    .55s
+    cubic-bezier(.16,1,.3,1)
+    calc(var(--home-motion-delay) + 180ms)
+    both;
+}
+
+@keyframes homeSocialIconPop{
+  0%{
+    transform:scale(.72);
+    opacity:.25;
+  }
+
+  70%{
+    transform:scale(1.09);
+  }
+
+  100%{
+    transform:scale(1);
+    opacity:1;
+  }
+}
+
+
+/* ----------------------------------------------------------
+   ABOUT JAY
+   Opposing directional reveals
+   ---------------------------------------------------------- */
+
+.publicPage .homeAboutPortrait.homeMotionTarget{
+  transform:
+    translateX(-60px)
+    scale(.97);
+}
+
+.publicPage .homeAboutPortrait.homeMotionVisible{
+  transform:
+    translateX(0)
+    scale(1);
+}
+
+.publicPage .homeAboutEditorialCopy.homeMotionTarget{
+  transform:translateX(58px);
+}
+
+.publicPage .homeAboutEditorialCopy.homeMotionVisible{
+  transform:translateX(0);
+}
+
+
+/* Portrait gets subtle cinematic settle */
+
+.publicPage
+.homeAboutPortrait.homeMotionVisible
+img{
+  animation:
+    homePortraitSettle
+    1.25s
+    cubic-bezier(.16,1,.3,1)
+    both;
+}
+
+@keyframes homePortraitSettle{
+  from{
+    transform:scale(1.07);
+  }
+
+  to{
+    transform:scale(1.01);
+  }
+}
+
+
+/* ----------------------------------------------------------
+   FINAL CTA
+   ---------------------------------------------------------- */
+
+.publicPage
+.homeFinalCtaInner.homeMotionTarget{
+  transform:
+    translateY(55px)
+    scale(.975);
+}
+
+.publicPage
+.homeFinalCtaInner.homeMotionVisible{
+  transform:
+    translateY(0)
+    scale(1);
+}
+
+
+/* ----------------------------------------------------------
+   BUTTON MICRO-MOTION — HOMEPAGE ONLY
+   ---------------------------------------------------------- */
+
+@media(hover:hover) and (pointer:fine){
+
+  .publicPage .btn{
+    position:relative;
+    overflow:hidden;
+  }
+
+  .publicPage .btn:before{
+    content:"";
+
+    position:absolute;
+    inset:0;
+
+    background:
+      linear-gradient(
+        110deg,
+        transparent 25%,
+        rgba(255,255,255,.16) 50%,
+        transparent 75%
+      );
+
+    transform:translateX(-140%);
+
+    transition:
+      transform .55s
+      cubic-bezier(.2,.8,.2,1);
+
+    pointer-events:none;
+  }
+
+  .publicPage .btn:hover:before{
+    transform:translateX(140%);
+  }
+
+}
+
+
+/* ----------------------------------------------------------
+   MOBILE — STRONGER, SHORTER MOTION
+   ---------------------------------------------------------- */
+
+@media(max-width:700px){
+
+  .publicPage .homeMotionTarget{
+    transform:translateY(38px);
+
+    transition-duration:
+      .66s!important;
+  }
+
+  .publicPage
+  .homeMotionTarget.homeMotionVisible{
+    transform:translateY(0);
+  }
+
+
+  .publicPage
+  .homeValueCard.homeMotionTarget{
+    transform:
+      translateY(46px)
+      scale(.96);
+  }
+
+  .publicPage
+  .homeValueCard.homeMotionVisible{
+    transform:
+      translateY(0)
+      scale(1);
+  }
+
+
+  .publicPage
+  .homeIcnCarousel.homeMotionTarget{
+    transform:
+      translateY(42px)
+      scale(.965);
+  }
+
+  .publicPage
+  .homeIcnCarousel.homeMotionVisible{
+    transform:
+      translateY(0)
+      scale(1);
+  }
+
+
+  .publicPage
+  .homeAboutPortrait.homeMotionTarget{
+    transform:
+      translateX(-34px)
+      scale(.965);
+  }
+
+  .publicPage
+  .homeAboutPortrait.homeMotionVisible{
+    transform:
+      translateX(0)
+      scale(1);
+  }
+
+
+  .publicPage
+  .homeAboutEditorialCopy.homeMotionTarget{
+    transform:translateX(34px);
+  }
+
+  .publicPage
+  .homeAboutEditorialCopy.homeMotionVisible{
+    transform:translateX(0);
+  }
+
+
+  .publicPage .hero:after{
+    width:90vw;
+    height:90vw;
+
+    right:-45vw;
+    bottom:-25vw;
+  }
+
+}
+
+
+/* ----------------------------------------------------------
+   ACCESSIBILITY
+   ---------------------------------------------------------- */
+
+@media(prefers-reduced-motion:reduce){
+
+  .publicPage *,
+  .publicPage *:before,
+  .publicPage *:after{
+    animation-duration:.01ms!important;
+    animation-iteration-count:1!important;
+
+    transition-duration:.01ms!important;
+    scroll-behavior:auto!important;
+  }
+
+  .publicPage .homeMotionTarget{
+    opacity:1!important;
+    transform:none!important;
+  }
+
+}
+
