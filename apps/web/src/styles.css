@@ -4858,3 +4858,339 @@ html{
   color:#fff!important;
 }
 
+
+
+/* ==========================================================
+   MOBILE STRONG MOTION SYSTEM
+   Stronger entrance + tap animations for touch devices
+   ========================================================== */
+
+
+/* ----------------------------------------------------------
+   EXTRA KEYFRAMES
+   ---------------------------------------------------------- */
+
+@keyframes mobileCardRise{
+  0%{
+    opacity:0;
+    transform:translateY(32px) scale(.96);
+  }
+
+  65%{
+    opacity:1;
+    transform:translateY(-4px) scale(1.01);
+  }
+
+  100%{
+    opacity:1;
+    transform:translateY(0) scale(1);
+  }
+}
+
+@keyframes mobileHeadingRise{
+  0%{
+    opacity:0;
+    transform:translateY(26px);
+  }
+
+  100%{
+    opacity:1;
+    transform:translateY(0);
+  }
+}
+
+@keyframes mobileButtonPop{
+  0%{
+    transform:scale(1);
+  }
+
+  50%{
+    transform:scale(.94);
+  }
+
+  100%{
+    transform:scale(1);
+  }
+}
+
+
+/* ==========================================================
+   MOBILE
+   ========================================================== */
+
+@media(max-width:700px){
+
+  /* --------------------------------------------------------
+     HERO ENTRANCE
+     -------------------------------------------------------- */
+
+  .publicPage .heroInner{
+    animation:
+      mobileHeadingRise .75s cubic-bezier(.18,.9,.25,1)
+      both!important;
+  }
+
+
+  /* --------------------------------------------------------
+     SECTION HEADINGS
+     -------------------------------------------------------- */
+
+  .homeSectionHeading,
+  .homeAboutCopy,
+  .homeAboutDetails,
+  .homeFinalCtaInner{
+    animation:
+      mobileHeadingRise .7s cubic-bezier(.18,.9,.25,1)
+      both!important;
+  }
+
+
+  /* --------------------------------------------------------
+     VALUE CARDS — STRONG STAGGERED ENTRANCE
+     -------------------------------------------------------- */
+
+  .homeValueCard{
+    opacity:0;
+
+    animation:
+      mobileCardRise .62s cubic-bezier(.18,.9,.25,1)
+      forwards!important;
+
+    transform-origin:center;
+  }
+
+  .homeValueCard:nth-child(1){
+    animation-delay:.05s!important;
+  }
+
+  .homeValueCard:nth-child(2){
+    animation-delay:.13s!important;
+  }
+
+  .homeValueCard:nth-child(3){
+    animation-delay:.21s!important;
+  }
+
+  .homeValueCard:nth-child(4){
+    animation-delay:.29s!important;
+  }
+
+  .homeValueCard:nth-child(5){
+    animation-delay:.37s!important;
+  }
+
+  .homeValueCard:nth-child(6){
+    animation-delay:.45s!important;
+  }
+
+
+  /* --------------------------------------------------------
+     MOBILE TAP EFFECT
+     Black card -> white card while finger is pressed
+     -------------------------------------------------------- */
+
+  .homeValueCard:active{
+    transform:
+      scale(.965)
+      translateY(3px)!important;
+
+    background:#fff!important;
+    border-color:#fff!important;
+
+    transition:
+      transform .1s ease,
+      background .14s ease,
+      border-color .14s ease!important;
+  }
+
+  .homeValueCard:active:before{
+    transform:scaleY(1)!important;
+  }
+
+  .homeValueCard:active h3{
+    color:#000!important;
+  }
+
+  .homeValueCard:active p{
+    color:#555!important;
+  }
+
+  .homeValueCard:active>span{
+    color:#555!important;
+    transform:translateX(5px);
+  }
+
+
+  /* --------------------------------------------------------
+     COACHING HUB CARDS
+     -------------------------------------------------------- */
+
+  .homeHubCard{
+    opacity:0;
+
+    animation:
+      mobileCardRise .65s cubic-bezier(.18,.9,.25,1)
+      forwards!important;
+  }
+
+  .homeHubCard:nth-child(1){
+    animation-delay:.08s!important;
+  }
+
+  .homeHubCard:nth-child(2){
+    animation-delay:.16s!important;
+  }
+
+  .homeHubCard:nth-child(3){
+    animation-delay:.24s!important;
+  }
+
+  .homeHubCard:nth-child(4){
+    animation-delay:.32s!important;
+  }
+
+  .homeHubCard:nth-child(5){
+    animation-delay:.40s!important;
+  }
+
+  .homeHubCard:active{
+    transform:
+      scale(.96)
+      translateY(3px)!important;
+
+    border-color:#fff!important;
+    background:#181818!important;
+  }
+
+
+  /* --------------------------------------------------------
+     PLUS ICONS
+     -------------------------------------------------------- */
+
+  .homeHubIcon,
+  .homeHubCard>span:first-child{
+    transition:
+      transform .18s ease,
+      background .18s ease,
+      color .18s ease,
+      border-color .18s ease!important;
+  }
+
+  .homeHubCard:active .homeHubIcon,
+  .homeHubCard:active>span:first-child{
+    transform:
+      rotate(90deg)
+      scale(1.15)!important;
+
+    color:#000!important;
+    background:#fff!important;
+    border-color:#fff!important;
+  }
+
+
+  /* --------------------------------------------------------
+     BUTTON TAP
+     -------------------------------------------------------- */
+
+  .publicPage .btn:active,
+  .btn:active{
+    animation:
+      mobileButtonPop .22s ease!important;
+  }
+
+  .publicPage .btn.red:active{
+    color:#fff!important;
+    background:#000!important;
+    border-color:#fff!important;
+  }
+
+  .publicPage .btn.ghost:active{
+    color:#000!important;
+    background:#fff!important;
+    border-color:#fff!important;
+  }
+
+
+  /* --------------------------------------------------------
+     DASHBOARD CARD TAP
+     -------------------------------------------------------- */
+
+  .premiumMetric:active,
+  .premiumPanel:active,
+  .settingsCard:active,
+  .metric:active,
+  .exerciseCard:active,
+  .planCard:active{
+    transform:
+      scale(.975)
+      translateY(2px)!important;
+
+    border-color:#555!important;
+  }
+
+
+  /* --------------------------------------------------------
+     EXERCISE VIDEO TAP
+     -------------------------------------------------------- */
+
+  .exerciseCard:active .videoBox video{
+    transform:scale(1.035)!important;
+  }
+
+
+  /* --------------------------------------------------------
+     MOBILE HEADER BUTTON TAP
+     -------------------------------------------------------- */
+
+  .publicPage>header .actions .btn:active{
+    transform:scale(.92)!important;
+  }
+
+
+  /* --------------------------------------------------------
+     SIDEBAR / MOBILE NAV TAP
+     -------------------------------------------------------- */
+
+  .premiumSidebar .sidebarNav button:active{
+    transform:
+      translateX(5px)
+      scale(.97)!important;
+  }
+
+  .clientTabs button:active{
+    transform:scale(.94)!important;
+  }
+}
+
+
+/* ==========================================================
+   TOUCH DEVICES — even when screen is wider than 700px
+   ========================================================== */
+
+@media(hover:none) and (pointer:coarse){
+
+  .homeValueCard:active{
+    background:#fff!important;
+    border-color:#fff!important;
+    transform:scale(.965)!important;
+  }
+
+  .homeValueCard:active h3{
+    color:#000!important;
+  }
+
+  .homeValueCard:active p,
+  .homeValueCard:active>span{
+    color:#555!important;
+  }
+
+  .homeHubCard:active{
+    transform:scale(.97)!important;
+    border-color:#fff!important;
+  }
+
+  .btn:active{
+    transform:scale(.94)!important;
+  }
+}
+
