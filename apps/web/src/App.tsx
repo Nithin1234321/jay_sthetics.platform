@@ -3932,25 +3932,21 @@ function ClientDashboard({data}:any){
 
     <div className="clientActionGrid">
       <div className="actionCard">
-        <span>01</span>
         <h3>Training</h3>
         <p>Open your current workout split and exercise demonstrations.</p>
       </div>
 
       <div className="actionCard">
-        <span>02</span>
         <h3>Nutrition</h3>
         <p>Review calories, macros and meal alternatives.</p>
       </div>
 
       <div className="actionCard">
-        <span>03</span>
         <h3>Weekly Check-in</h3>
         <p>Submit progress, adherence and photos for Jay.</p>
       </div>
 
       <div className="actionCard">
-        <span>04</span>
         <h3>Coach Support</h3>
         <p>Use private messages and available call slots.</p>
       </div>
