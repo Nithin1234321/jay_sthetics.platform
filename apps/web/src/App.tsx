@@ -118,7 +118,7 @@ export default function App(){
     if(path!=="/") return;
 
     const timer=window.setInterval(()=>{
-      setGalleryIndex(current=>(current+1)%5);
+      setGalleryIndex(current=>(current+1)%4);
     },5000);
 
     return ()=>window.clearInterval(timer);
@@ -482,7 +482,7 @@ export default function App(){
               setGalleryIndex(current=>
                 delta<0
                   ?(current+1)%5
-                  :(current+4)%5
+                  :(current+3)%4
               );
             }
 
@@ -493,7 +493,7 @@ export default function App(){
             className="homeIcnArrow homeIcnArrowLeft"
             type="button"
             aria-label="Previous photo"
-            onClick={()=>setGalleryIndex(current=>(current+4)%5)}
+            onClick={()=>setGalleryIndex(current=>(current+3)%4)}
           >
             ‹
           </button>
@@ -508,8 +508,7 @@ export default function App(){
               "/assets/icn-2025/icn-2025-1.jpeg",
               "/assets/icn-2025/icn-2025-2.jpeg",
               "/assets/icn-2025/icn-2025-3.jpeg",
-              "/assets/icn-2025/icn-2025-4.jpeg",
-              "/assets/icn-2025/icn-2025-5.jpeg"
+              "/assets/icn-2025/icn-2025-4.jpeg"
             ].map((src,index)=>
               <figure className="homeIcnCard" key={src}>
                 <img
@@ -525,7 +524,7 @@ export default function App(){
             className="homeIcnArrow homeIcnArrowRight"
             type="button"
             aria-label="Next photo"
-            onClick={()=>setGalleryIndex(current=>(current+1)%5)}
+            onClick={()=>setGalleryIndex(current=>(current+1)%4)}
           >
             ›
           </button>
@@ -537,7 +536,7 @@ export default function App(){
           </div>
 
           <div className="homeIcnDots" aria-label="Gallery navigation">
-            {[0,1,2,3,4].map(index=>
+            {[0,1,2,3].map(index=>
               <button
                 type="button"
                 key={index}
