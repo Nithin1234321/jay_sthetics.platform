@@ -1256,7 +1256,7 @@ function AdminClients({setNotice}:{setNotice:(s:string)=>void}){
     Delete Client
   </button>
 </div></div>
-      <div className="clientTabs">{["overview","profile","subscription","workout","nutrition","progress","check-ins","calls","payments","notes"].map(t=><button key={t} className={clientTab===t?"active":""} onClick={()=>setClientTab(t)}>{t}</button>)}</div><div className="clientWorkspaceBody">
+      <div className="clientTabs">{["overview","profile","subscription","workout","nutrition","check-ins","calls","payments","notes"].map(t=><button key={t} className={clientTab===t?"active":""} onClick={()=>setClientTab(t)}>{t}</button>)}</div><div className="clientWorkspaceBody">
       {clientTab==="overview"&&<div className="clientOverviewGrid"><div className="clientHeroCard"><small>COACHING STATUS</small><h2>{selected.subscriptions?.[0]?.program?.name||"No programme assigned"}</h2><p>{selected.subscriptions?.[0]?.status||"No coaching access yet."}</p></div><Info k="Goal" v={selected.clientProfile?.fitnessGoal||"Not added"}/><Info k="Weight" v={selected.clientProfile?.currentWeightKg?`${selected.clientProfile.currentWeightKg} kg`:"Not added"}/><Info k="Height" v={selected.clientProfile?.heightCm?`${selected.clientProfile.heightCm} cm`:"Not added"}/><Info k="Experience" v={selected.clientProfile?.trainingExperience||selected.clientProfile?.experienceLevel||"Not added"}/></div>}
       {clientTab==="profile"&&<div className="clientSection"><h3>Client Details</h3><form onSubmit={saveProfile} className="profileForm"><div className="formGrid"><label>Full name<input name="fullName" defaultValue={selected.fullName} required/></label><label>Contact number<input name="phone" defaultValue={selected.phone||""} required/></label></div><div className="formGrid"><label>Date of birth<input name="dob" type="date" defaultValue={selected.clientProfile?.dateOfBirth?String(selected.clientProfile.dateOfBirth).slice(0,10):""} required/></label><label>Height (cm)<input name="height" type="number" step=".1" defaultValue={selected.clientProfile?.heightCm||""} required/></label></div><div className="formGrid"><label>Weight (kg)<input name="weight" type="number" step=".1" defaultValue={selected.clientProfile?.currentWeightKg||""} required/></label><label>Training experience<input name="experience" defaultValue={selected.clientProfile?.trainingExperience||selected.clientProfile?.experienceLevel||""} required/></label></div><label>Goal<textarea name="goal" defaultValue={selected.clientProfile?.fitnessGoal||""} required/></label><button className="btn red">Save Details</button></form></div>}
       {clientTab==="subscription"&&
@@ -1765,7 +1765,7 @@ function AdminClients({setNotice}:{setNotice:(s:string)=>void}){
           )}
         </div>
       }
-      {clientTab==="progress"&&<div className="clientSection"><h3>Progress History</h3>{selected.measurements?.length?selected.measurements.map((x:any)=><div className="managementRow" key={x.id}><b>{x.metric}: {String(x.value)} {x.unit}</b><small>{new Date(x.measuredAt).toLocaleDateString()}</small></div>):<Empty text="No measurements yet."/>}</div>}
+
       {clientTab==="check-ins"&&
   <div className="clientSection">
     <h3>Weekly Check-ins</h3>
