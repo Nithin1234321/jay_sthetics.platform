@@ -3267,3 +3267,836 @@ button.tr{width:100%;color:inherit;border:0;text-align:left;cursor:pointer}
   }
 }
 
+
+
+/* ==========================================================
+   JAY AESTHETICS — WARM EDITORIAL THEME
+   Warm cream + charcoal + muted burgundy
+   Theme-only layer. No application logic changed.
+   ========================================================== */
+
+:root{
+  --ja-cream:#f1ece3;
+  --ja-paper:#f8f4ee;
+  --ja-paper-2:#ebe4da;
+
+  --ja-charcoal:#171614;
+  --ja-charcoal-2:#24211e;
+
+  --ja-muted:#766f67;
+  --ja-muted-2:#9b9288;
+
+  --ja-line:#d6cec3;
+  --ja-line-dark:#34302c;
+
+  --ja-burgundy:#791b18;
+  --ja-burgundy-strong:#9d211c;
+  --ja-burgundy-soft:#ead7d3;
+
+  --panel:var(--ja-paper);
+  --panel-2:var(--ja-paper-2);
+  --line:var(--ja-line);
+  --text:var(--ja-charcoal);
+  --muted:var(--ja-muted);
+  --red:var(--ja-burgundy);
+}
+
+
+/* ==========================================================
+   BASE
+   ========================================================== */
+
+html,
+body{
+  background:var(--ja-cream);
+  color:var(--ja-charcoal);
+}
+
+body{
+  background:
+    linear-gradient(
+      180deg,
+      #f5f0e8 0%,
+      var(--ja-cream) 100%
+    );
+}
+
+.redText,
+.eyebrow i{
+  color:var(--ja-burgundy)!important;
+}
+
+.muted{
+  color:var(--ja-muted)!important;
+}
+
+
+/* ==========================================================
+   BUTTONS
+   ========================================================== */
+
+.btn{
+  border-color:#a89f94;
+  color:var(--ja-charcoal);
+}
+
+.btn.red,
+.red.btn{
+  color:#fff!important;
+  border-color:var(--ja-burgundy)!important;
+  background:
+    linear-gradient(
+      135deg,
+      var(--ja-burgundy-strong),
+      var(--ja-burgundy)
+    )!important;
+}
+
+.btn.ghost{
+  color:var(--ja-charcoal);
+  border-color:#aaa095;
+  background:rgba(255,255,255,.24);
+}
+
+.btn.ghost:hover{
+  background:#e7ded3;
+  border-color:#90857a;
+}
+
+.dangerBtn{
+  color:#8c1d1a!important;
+  border-color:#c9a4a0!important;
+  background:#f4e5e2!important;
+}
+
+
+/* ==========================================================
+   PUBLIC WEBSITE HEADER
+   ========================================================== */
+
+.publicPage{
+  background:var(--ja-cream);
+  color:var(--ja-charcoal);
+}
+
+.publicPage>header{
+  background:rgba(241,236,227,.94)!important;
+  border-bottom:1px solid var(--ja-line)!important;
+  box-shadow:0 8px 25px rgba(48,39,30,.04);
+}
+
+.publicPage>header nav a{
+  color:#625c55!important;
+}
+
+.publicPage>header nav a:hover{
+  color:var(--ja-burgundy)!important;
+}
+
+.brand b{
+  color:var(--ja-burgundy)!important;
+}
+
+.brand span{
+  color:var(--ja-charcoal);
+}
+
+
+/* ==========================================================
+   HERO
+   Keep hero photographic and dark for contrast
+   ========================================================== */
+
+.publicPage .hero{
+  color:#fff;
+  background:
+    linear-gradient(
+      90deg,
+      rgba(20,17,14,.93) 0%,
+      rgba(20,17,14,.82) 37%,
+      rgba(20,17,14,.22) 74%
+    ),
+    url('/assets/jay-hero.jpeg') 72% 28%/cover no-repeat!important;
+}
+
+.publicPage .hero .eyebrow{
+  color:#eee8df!important;
+}
+
+.publicPage .hero .muted{
+  color:#d0c7bd!important;
+}
+
+.publicPage .hero .btn.ghost{
+  color:#fff!important;
+  border-color:rgba(255,255,255,.55)!important;
+  background:rgba(0,0,0,.15);
+}
+
+
+/* ==========================================================
+   PUBLIC HOME SECTIONS
+   ========================================================== */
+
+.featureRow{
+  background:#e8e0d6!important;
+  border-color:var(--ja-line)!important;
+}
+
+.featureRow div{
+  border-color:#d3cabf!important;
+}
+
+.featureRow span{
+  color:var(--ja-muted)!important;
+}
+
+.section,
+.homeValueSection,
+.homeHubSection{
+  background:var(--ja-cream)!important;
+  color:var(--ja-charcoal);
+}
+
+.card,
+.homeValueCard,
+.homeHubCard,
+.hubGrid>div{
+  background:var(--ja-paper)!important;
+  border-color:var(--ja-line)!important;
+  color:var(--ja-charcoal);
+  box-shadow:0 10px 30px rgba(58,46,36,.035);
+}
+
+.cardBody p,
+.homeValueCard p,
+.homeHubCard p,
+.hubGrid small{
+  color:var(--ja-muted)!important;
+}
+
+.homeAboutSection,
+.about{
+  background:#e9e1d7!important;
+  color:var(--ja-charcoal);
+  border-color:var(--ja-line)!important;
+}
+
+.about p,
+.homeAboutDetails>p{
+  color:#6e675f!important;
+}
+
+.homeAboutStats>div{
+  border-color:#cec4b8!important;
+}
+
+.cta,
+.homeFinalCta{
+  color:#fff;
+  background:
+    radial-gradient(
+      circle at center,
+      #89221d 0%,
+      #651713 38%,
+      #251513 100%
+    )!important;
+}
+
+.homeFinalCta .muted,
+.cta p{
+  color:#e4d8d1!important;
+}
+
+.publicPage footer{
+  background:#ded5ca!important;
+  color:#6f675f!important;
+  border-color:#cbc1b5!important;
+}
+
+
+/* ==========================================================
+   ADMIN + CLIENT DASHBOARDS
+   ========================================================== */
+
+.appShell{
+  background:var(--ja-cream)!important;
+  color:var(--ja-charcoal)!important;
+}
+
+.premiumDash,
+.dash{
+  background:
+    linear-gradient(
+      180deg,
+      #f6f1ea,
+      var(--ja-cream)
+    )!important;
+
+  color:var(--ja-charcoal)!important;
+}
+
+.premiumTop{
+  border-color:var(--ja-line)!important;
+}
+
+.premiumTop h1,
+.dash h1,
+.dash h2,
+.dash h3,
+.dash b,
+.dash strong{
+  color:var(--ja-charcoal);
+}
+
+.premiumTop p{
+  color:var(--ja-muted)!important;
+}
+
+
+/* ---------- SIDEBAR ---------- */
+
+.premiumSidebar,
+.sidebar{
+  background:
+    linear-gradient(
+      180deg,
+      #1d1b18,
+      #141310
+    )!important;
+
+  border-color:#302d29!important;
+  color:#eee8df;
+}
+
+.sidebarBrandWrap{
+  border-color:#34302c!important;
+}
+
+.sidebarBrandWrap .brand span{
+  color:#eee8df!important;
+}
+
+.sidebarBrandWrap small{
+  color:#8f877e!important;
+}
+
+.premiumSidebar .sidebarNav button{
+  color:#a9a096!important;
+}
+
+.premiumSidebar .sidebarNav button:hover{
+  color:#fff!important;
+  background:#292520!important;
+}
+
+.premiumSidebar .sidebarNav button.sideActive{
+  color:#fff!important;
+  border-color:#70231e!important;
+  background:
+    linear-gradient(
+      90deg,
+      #67201c,
+      #351a17
+    )!important;
+}
+
+.sideIcon{
+  color:#aaa198!important;
+  background:#292622!important;
+}
+
+.sideActive .sideIcon{
+  color:#fff!important;
+  background:var(--ja-burgundy)!important;
+}
+
+.sidebarFooter{
+  border-color:#34302c!important;
+}
+
+.logoutBtn{
+  color:#aaa198!important;
+}
+
+
+/* ==========================================================
+   DASHBOARD CARDS / PANELS
+   ========================================================== */
+
+.metric,
+.premiumMetric,
+.premiumPanel,
+.settingsCard,
+.infoPanel,
+.exerciseCard,
+.planCard,
+.programmeCard,
+.checkinCard,
+.paymentCard,
+.leadCard,
+.actionCard,
+.orderCard,
+.selectedPlanMini,
+.info,
+.miniCard,
+.managementRow,
+.coachNote,
+.stackList,
+.compactTable{
+  background:var(--ja-paper)!important;
+  color:var(--ja-charcoal)!important;
+  border-color:var(--ja-line)!important;
+  box-shadow:0 7px 22px rgba(67,53,41,.035);
+}
+
+.premiumMetric{
+  background:
+    linear-gradient(
+      180deg,
+      #faf7f2,
+      #eee7dd
+    )!important;
+}
+
+.premiumMetric b{
+  color:var(--ja-charcoal)!important;
+}
+
+.premiumMetric p,
+.metric small,
+.premiumMetric small,
+.info small,
+.managementRow small,
+.checkinCard p,
+.coachNote small,
+.panelTitle small{
+  color:var(--ja-muted)!important;
+}
+
+.quickLinks>div,
+.platformStatus>div{
+  background:#eee7dd!important;
+  border-color:#d5cbc0!important;
+}
+
+.quickLinks span,
+.platformStatus small{
+  color:var(--ja-muted)!important;
+}
+
+
+/* ==========================================================
+   OVERVIEW / CLIENT HERO CARDS
+   ========================================================== */
+
+.overviewHero,
+.clientWelcome,
+.clientHeroCard{
+  color:var(--ja-charcoal)!important;
+  border-color:#d2b9b3!important;
+
+  background:
+    radial-gradient(
+      circle at 88% 15%,
+      #ead7d2 0%,
+      #f6f0e9 38%,
+      #eee7dd 100%
+    )!important;
+}
+
+.overviewHero p,
+.clientWelcome p{
+  color:#71685f!important;
+}
+
+.heroPulse,
+.programStatusCard{
+  background:#e8ddd2!important;
+  border-color:#d0bdb5!important;
+  color:var(--ja-charcoal)!important;
+}
+
+
+/* ==========================================================
+   TABLES
+   ========================================================== */
+
+.premiumTable{
+  background:var(--ja-paper)!important;
+  border-color:var(--ja-line)!important;
+}
+
+.premiumTable .tr{
+  background:var(--ja-paper)!important;
+  color:var(--ja-charcoal)!important;
+  border-color:var(--ja-line)!important;
+}
+
+.premiumTable .tr.head{
+  background:#e7dfd5!important;
+  color:#706960!important;
+}
+
+.premiumTable .rowButton:hover{
+  background:#ede5db!important;
+}
+
+.premiumTable .tr small{
+  color:var(--ja-muted)!important;
+}
+
+
+/* ==========================================================
+   FORMS / INPUTS
+   ========================================================== */
+
+.toolbar input,
+.editCard input,
+.editCard textarea,
+.editCard select,
+.dash input,
+.dash textarea,
+.dash select,
+.modalCard input,
+.modalCard textarea,
+.modalCard select,
+.clientWorkspaceBody input,
+.clientWorkspaceBody textarea,
+.clientWorkspaceBody select{
+  color:var(--ja-charcoal)!important;
+  background:#faf7f2!important;
+  border-color:#cfc5b9!important;
+}
+
+input::placeholder,
+textarea::placeholder{
+  color:#9c9389!important;
+}
+
+.dash input:focus,
+.dash textarea:focus,
+.dash select:focus,
+.authForm input:focus{
+  border-color:var(--ja-burgundy)!important;
+  box-shadow:0 0 0 3px rgba(121,27,24,.09)!important;
+}
+
+
+/* ==========================================================
+   MODALS
+   ========================================================== */
+
+.modal{
+  background:rgba(30,25,20,.62)!important;
+}
+
+.modalCard{
+  color:var(--ja-charcoal)!important;
+  background:var(--ja-paper)!important;
+  border-color:#cfc5b9!important;
+  box-shadow:0 30px 90px rgba(35,28,22,.22);
+}
+
+.modalCard .close{
+  color:var(--ja-charcoal)!important;
+}
+
+.modalAuthHead p{
+  color:var(--ja-muted)!important;
+}
+
+
+/* ==========================================================
+   CLIENT DETAIL WORKSPACE
+   ========================================================== */
+
+.clientWorkspaceOverlay,
+.clientWorkspace,
+.clientWorkspaceBody{
+  background:var(--ja-cream)!important;
+  color:var(--ja-charcoal)!important;
+}
+
+.clientWorkspaceTop,
+.clientTabs{
+  background:#ebe3d8!important;
+  border-color:var(--ja-line)!important;
+}
+
+.clientIdentity p{
+  color:var(--ja-muted)!important;
+}
+
+.clientInitial{
+  color:#fff!important;
+  background:var(--ja-burgundy)!important;
+}
+
+.clientAccessBadge{
+  color:#645c54;
+  border-color:#bdb2a6!important;
+}
+
+.clientTabs button{
+  color:#726a61!important;
+}
+
+.clientTabs button.active{
+  color:#fff!important;
+  background:var(--ja-burgundy)!important;
+}
+
+
+/* ==========================================================
+   EXERCISE / WORKOUT / NUTRITION
+   ========================================================== */
+
+.videoBox{
+  background:#1c1916!important;
+  color:#8f877d!important;
+}
+
+.exerciseBody p,
+.exerciseBody li,
+.exerciseBody small,
+.planCard>p,
+.planRow small,
+.mealRow small{
+  color:var(--ja-muted)!important;
+}
+
+.pill{
+  color:#625a53!important;
+  border-color:#c9bfb4!important;
+  background:#ede5db!important;
+}
+
+.macroRow span{
+  color:#625a53!important;
+  border-color:#c9bfb4!important;
+  background:#eee6dc!important;
+}
+
+
+/* ==========================================================
+   CHAT
+   ========================================================== */
+
+.clientChat,
+.chatLayout,
+.chatPanel,
+.conversationList{
+  background:var(--ja-paper)!important;
+  border-color:var(--ja-line)!important;
+  color:var(--ja-charcoal)!important;
+}
+
+.conversationList button{
+  color:var(--ja-charcoal)!important;
+  border-color:var(--ja-line)!important;
+}
+
+.conversationList button.selected{
+  background:#eadbd6!important;
+  border-left-color:var(--ja-burgundy)!important;
+}
+
+.bubble{
+  color:var(--ja-charcoal)!important;
+  background:#e8e0d6!important;
+}
+
+.bubble.mine{
+  color:#fff!important;
+  background:var(--ja-burgundy)!important;
+}
+
+.chatForm{
+  background:#ebe3d8!important;
+  border-color:var(--ja-line)!important;
+}
+
+
+/* ==========================================================
+   PROGRAMMES
+   ========================================================== */
+
+.programsPage,
+.programsMain{
+  color:var(--ja-charcoal)!important;
+  background:var(--ja-cream)!important;
+}
+
+.simpleHeader{
+  background:#f2ece4!important;
+  border-color:var(--ja-line)!important;
+}
+
+.programsHero{
+  color:var(--ja-charcoal)!important;
+
+  background:
+    radial-gradient(
+      circle at 75% 30%,
+      #e4cdc6 0%,
+      #eee5db 30%,
+      var(--ja-cream) 68%
+    )!important;
+
+  border-color:var(--ja-line)!important;
+}
+
+.programsHero>p:last-child{
+  color:var(--ja-muted)!important;
+}
+
+.fullProgramCard,
+.programmeGroup{
+  background:var(--ja-paper)!important;
+  color:var(--ja-charcoal)!important;
+  border-color:var(--ja-line)!important;
+}
+
+.programmeGroupHead{
+  color:var(--ja-charcoal)!important;
+  border-color:var(--ja-line)!important;
+  background:#e9e0d5!important;
+}
+
+.programmeMain p,
+.programmeGroupHead p{
+  color:var(--ja-muted)!important;
+}
+
+.fullProgramPrice,
+.programmePrice b{
+  color:var(--ja-charcoal)!important;
+}
+
+.durationBadge,
+.groupCount{
+  color:var(--ja-charcoal)!important;
+  background:#ebe3d9!important;
+  border-color:#c9bfb4!important;
+}
+
+
+/* ==========================================================
+   AUTH / LOGIN
+   ========================================================== */
+
+.authPage{
+  background:var(--ja-cream)!important;
+  color:var(--ja-charcoal)!important;
+}
+
+.authPanel{
+  background:
+    radial-gradient(
+      circle at 50% 30%,
+      #f9f5ef,
+      #eee7de 55%,
+      #e7ded3 100%
+    )!important;
+}
+
+.authHeader h2{
+  color:var(--ja-charcoal)!important;
+}
+
+.authHeader p,
+.authOptions,
+.authSecurity,
+.authDivider{
+  color:var(--ja-muted)!important;
+}
+
+.authForm label{
+  color:#625b54!important;
+}
+
+.authForm input{
+  color:var(--ja-charcoal)!important;
+  background:#fbf8f3!important;
+  border-color:#cfc5b9!important;
+}
+
+.authOptions a,
+.authTextLink{
+  color:#625b54!important;
+}
+
+
+/* ==========================================================
+   CHECKOUT
+   ========================================================== */
+
+.checkoutPage{
+  color:var(--ja-charcoal)!important;
+
+  background:
+    radial-gradient(
+      circle at 25% 15%,
+      #ead7d1 0%,
+      #f1ebe3 38%,
+      #e8e0d6 100%
+    )!important;
+}
+
+.checkoutBrand{
+  border-color:var(--ja-line)!important;
+}
+
+.checkoutBenefits div{
+  color:#625b54!important;
+  background:#eee6dc!important;
+  border-color:#d1c6ba!important;
+}
+
+.orderMeta,
+.orderTotal{
+  border-color:var(--ja-line)!important;
+}
+
+
+/* ==========================================================
+   NOTICES / EMPTY STATES
+   ========================================================== */
+
+.empty{
+  color:var(--ja-muted)!important;
+  border-color:#c7bbb0!important;
+  background:#eee6dc!important;
+}
+
+.inlineNotice,
+.notice{
+  color:#5b201d!important;
+  border-color:#d1aba5!important;
+  background:#f1ded9!important;
+}
+
+
+/* ==========================================================
+   MOBILE
+   ========================================================== */
+
+@media(max-width:700px){
+
+  .publicPage .hero{
+    background:
+      linear-gradient(
+        180deg,
+        rgba(20,17,14,.08),
+        rgba(20,17,14,.58) 46%,
+        rgba(20,17,14,.92) 82%
+      ),
+      url('/assets/jay-hero.jpeg') 60% 20%/cover no-repeat!important;
+  }
+
+  .publicPage>header{
+    background:rgba(241,236,227,.97)!important;
+  }
+}
+
