@@ -6293,3 +6293,257 @@ p{
 .homeGalleryProgress{
   display:none!important;
 }
+
+/* ==========================================================
+   FINAL MOBILE BUTTON ALIGNMENT FIX
+   Consistent height / centered text / clean action rows
+   ========================================================== */
+
+@media(max-width:700px){
+
+  /* --------------------------------------------------------
+     GLOBAL BUTTON NORMALIZATION
+     -------------------------------------------------------- */
+
+  .btn,
+  button.btn,
+  a.btn{
+    min-height:46px!important;
+    height:auto!important;
+
+    display:inline-flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+
+    text-align:center!important;
+    vertical-align:middle!important;
+
+    padding:11px 16px!important;
+
+    line-height:1.15!important;
+
+    white-space:normal!important;
+    word-break:normal!important;
+
+    font-size:12px!important;
+    font-weight:800!important;
+
+    letter-spacing:.02em!important;
+
+    border-radius:8px!important;
+  }
+
+
+  /* Prevent nested text/icons from shifting vertically */
+
+  .btn span,
+  .btn strong,
+  .btn b{
+    display:inline-flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+
+    line-height:1.15!important;
+    text-align:center!important;
+  }
+
+
+  /* --------------------------------------------------------
+     PUBLIC HEADER
+     Keep both buttons aligned on mobile
+     -------------------------------------------------------- */
+
+  .publicPage>header{
+    align-items:center!important;
+  }
+
+  .publicPage>header .actions{
+    display:flex!important;
+    align-items:center!important;
+    justify-content:flex-end!important;
+    gap:6px!important;
+  }
+
+  .publicPage>header .actions .btn{
+    min-height:38px!important;
+    height:38px!important;
+
+    padding:0 10px!important;
+
+    display:inline-flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+
+    line-height:1!important;
+    white-space:nowrap!important;
+
+    font-size:9px!important;
+
+    margin:0!important;
+  }
+
+
+  /* --------------------------------------------------------
+     HERO BUTTONS
+     -------------------------------------------------------- */
+
+  .publicPage .heroButtons,
+  .homeFinalActions,
+  .homeAboutEditorialActions{
+    display:grid!important;
+    grid-template-columns:1fr!important;
+    gap:10px!important;
+    width:100%!important;
+  }
+
+  .publicPage .heroButtons .btn,
+  .homeFinalActions .btn,
+  .homeAboutEditorialActions .btn{
+    width:100%!important;
+    min-height:48px!important;
+    margin:0!important;
+  }
+
+
+  /* --------------------------------------------------------
+     MODAL / FORM ACTION BUTTONS
+     -------------------------------------------------------- */
+
+  .dialogActions,
+  .toolbarActions,
+  .customOfferActions,
+  .clientTopActions,
+  .programmeRowActions{
+    display:flex!important;
+    flex-wrap:wrap!important;
+    align-items:stretch!important;
+    gap:8px!important;
+  }
+
+  .dialogActions .btn,
+  .toolbarActions .btn,
+  .customOfferActions .btn,
+  .clientTopActions .btn,
+  .programmeRowActions .btn{
+    flex:1 1 140px!important;
+    min-width:0!important;
+
+    display:inline-flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+
+    text-align:center!important;
+    margin:0!important;
+  }
+
+
+  /* --------------------------------------------------------
+     FULL WIDTH FORM BUTTONS
+     -------------------------------------------------------- */
+
+  form .btn.full,
+  .btn.full,
+  .workoutPlanCard>.btn.full{
+    width:100%!important;
+    min-height:48px!important;
+
+    display:flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+
+    text-align:center!important;
+  }
+
+
+  /* --------------------------------------------------------
+     SEARCH BUTTONS
+     -------------------------------------------------------- */
+
+  .search button,
+  .clientExerciseSearch button{
+    min-height:44px!important;
+    height:44px!important;
+
+    display:flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+
+    padding:0 14px!important;
+
+    line-height:1!important;
+  }
+
+
+  /* --------------------------------------------------------
+     CLIENT TABS
+     Horizontal tabs stay centered vertically
+     -------------------------------------------------------- */
+
+  .clientTabs button{
+    min-height:40px!important;
+
+    display:inline-flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+
+    line-height:1.15!important;
+
+    padding:9px 12px!important;
+  }
+
+
+  /* --------------------------------------------------------
+     SIDEBAR
+     Preserve left-aligned navigation
+     -------------------------------------------------------- */
+
+  .premiumSidebar .sidebarNav button,
+  .sidebar button{
+    justify-content:flex-start!important;
+    text-align:left!important;
+    line-height:1.25!important;
+  }
+
+
+  /* --------------------------------------------------------
+     SMALL / DESTRUCTIVE ACTIONS
+     -------------------------------------------------------- */
+
+  .leadEnquiryCard .btn,
+  .checkinAdminHeader .btn,
+  .adminCheckinFooter .btn,
+  .programmeTop>.btn{
+    min-height:44px!important;
+
+    display:inline-flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+
+    text-align:center!important;
+  }
+}
+
+
+/* Very small phones */
+
+@media(max-width:390px){
+
+  .publicPage>header .actions .btn{
+    height:36px!important;
+    min-height:36px!important;
+
+    padding:0 7px!important;
+
+    font-size:8px!important;
+    letter-spacing:0!important;
+  }
+
+  .btn,
+  button.btn,
+  a.btn{
+    font-size:11px!important;
+    padding-left:13px!important;
+    padding-right:13px!important;
+  }
+}
+
