@@ -6960,3 +6960,45 @@ p{
   }
 }
 
+
+
+/* SOCIAL CLICK CUE */
+
+.homeSocialCue{
+  text-align:center;
+  margin:0 auto 18px;
+}
+
+.homeSocialCue strong{
+  display:block;
+  color:#fff!important;
+  font-size:11px;
+  font-weight:800;
+  letter-spacing:.14em;
+}
+
+.homeSocialCue span{
+  display:block;
+  margin-top:5px;
+  color:#666!important;
+  font-size:10px;
+}
+
+.homeSocialLink{
+  cursor:pointer!important;
+}
+
+@media(max-width:700px){
+  .homeSocialCue{
+    margin-bottom:14px;
+  }
+
+  .homeSocialCue strong{
+    font-size:10px;
+  }
+
+  .homeSocialCue span{
+    font-size:9px;
+  }
+}
+

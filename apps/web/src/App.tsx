@@ -544,6 +544,11 @@ export default function App(){
 
 
       <section className="homeSocialBridge" aria-label="Jay social links">
+        <div className="homeSocialCue">
+          <strong>CONNECT WITH JAY</strong>
+          <span>Tap an icon to open</span>
+        </div>
+
         <div className="homeSocialBridgeInner">
 
           <a
