@@ -545,8 +545,17 @@ export default function App(){
 
       <section className="homeSocialBridge" aria-label="Jay social links">
         <div className="homeSocialCue">
-          <strong>CONNECT WITH JAY</strong>
-          <span>Tap an icon to open</span>
+          <span className="homeSocialEyebrow">
+            SOCIALS & CONTACT
+          </span>
+
+          <h3>
+            CONNECT WITH JAY
+          </h3>
+
+          <p>
+            Choose a platform below
+          </p>
         </div>
 
         <div className="homeSocialBridgeInner">

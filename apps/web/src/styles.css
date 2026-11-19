@@ -7002,3 +7002,98 @@ p{
   }
 }
 
+
+
+/* SOCIAL SECTION HEADER UPGRADE */
+
+.homeSocialCue{
+  max-width:700px;
+  margin:0 auto 24px!important;
+  text-align:center;
+}
+
+.homeSocialEyebrow{
+  display:block;
+
+  margin-bottom:8px;
+
+  color:#777!important;
+
+  font-size:9px!important;
+  font-weight:800!important;
+
+  letter-spacing:.18em!important;
+}
+
+.homeSocialCue h3{
+  margin:0!important;
+
+  color:#fff!important;
+
+  font-family:"Oswald",sans-serif!important;
+
+  font-size:clamp(34px,4vw,52px)!important;
+  font-weight:600!important;
+
+  line-height:1!important;
+
+  letter-spacing:-.02em!important;
+}
+
+.homeSocialCue p{
+  margin:8px 0 0!important;
+
+  color:#777!important;
+
+  font-size:11px!important;
+}
+
+
+/* Make clickable cards look more like buttons */
+
+.homeSocialLink{
+  position:relative;
+}
+
+.homeSocialLink:after{
+  content:"↗";
+
+  margin-left:auto;
+
+  color:#666;
+
+  font-size:15px;
+
+  transition:
+    transform .2s ease,
+    color .2s ease;
+}
+
+@media(hover:hover) and (pointer:fine){
+
+  .homeSocialLink:hover:after{
+    color:#000;
+    transform:translate(2px,-2px);
+  }
+}
+
+
+@media(max-width:700px){
+
+  .homeSocialCue{
+    margin-bottom:18px!important;
+  }
+
+  .homeSocialCue h3{
+    font-size:32px!important;
+  }
+
+  .homeSocialCue p{
+    font-size:10px!important;
+  }
+
+  .homeSocialLink:after{
+    display:none;
+  }
+}
+
