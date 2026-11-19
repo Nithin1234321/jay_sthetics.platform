@@ -6547,3 +6547,97 @@ p{
   }
 }
 
+
+/* MANUAL ICN GALLERY CONTROLS */
+
+.homeIcnManual{
+  position:relative;
+  overflow:hidden;
+  touch-action:pan-y;
+}
+
+.homeIcnManual .homeIcnTrack{
+  animation:none!important;
+  transition:transform .55s cubic-bezier(.22,.8,.2,1)!important;
+}
+
+.homeIcnArrow{
+  position:absolute;
+  top:42%;
+  z-index:8;
+  width:46px;
+  height:46px;
+  min-width:46px;
+  min-height:46px;
+  padding:0!important;
+  display:grid!important;
+  place-items:center!important;
+  border:1px solid rgba(255,255,255,.35)!important;
+  border-radius:50%!important;
+  background:rgba(0,0,0,.72)!important;
+  color:#fff!important;
+  font-size:30px!important;
+  line-height:1!important;
+  font-weight:400!important;
+  cursor:pointer;
+  backdrop-filter:blur(8px);
+  -webkit-backdrop-filter:blur(8px);
+}
+
+.homeIcnArrowLeft{left:14px}
+.homeIcnArrowRight{right:14px}
+
+@media(hover:hover) and (pointer:fine){
+  .homeIcnArrow:hover{
+    background:#fff!important;
+    color:#000!important;
+    border-color:#fff!important;
+    transform:scale(1.06)!important;
+  }
+}
+
+.homeIcnDots{
+  display:flex!important;
+  justify-content:center!important;
+  gap:8px!important;
+  margin-top:18px!important;
+}
+
+.homeIcnDots button{
+  width:8px!important;
+  height:8px!important;
+  min-width:8px!important;
+  min-height:8px!important;
+  padding:0!important;
+  margin:0!important;
+  border:0!important;
+  border-radius:50%!important;
+  background:#444!important;
+  cursor:pointer;
+}
+
+.homeIcnDots button.active{
+  background:#fff!important;
+  transform:scale(1.25)!important;
+}
+
+/* Keep exact uploaded images unchanged */
+.homeIcnCard img{
+  filter:none!important;
+  transform:none!important;
+  animation:none!important;
+}
+
+@media(max-width:700px){
+  .homeIcnArrow{
+    width:40px!important;
+    height:40px!important;
+    min-width:40px!important;
+    min-height:40px!important;
+    top:40%;
+    font-size:26px!important;
+  }
+
+  .homeIcnArrowLeft{left:22px}
+  .homeIcnArrowRight{right:22px}
+}

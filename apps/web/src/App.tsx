@@ -102,6 +102,10 @@ export default function App(){
     email:string;
     password:string;
   }|null>(null);
+
+  const [galleryIndex,setGalleryIndex]=useState(0);
+  const [galleryTouchStart,setGalleryTouchStart]=useState<number|null>(null);
+
   const path=location.pathname;
 
   useEffect(()=>{
@@ -109,6 +113,16 @@ export default function App(){
       .then(setPrograms)
       .catch(()=>{})
   },[]);
+
+  useEffect(()=>{
+    if(path!=="/") return;
+
+    const timer=window.setInterval(()=>{
+      setGalleryIndex(current=>(current+1)%5);
+    },5000);
+
+    return ()=>window.clearInterval(timer);
+  },[path]);
 
   useEffect(()=>{
     if(
@@ -456,8 +470,40 @@ export default function App(){
           <p>Classic Physique — Silver Medal ×2 · Posing Champion</p>
         </div>
 
-        <div className="homeIcnCarousel" aria-label="Jay ICN 2025 gallery">
-          <div className="homeIcnTrack">
+        <div
+          className="homeIcnCarousel homeIcnManual"
+          aria-label="Jay ICN 2025 gallery"
+          onTouchStart={e=>setGalleryTouchStart(e.touches[0].clientX)}
+          onTouchEnd={e=>{
+            if(galleryTouchStart===null)return;
+            const delta=e.changedTouches[0].clientX-galleryTouchStart;
+
+            if(Math.abs(delta)>45){
+              setGalleryIndex(current=>
+                delta<0
+                  ?(current+1)%5
+                  :(current+4)%5
+              );
+            }
+
+            setGalleryTouchStart(null);
+          }}
+        >
+          <button
+            className="homeIcnArrow homeIcnArrowLeft"
+            type="button"
+            aria-label="Previous photo"
+            onClick={()=>setGalleryIndex(current=>(current+4)%5)}
+          >
+            ‹
+          </button>
+
+          <div
+            className="homeIcnTrack"
+            style={{
+              transform:`translateX(calc(${galleryIndex} * (-1 * (clamp(300px,30vw,420px) + 20px))))`
+            }}
+          >
             {[
               "/assets/icn-2025/icn-2025-1.jpeg",
               "/assets/icn-2025/icn-2025-2.jpeg",
@@ -475,14 +521,31 @@ export default function App(){
             )}
           </div>
 
+          <button
+            className="homeIcnArrow homeIcnArrowRight"
+            type="button"
+            aria-label="Next photo"
+            onClick={()=>setGalleryIndex(current=>(current+1)%5)}
+          >
+            ›
+          </button>
+
           <div className="homeIcnMeta">
             <span>ICN 2025</span>
             <strong>Classic Physique — Silver Medal ×2</strong>
             <strong>Posing Champion</strong>
           </div>
 
-          <div className="homeIcnDots" aria-hidden="true">
-            <span></span><span></span><span></span><span></span><span></span>
+          <div className="homeIcnDots" aria-label="Gallery navigation">
+            {[0,1,2,3,4].map(index=>
+              <button
+                type="button"
+                key={index}
+                className={galleryIndex===index?"active":""}
+                aria-label={`Go to photo ${index+1}`}
+                onClick={()=>setGalleryIndex(index)}
+              />
+            )}
           </div>
         </div>
       </section>
