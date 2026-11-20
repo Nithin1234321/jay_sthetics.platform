@@ -484,7 +484,17 @@ export default function App(){
     </header>
     {notice&&<div className="notice" onClick={()=>setNotice("")}>{notice} ×</div>}
     <main>
-      <section className="hero" id="home"><div className="heroInner">
+      <section className="hero" id="home">
+        <div className="heroFadeShow" aria-hidden="true">
+          <img src="/assets/hero-fade/jay-hero-fade-1.jpeg" alt=""/>
+          <img src="/assets/hero-fade/jay-hero-fade-2.jpeg" alt=""/>
+          <img src="/assets/hero-fade/jay-hero-fade-3.jpeg" alt=""/>
+          <img src="/assets/hero-fade/jay-hero-fade-4.jpeg" alt=""/>
+        </div>
+
+        <div className="heroFadeShade" aria-hidden="true"></div>
+
+        <div className="heroInner">
         <p className="eyebrow">TRANSFORM YOUR <i>BODY.</i><br/>ELEVATE YOUR <i>LIFE.</i></p>
         <h1>jay.<br/><span>__sthetics</span></h1><h2>Online Coaching. Real Results.</h2>
         <p className="muted">Personalized training, nutrition, weekly check-ins and direct coaching support in one platform.</p>
@@ -503,7 +513,9 @@ export default function App(){
             View Coaching Options
           </a>
         </div>
-      </div></section>
+      </div>
+      </section>
+
       <section className="homeValueSection">
         <div className="homeSectionInner">
           <div className="homeSectionHeading">

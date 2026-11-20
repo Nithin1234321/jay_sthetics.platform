@@ -7770,3 +7770,128 @@ img{
         no-repeat!important;
   }
 }
+
+/* ==========================================================
+   HOMEPAGE HERO 4-PHOTO CROSSFADE
+   ========================================================== */
+
+.publicPage .hero{
+  background:#000!important;
+  position:relative!important;
+  isolation:isolate;
+}
+
+.publicPage .heroFadeShow{
+  position:absolute;
+  inset:0;
+  z-index:0;
+  overflow:hidden;
+  background:#000;
+  pointer-events:none;
+}
+
+.publicPage .heroFadeShow img{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  object-position:center 28%;
+  opacity:0;
+  transform:scale(1.015);
+  animation:jayHeroCrossfade 28s ease-in-out infinite;
+  will-change:opacity,transform;
+}
+
+.publicPage .heroFadeShow img:nth-child(1){animation-delay:0s}
+.publicPage .heroFadeShow img:nth-child(2){animation-delay:7s}
+.publicPage .heroFadeShow img:nth-child(3){animation-delay:14s}
+.publicPage .heroFadeShow img:nth-child(4){animation-delay:21s}
+
+@keyframes jayHeroCrossfade{
+  0%{
+    opacity:0;
+    transform:scale(1.015);
+  }
+  7%{
+    opacity:1;
+  }
+  23%{
+    opacity:1;
+    transform:scale(1.035);
+  }
+  30%{
+    opacity:0;
+  }
+  100%{
+    opacity:0;
+    transform:scale(1.035);
+  }
+}
+
+.publicPage .heroFadeShade{
+  position:absolute;
+  inset:0;
+  z-index:1;
+  pointer-events:none;
+  background:
+    linear-gradient(
+      90deg,
+      rgba(0,0,0,.92) 0%,
+      rgba(0,0,0,.82) 23%,
+      rgba(0,0,0,.55) 45%,
+      rgba(0,0,0,.20) 72%,
+      rgba(0,0,0,.12) 100%
+    ),
+    linear-gradient(
+      180deg,
+      rgba(0,0,0,.10) 0%,
+      rgba(0,0,0,.05) 62%,
+      rgba(0,0,0,.72) 100%
+    );
+}
+
+.publicPage .heroInner{
+  position:relative;
+  z-index:3!important;
+}
+
+.publicPage .hero:after{
+  z-index:2!important;
+}
+
+@media(max-width:700px){
+  .publicPage .heroFadeShow img{
+    object-position:center 24%;
+    transform:scale(1.01);
+  }
+
+  .publicPage .heroFadeShow img:nth-child(1){object-position:center 22%}
+  .publicPage .heroFadeShow img:nth-child(2){object-position:center 18%}
+  .publicPage .heroFadeShow img:nth-child(3){object-position:center 24%}
+  .publicPage .heroFadeShow img:nth-child(4){object-position:center 22%}
+
+  .publicPage .heroFadeShade{
+    background:
+      linear-gradient(
+        180deg,
+        rgba(0,0,0,.18) 0%,
+        rgba(0,0,0,.30) 30%,
+        rgba(0,0,0,.66) 60%,
+        rgba(0,0,0,.92) 88%,
+        #050505 100%
+      );
+  }
+}
+
+@media(prefers-reduced-motion:reduce){
+  .publicPage .heroFadeShow img{
+    animation:none!important;
+    opacity:0!important;
+    transform:none!important;
+  }
+
+  .publicPage .heroFadeShow img:first-child{
+    opacity:1!important;
+  }
+}
