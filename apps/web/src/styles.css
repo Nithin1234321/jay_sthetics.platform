@@ -7979,3 +7979,16 @@ img{
   }
 }
 
+
+/* HERO SLIDESHOW — SHIFT IMAGES SLIGHTLY RIGHT */
+
+.publicPage .heroFadeShow img{
+  object-position:56% center!important;
+}
+
+@media(max-width:700px){
+  .publicPage .heroFadeShow img{
+    object-position:58% center!important;
+  }
+}
+
