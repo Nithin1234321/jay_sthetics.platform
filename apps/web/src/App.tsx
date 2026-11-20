@@ -1184,7 +1184,21 @@ function ProfilePhoto({src,name,size=52}:{src?:string|null;name?:string;size?:nu
 function AdminClients({setNotice}:{setNotice:(s:string)=>void}){
   const [clients,setClients]=useState<any[]>([]),[programs,setPrograms]=useState<Program[]>([]),[workouts,setWorkouts]=useState<any[]>([]),[nutrition,setNutrition]=useState<any[]>([]),[q,setQ]=useState("");
   const [selected,setSelected]=useState<any|null>(null),[showNew,setShowNew]=useState(false),[clientTab,setClientTab]=useState("overview");
-  async function load(){const [r,p,w,n]=await Promise.all([api<any>(`/admin/clients?q=${encodeURIComponent(q)}`),api<Program[]>("/admin/programs"),api<any[]>("/admin/workout-plans"),api<any[]>("/admin/nutrition-plans")]);setClients(r.items);setPrograms(p);setWorkouts(w);setNutrition(n)}
+  async function load(){
+    const [r,p,w,n]=await Promise.all([
+      api<any>(
+        `/admin/clients?all=1&q=${encodeURIComponent(q)}`
+      ),
+      api<Program[]>("/admin/programs"),
+      api<any[]>("/admin/workout-plans"),
+      api<any[]>("/admin/nutrition-plans")
+    ]);
+
+    setClients(r.items);
+    setPrograms(p);
+    setWorkouts(w);
+    setNutrition(n);
+  }
   useEffect(()=>{load().catch(e=>setNotice(e.message))},[]);
   async function open(id:string){try{setClientTab("overview");setSelected(await api<any>(`/admin/clients/${id}`))}catch(e:any){setNotice(e.message)}}
   async function refresh(){if(selected)setSelected(await api<any>(`/admin/clients/${selected.id}`))}
@@ -1465,23 +1479,230 @@ function AdminClients({setNotice}:{setNotice:(s:string)=>void}){
     }
   }
 
+  async function updateWeeklyCall(
+    clientId:string,
+    payload:{
+      status?:"CALLED"|"NO_ANSWER"|null;
+      contactedAt?:string|null;
+      note?:string;
+    }
+  ){
+    try{
+      const record=await api<any>(
+        `/admin/clients/${clientId}/weekly-call`,
+        {
+          method:"PUT",
+          body:JSON.stringify(payload)
+        }
+      );
+
+      setClients(current=>
+        current.map(client=>
+          client.id===clientId
+            ?{
+                ...client,
+                weeklyCalls:[record]
+              }
+            :client
+        )
+      );
+
+      if(payload.status==="CALLED"){
+        setNotice("Weekly client call marked complete.");
+      }
+
+      if(payload.status==="NO_ANSWER"){
+        setNotice("Client marked as no answer.");
+      }
+
+      if(
+        payload.note!==undefined &&
+        payload.status===undefined
+      ){
+        setNotice("Weekly call note saved.");
+      }
+    }catch(e:any){
+      setNotice(e.message);
+    }
+  }
+
   async function assignWorkout(workoutPlanId:string){if(!selected||!workoutPlanId)return;await api(`/admin/clients/${selected.id}/workout`,{method:"POST",body:JSON.stringify({workoutPlanId})});setNotice("Workout assigned.");refresh()}
   async function assignNutrition(nutritionPlanId:string){if(!selected||!nutritionPlanId)return;await api(`/admin/clients/${selected.id}/nutrition`,{method:"POST",body:JSON.stringify({nutritionPlanId})});setNotice("Nutrition assigned.");refresh()}
   async function saveProfile(e:FormEvent<HTMLFormElement>){e.preventDefault();if(!selected)return;const f=new FormData(e.currentTarget);try{await api(`/admin/clients/${selected.id}/profile`,{method:"PATCH",body:JSON.stringify({fullName:f.get("fullName"),phone:f.get("phone"),dateOfBirth:f.get("dob"),heightCm:Number(f.get("height")),currentWeightKg:Number(f.get("weight")),fitnessGoal:f.get("goal"),trainingExperience:f.get("experience")})});setNotice("Client details updated.");refresh()}catch(e:any){setNotice(e.message)}}
   async function addNote(e:FormEvent<HTMLFormElement>){e.preventDefault();if(!selected)return;const f=new FormData(e.currentTarget);await api(`/admin/clients/${selected.id}/notes`,{method:"POST",body:JSON.stringify({body:f.get("body")})});e.currentTarget.reset();setNotice("Private note saved.");refresh()}
   return <div>
     <div className="toolbar"><div className="search"><input value={q} onChange={e=>setQ(e.target.value)} placeholder="Search name, email or phone"/><button className="btn ghost" onClick={()=>load()}>Search</button></div><div className="toolbarActions"><button className="btn ghost" onClick={()=>downloadExcel("jay-sthetics-clients.xlsx",[{name:"Clients",rows:clients.map(c=>({Client_ID:c.id,Name:c.fullName,Email:c.email,Phone:c.phone||"",Account_Status:c.isActive?"Active":"Disabled",Programme:c.subscriptions?.[0]?.program?.name||"Not assigned",Subscription_Status:c.subscriptions?.[0]?.status||"No subscription",Joined:new Date(c.createdAt).toLocaleDateString()}))}])}>↓ Excel</button><button className="btn red" onClick={()=>setShowNew(true)}>+ Add Client</button></div></div>
-    <div className="dataTable premiumTable"><div className="tr head"><span>Client</span><span>Contact</span><span>Programme</span><span>Access</span></div>{clients.map(c=><button className="tr rowButton" key={c.id} onClick={()=>open(c.id)}><span style={{display:"flex",alignItems:"center",gap:"10px"}}>
-  <ProfilePhoto
-    src={c.clientProfile?.profilePhotoUrl}
-    name={c.fullName}
-    size={42}
-  />
-  <span>
-    <b>{c.fullName}</b>
-    <small>{date(c.createdAt)}</small>
-  </span>
-</span><span>{c.email}<small>{c.phone||"No phone"}</small></span><span>{c.subscriptions?.[0]?.program?.name||"Not assigned"}</span><span>{c.subscriptions?.[0]?.status||"NO PLAN"}</span></button>)}</div>
+    <div className="clientCountBar">
+      <span>
+        Showing <b>{clients.length}</b> client{
+          clients.length===1?"":"s"
+        }
+      </span>
+
+      <small>
+        Weekly call tracking resets automatically each Monday.
+      </small>
+    </div>
+
+    <div className="dataTable premiumTable weeklyClientTable">
+      <div className="tr head clientWeeklyHead">
+        <span>Client</span>
+        <span>Contact</span>
+        <span>Programme</span>
+        <span>Access</span>
+        <span>Weekly Call</span>
+      </div>
+
+      {clients.map(c=>{
+        const weekly=c.weeklyCalls?.[0];
+
+        return (
+          <div
+            className="tr rowButton clientWeeklyRow"
+            key={c.id}
+            role="button"
+            tabIndex={0}
+            onClick={()=>open(c.id)}
+            onKeyDown={e=>{
+              if(e.key==="Enter")open(c.id);
+            }}
+          >
+            <span
+              className="clientTableIdentity"
+              style={{
+                display:"flex",
+                alignItems:"center",
+                gap:"10px"
+              }}
+            >
+              <ProfilePhoto
+                src={c.clientProfile?.profilePhotoUrl}
+                name={c.fullName}
+                size={42}
+              />
+
+              <span>
+                <b>{c.fullName}</b>
+
+                <small>
+                  {date(c.createdAt)}
+                </small>
+              </span>
+            </span>
+
+            <span>
+              {c.email}
+
+              <small>
+                {c.phone||"No phone"}
+              </small>
+            </span>
+
+            <span>
+              {c.subscriptions?.[0]?.program?.name||
+                "Not assigned"
+              }
+            </span>
+
+            <span>
+              {c.subscriptions?.[0]?.status||
+                "NO PLAN"
+              }
+            </span>
+
+            <div
+              className="weeklyCallCell"
+              onClick={e=>e.stopPropagation()}
+              onKeyDown={e=>e.stopPropagation()}
+            >
+              <div className="weeklyCallTop">
+                <button
+                  type="button"
+                  className={`weeklyCallStatus yes ${
+                    weekly?.status==="CALLED"
+                      ?"active"
+                      :""
+                  }`}
+                  title="Spoke to client"
+                  aria-label={`Mark ${c.fullName} as called`}
+                  onClick={()=>
+                    updateWeeklyCall(
+                      c.id,
+                      {
+                        status:"CALLED",
+                        contactedAt:new Date().toISOString()
+                      }
+                    )
+                  }
+                >
+                  ✓
+                </button>
+
+                <button
+                  type="button"
+                  className={`weeklyCallStatus no ${
+                    weekly?.status==="NO_ANSWER"
+                      ?"active"
+                      :""
+                  }`}
+                  title="Client did not answer"
+                  aria-label={`Mark ${c.fullName} as no answer`}
+                  onClick={()=>
+                    updateWeeklyCall(
+                      c.id,
+                      {
+                        status:"NO_ANSWER",
+                        contactedAt:new Date().toISOString()
+                      }
+                    )
+                  }
+                >
+                  ×
+                </button>
+
+                <div className="weeklyCallTime">
+                  <small>
+                    {weekly?.status==="CALLED"
+                      ?"CALLED"
+                      :weekly?.status==="NO_ANSWER"
+                        ?"NO ANSWER"
+                        :"THIS WEEK"
+                    }
+                  </small>
+
+                  <b>
+                    {weekly?.contactedAt
+                      ?date(weekly.contactedAt)
+                      :"Pending"
+                    }
+                  </b>
+                </div>
+              </div>
+
+              <div className="weeklyCallNote">
+                <input
+                  key={`${c.id}-${weekly?.updatedAt||"new"}`}
+                  defaultValue={weekly?.note||""}
+                  placeholder="Follow-up note…"
+                  aria-label={`Weekly call note for ${c.fullName}`}
+                  onBlur={e=>{
+                    const next=e.currentTarget.value.trim();
+                    const previous=(weekly?.note||"").trim();
+
+                    if(next===previous)return;
+
+                    updateWeeklyCall(
+                      c.id,
+                      {note:next}
+                    );
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
     {showNew&&<Dialog title="Create Client" close={()=>setShowNew(false)}><form onSubmit={create}><input name="fullName" placeholder="Full name" required/><input name="email" type="email" placeholder="Email" required/><input name="phone" placeholder="Phone"/><input name="goal" placeholder="Fitness goal"/><input name="password" placeholder="Temporary password" minLength={8} required/><button className="btn red full">Create Client</button></form></Dialog>}
     {selected&&<div className="clientWorkspaceOverlay"><div className="clientWorkspace"><div className="clientWorkspaceTop"><button className="backClient" onClick={()=>setSelected(null)}>← Back to clients</button><div className="clientIdentity">
   <ProfilePhoto

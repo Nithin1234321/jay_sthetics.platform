@@ -156,12 +156,39 @@ adminRouter.get("/overview", async (_req, res) => {
   });
 });
 
+function currentWeekStart(){
+  const now=new Date();
+
+  const day=now.getUTCDay();
+  const diff=day===0?-6:1-day;
+
+  const monday=new Date(Date.UTC(
+    now.getUTCFullYear(),
+    now.getUTCMonth(),
+    now.getUTCDate()+diff,
+    0,0,0,0
+  ));
+
+  return monday;
+}
+
 // CLIENTS
 adminRouter.get("/clients", async (req, res) => {
   const page = Math.max(Number(req.query.page) || 1, 1);
-  const limit = Math.min(Math.max(Number(req.query.limit) || 25, 1), 100);
+  const limit = Math.min(Math.max(Number(req.query.limit) || 25, 1), 500);
+  const showAll = String(req.query.all ?? "") === "1";
+
   const q = String(req.query.q ?? "").trim();
-  const skip = (page - 1) * limit;
+
+  const skip = showAll
+    ? undefined
+    : (page - 1) * limit;
+
+  const take = showAll
+    ? undefined
+    : limit;
+
+  const weekStart=currentWeekStart();
 
   const where: any = {
     role: "CLIENT",
@@ -177,22 +204,128 @@ adminRouter.get("/clients", async (req, res) => {
   const [items, total] = await Promise.all([
     prisma.user.findMany({
       where,
+
       select: {
-        id: true, fullName: true, email: true, phone: true, isActive: true, createdAt: true,
+        id: true,
+        fullName: true,
+        email: true,
+        phone: true,
+        isActive: true,
+        createdAt: true,
+
         clientProfile: true,
+
         subscriptions: {
           include: { program: true },
           orderBy: { createdAt: "desc" },
           take: 1
+        },
+
+        weeklyCalls:{
+          where:{weekStart},
+          orderBy:{updatedAt:"desc"},
+          take:1
         }
       },
+
       orderBy: { createdAt: "desc" },
-      skip, take: limit
+
+      ...(skip!==undefined?{skip}:{}),
+      ...(take!==undefined?{take}:{})
     }),
+
     prisma.user.count({ where })
   ]);
 
-  res.json({ items, total, page, pages: Math.ceil(total / limit) });
+  res.json({
+    items,
+    total,
+    page,
+    pages:showAll?1:Math.ceil(total/limit),
+    weekStart
+  });
+});
+
+
+adminRouter.put("/clients/:id/weekly-call", async (req,res)=>{
+  const input=z.object({
+    status:z.enum(["CALLED","NO_ANSWER"]).nullable().optional(),
+    contactedAt:z.string().datetime().nullable().optional(),
+    note:z.string().max(2000).optional()
+  }).safeParse(req.body);
+
+  if(!input.success){
+    return res.status(400).json({
+      error:"Invalid weekly call update."
+    });
+  }
+
+  const client=await prisma.user.findFirst({
+    where:{
+      id:req.params.id,
+      role:"CLIENT"
+    },
+    select:{id:true}
+  });
+
+  if(!client){
+    return res.status(404).json({
+      error:"Client not found."
+    });
+  }
+
+  const weekStart=currentWeekStart();
+
+  const existing=await prisma.clientWeeklyCall.findUnique({
+    where:{
+      userId_weekStart:{
+        userId:client.id,
+        weekStart
+      }
+    }
+  });
+
+  const status=
+    input.data.status!==undefined
+      ?input.data.status
+      :existing?.status??null;
+
+  const contactedAt=
+    input.data.contactedAt!==undefined
+      ?input.data.contactedAt
+        ?new Date(input.data.contactedAt)
+        :null
+      :existing?.contactedAt??null;
+
+  const note=
+    input.data.note!==undefined
+      ?input.data.note.trim()
+      :existing?.note??null;
+
+  const record=await prisma.clientWeeklyCall.upsert({
+    where:{
+      userId_weekStart:{
+        userId:client.id,
+        weekStart
+      }
+    },
+
+    update:{
+      status,
+      contactedAt,
+      note:note||null
+    },
+
+    create:{
+      userId:client.id,
+      weekStart,
+      status,
+      contactedAt,
+      note:note||null
+    }
+  });
+
+  res.json(record);
 });
 
 adminRouter.get("/clients/:id", async (req, res) => {
