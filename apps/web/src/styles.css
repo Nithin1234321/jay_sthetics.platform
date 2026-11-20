@@ -7992,3 +7992,32 @@ img{
   }
 }
 
+
+/* ==========================================================
+   HERO DESKTOP — STRONGER RIGHT POSITION
+   ========================================================== */
+
+@media(min-width:701px){
+
+  .publicPage .heroFadeShow img{
+    object-position:center center!important;
+
+    /* physically move portrait toward right side */
+    transform:
+      translateX(9%)
+      scale(.98)!important;
+  }
+
+}
+
+/* Keep mobile positioning unchanged */
+
+@media(max-width:700px){
+
+  .publicPage .heroFadeShow img{
+    transform:scale(.96)!important;
+    object-position:58% center!important;
+  }
+
+}
+
