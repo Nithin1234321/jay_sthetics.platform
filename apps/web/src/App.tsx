@@ -2909,16 +2909,19 @@ function AdminExercises({setNotice}:{setNotice:(s:string)=>void}){
 }
 
 function AdminWorkouts({setNotice}:{setNotice:(s:string)=>void}){
-  const [plans,setPlans]=useState<any[]>([]),
-    [exercises,setExercises]=useState<any[]>([]),
-    [show,setShow]=useState(false),
-    [addTo,setAddTo]=useState<any|null>(null);
+  const [plans,setPlans]=useState<any[]>([]);
+  const [exercises,setExercises]=useState<any[]>([]);
+  const [show,setShow]=useState(false);
+  const [addTo,setAddTo]=useState<any|null>(null);
+  const [editingPlan,setEditingPlan]=useState<any|null>(null);
+  const [editingExercise,setEditingExercise]=useState<any|null>(null);
 
   async function load(){
     const [p,e]=await Promise.all([
       api<any[]>("/admin/workout-plans"),
       api<any[]>("/admin/exercises")
     ]);
+
     setPlans(p);
     setExercises(e);
   }
@@ -2929,6 +2932,7 @@ function AdminWorkouts({setNotice}:{setNotice:(s:string)=>void}){
 
   async function create(e:FormEvent<HTMLFormElement>){
     e.preventDefault();
+
     const f=new FormData(e.currentTarget);
 
     try{
@@ -2942,6 +2946,30 @@ function AdminWorkouts({setNotice}:{setNotice:(s:string)=>void}){
 
       setShow(false);
       setNotice("Workout plan created.");
+      load();
+    }catch(e:any){
+      setNotice(e.message);
+    }
+  }
+
+  async function savePlan(e:FormEvent<HTMLFormElement>){
+    e.preventDefault();
+
+    if(!editingPlan)return;
+
+    const f=new FormData(e.currentTarget);
+
+    try{
+      await api(`/admin/workout-plans/${editingPlan.id}`,{
+        method:"PATCH",
+        body:JSON.stringify({
+          name:f.get("name"),
+          description:f.get("description")
+        })
+      });
+
+      setEditingPlan(null);
+      setNotice("Workout plan updated.");
       load();
     }catch(e:any){
       setNotice(e.message);
@@ -2977,13 +3005,53 @@ function AdminWorkouts({setNotice}:{setNotice:(s:string)=>void}){
     }
   }
 
-  async function deleteWorkoutExercise(planId:string,itemId:string){
-    if(!window.confirm("Remove this exercise from the workout plan?"))return;
+  async function saveWorkoutExercise(
+    e:FormEvent<HTMLFormElement>
+  ){
+    e.preventDefault();
+
+    if(!editingExercise)return;
+
+    const f=new FormData(e.currentTarget);
 
     try{
-      await api(`/admin/workout-plans/${planId}/exercises/${itemId}`,{
-        method:"DELETE"
-      });
+      await api(
+        `/admin/workout-plans/${editingExercise.planId}/exercises/${editingExercise.id}`,
+        {
+          method:"PATCH",
+          body:JSON.stringify({
+            exerciseId:f.get("exerciseId"),
+            dayLabel:String(f.get("dayLabel")||"").trim(),
+            position:Number(f.get("position")),
+            sets:String(f.get("sets")||"").trim()||undefined,
+            reps:String(f.get("reps")||"").trim()||undefined,
+            restSeconds:String(f.get("restSeconds")||"").trim()||undefined,
+            notes:String(f.get("notes")||"").trim()||undefined
+          })
+        }
+      );
+
+      setEditingExercise(null);
+      setNotice("Workout exercise updated.");
+      load();
+    }catch(e:any){
+      setNotice(e.message);
+    }
+  }
+
+  async function deleteWorkoutExercise(
+    planId:string,
+    itemId:string
+  ){
+    if(!window.confirm(
+      "Remove this exercise from the workout plan?"
+    ))return;
+
+    try{
+      await api(
+        `/admin/workout-plans/${planId}/exercises/${itemId}`,
+        {method:"DELETE"}
+      );
 
       setNotice("Exercise removed from workout plan.");
       load();
@@ -3012,45 +3080,82 @@ function AdminWorkouts({setNotice}:{setNotice:(s:string)=>void}){
   return <>
     <div className="toolbar">
       <div>
-        <h2 style={{margin:"0 0 6px"}}>Workout Plans</h2>
+        <h2 style={{margin:"0 0 6px"}}>
+          Workout Plans
+        </h2>
+
         <p className="muted" style={{margin:0}}>
-          Build detailed workout prescriptions and assign them to clients.
+          Build detailed workout prescriptions and assign them
+          to clients.
         </p>
       </div>
 
-      <button className="btn red" onClick={()=>setShow(true)}>
+      <button
+        className="btn red"
+        onClick={()=>setShow(true)}
+      >
         + New Workout Plan
       </button>
     </div>
 
     <div className="planGrid workoutPlanGrid">
       {plans.map(p=>
-        <article className="planCard workoutPlanCard" key={p.id}>
+        <article
+          className="planCard workoutPlanCard"
+          key={p.id}
+        >
           <div className="workoutPlanHeader">
             <div>
-              <small className="redText">WORKOUT PLAN</small>
+              <small className="redText">
+                WORKOUT PLAN
+              </small>
+
               <h2>{p.name}</h2>
+
               <p className="workoutPlanDescription">
-                {p.description||"No plan description added yet."}
+                {p.description||
+                  "No plan description added yet."}
               </p>
             </div>
 
-            <button
-              className="btn ghost dangerButton"
-              type="button"
-              onClick={()=>deleteWorkoutPlan(p.id)}
+            <div
+              style={{
+                display:"flex",
+                gap:"8px",
+                flexWrap:"wrap"
+              }}
             >
-              Delete Plan
-            </button>
+              <button
+                className="btn ghost"
+                type="button"
+                onClick={()=>setEditingPlan(p)}
+              >
+                Edit Plan
+              </button>
+
+              <button
+                className="btn ghost dangerButton"
+                type="button"
+                onClick={()=>deleteWorkoutPlan(p.id)}
+              >
+                Delete Plan
+              </button>
+            </div>
           </div>
 
           <div className="workoutPlanExerciseList">
-            {p.exercises?.length?
-              p.exercises.map((x:any)=>
-                <div className="workoutDetailCard" key={x.id}>
+            {p.exercises?.length
+              ?p.exercises.map((x:any)=>
+                <div
+                  className="workoutDetailCard"
+                  key={x.id}
+                >
                   <div className="workoutDetailTop">
                     <div>
-                      <span className="pill">{x.dayLabel}</span>
+                      <span className="pill">
+                        {x.dayLabel}
+                      </span>
+
                       <h3>
                         <span className="exercisePosition">
                           {x.position}.
@@ -3059,13 +3164,35 @@ function AdminWorkouts({setNotice}:{setNotice:(s:string)=>void}){
                       </h3>
                     </div>
 
-                    <button
-                      type="button"
-                      className="workoutDeleteButton"
-                      onClick={()=>deleteWorkoutExercise(p.id,x.id)}
+                    <div
+                      style={{
+                        display:"flex",
+                        gap:"7px",
+                        flexWrap:"wrap"
+                      }}
                     >
-                      Delete Exercise
-                    </button>
+                      <button
+                        type="button"
+                        className="workoutDeleteButton"
+                        onClick={()=>setEditingExercise({
+                          ...x,
+                          planId:p.id
+                        })}
+                      >
+                        Edit Exercise
+                      </button>
+
+                      <button
+                        type="button"
+                        className="workoutDeleteButton"
+                        onClick={()=>deleteWorkoutExercise(
+                          p.id,
+                          x.id
+                        )}
+                      >
+                        Delete Exercise
+                      </button>
+                    </div>
                   </div>
 
                   <div className="workoutPrescriptionGrid">
@@ -3093,8 +3220,7 @@ function AdminWorkouts({setNotice}:{setNotice:(s:string)=>void}){
                   }
                 </div>
               )
-              :
-              <Empty text="No exercises added yet."/>
+              :<Empty text="No exercises added yet."/>
             }
           </div>
 
@@ -3108,8 +3234,13 @@ function AdminWorkouts({setNotice}:{setNotice:(s:string)=>void}){
       )}
     </div>
 
+
     {show&&
-      <Dialog title="New Workout Plan" wide close={()=>setShow(false)}>
+      <Dialog
+        title="New Workout Plan"
+        wide
+        close={()=>setShow(false)}
+      >
         <form onSubmit={create}>
           <label>
             Workout plan name
@@ -3125,7 +3256,7 @@ function AdminWorkouts({setNotice}:{setNotice:(s:string)=>void}){
             <textarea
               name="description"
               rows={7}
-              placeholder="Add the purpose of the plan, weekly structure, progression instructions, intensity guidance, or anything else Jay wants the client to know."
+              placeholder="Weekly structure, progression, intensity guidance and coaching notes."
             />
           </label>
 
@@ -3136,13 +3267,68 @@ function AdminWorkouts({setNotice}:{setNotice:(s:string)=>void}){
       </Dialog>
     }
 
+
+    {editingPlan&&
+      <Dialog
+        title="Edit Workout Plan"
+        wide
+        close={()=>setEditingPlan(null)}
+      >
+        <form onSubmit={savePlan}>
+          <label>
+            Workout plan name
+            <input
+              name="name"
+              defaultValue={editingPlan.name}
+              required
+            />
+          </label>
+
+          <label>
+            Plan description
+            <textarea
+              name="description"
+              rows={7}
+              defaultValue={editingPlan.description||""}
+            />
+          </label>
+
+          <div className="dialogActions">
+            <button
+              type="button"
+              className="btn ghost"
+              onClick={()=>setEditingPlan(null)}
+            >
+              Cancel
+            </button>
+
+            <button className="btn red">
+              Save Changes
+            </button>
+          </div>
+        </form>
+      </Dialog>
+    }
+
+
     {addTo&&
-      <Dialog title={`Add Exercise — ${addTo.name}`} wide close={()=>setAddTo(null)}>
+      <Dialog
+        title={`Add Exercise — ${addTo.name}`}
+        wide
+        close={()=>setAddTo(null)}
+      >
         <form onSubmit={addExercise}>
           <label>
             Exercise
-            <select name="exerciseId" required defaultValue="">
-              <option value="" disabled>Select exercise</option>
+            <select
+              name="exerciseId"
+              required
+              defaultValue=""
+            >
+              <option value="" disabled>
+                Select exercise
+              </option>
+
               {exercises.map(x=>
                 <option key={x.id} value={x.id}>
                   {x.name}
@@ -3156,7 +3342,7 @@ function AdminWorkouts({setNotice}:{setNotice:(s:string)=>void}){
               Day / section
               <input
                 name="dayLabel"
-                placeholder="e.g. Push Day / Chest Focus"
+                placeholder="e.g. Push Day"
                 required
               />
             </label>
@@ -3167,7 +3353,80 @@ function AdminWorkouts({setNotice}:{setNotice:(s:string)=>void}){
                 name="position"
                 type="number"
                 min="1"
-                placeholder="1"
+                required
+              />
+            </label>
+          </div>
+
+          <div className="formGrid">
+            <label>
+              Sets
+              <input name="sets"/>
+            </label>
+
+            <label>
+              Reps
+              <input name="reps"/>
+            </label>
+          </div>
+
+          <label>
+            Rest
+            <input name="restSeconds"/>
+          </label>
+
+          <label>
+            Detailed coaching instructions
+            <textarea name="notes" rows={7}/>
+          </label>
+
+          <button className="btn red full">
+            Add Exercise
+          </button>
+        </form>
+      </Dialog>
+    }
+
+
+    {editingExercise&&
+      <Dialog
+        title="Edit Workout Exercise"
+        wide
+        close={()=>setEditingExercise(null)}
+      >
+        <form onSubmit={saveWorkoutExercise}>
+          <label>
+            Exercise
+            <select
+              name="exerciseId"
+              defaultValue={editingExercise.exerciseId}
+              required
+            >
+              {exercises.map(x=>
+                <option key={x.id} value={x.id}>
+                  {x.name}
+                </option>
+              )}
+            </select>
+          </label>
+
+          <div className="formGrid">
+            <label>
+              Day / section
+              <input
+                name="dayLabel"
+                defaultValue={editingExercise.dayLabel}
+                required
+              />
+            </label>
+
+            <label>
+              Display order
+              <input
+                name="position"
+                type="number"
+                min="1"
+                defaultValue={editingExercise.position}
                 required
               />
             </label>
@@ -3178,7 +3437,7 @@ function AdminWorkouts({setNotice}:{setNotice:(s:string)=>void}){
               Sets
               <input
                 name="sets"
-                placeholder="e.g. 2 warm-up + 3 working sets"
+                defaultValue={editingExercise.sets||""}
               />
             </label>
 
@@ -3186,7 +3445,7 @@ function AdminWorkouts({setNotice}:{setNotice:(s:string)=>void}){
               Reps
               <input
                 name="reps"
-                placeholder="e.g. 8–12, last set to failure"
+                defaultValue={editingExercise.reps||""}
               />
             </label>
           </div>
@@ -3195,7 +3454,9 @@ function AdminWorkouts({setNotice}:{setNotice:(s:string)=>void}){
             Rest
             <input
               name="restSeconds"
-              placeholder="e.g. 2–3 min / until breathing is controlled"
+              defaultValue={
+                editingExercise.restSeconds||""
+              }
             />
           </label>
 
@@ -3204,25 +3465,212 @@ function AdminWorkouts({setNotice}:{setNotice:(s:string)=>void}){
             <textarea
               name="notes"
               rows={7}
-              placeholder="Example: Keep shoulder blades retracted. Control the eccentric for 3 seconds. Pause briefly at the bottom. Stop the set if form breaks."
+              defaultValue={editingExercise.notes||""}
             />
           </label>
 
-          <button className="btn red full">
-            Add Exercise
-          </button>
+          <div className="dialogActions">
+            <button
+              type="button"
+              className="btn ghost"
+              onClick={()=>setEditingExercise(null)}
+            >
+              Cancel
+            </button>
+
+            <button className="btn red">
+              Save Exercise
+            </button>
+          </div>
         </form>
       </Dialog>
     }
   </>;
 }
 
+
 function AdminNutrition({setNotice}:{setNotice:(s:string)=>void}){
-  const [plans,setPlans]=useState<any[]>([]),[show,setShow]=useState(false),[mealFor,setMealFor]=useState<any|null>(null);
-  async function load(){setPlans(await api<any[]>("/admin/nutrition-plans"))}
-  useEffect(()=>{load().catch(e=>setNotice(e.message))},[]);
-  async function create(e:FormEvent<HTMLFormElement>){e.preventDefault();const f=new FormData(e.currentTarget);try{await api("/admin/nutrition-plans",{method:"POST",body:JSON.stringify({name:f.get("name"),calories:Number(f.get("calories"))||undefined,proteinG:Number(f.get("protein"))||undefined,carbsG:Number(f.get("carbs"))||undefined,fatsG:Number(f.get("fats"))||undefined,notes:f.get("notes")})});setShow(false);setNotice("Nutrition plan created.");load()}catch(e:any){setNotice(e.message)}}
-  async function meal(e:FormEvent<HTMLFormElement>){e.preventDefault();const f=new FormData(e.currentTarget);try{await api(`/admin/nutrition-plans/${mealFor.id}/meal-options`,{method:"POST",body:JSON.stringify({mealLabel:f.get("mealLabel"),optionLabel:f.get("optionLabel"),calories:Number(f.get("calories"))||undefined,proteinG:Number(f.get("protein"))||undefined,carbsG:Number(f.get("carbs"))||undefined,fatsG:Number(f.get("fats"))||undefined,foods:String(f.get("foods")).split("\n").map(x=>x.trim()).filter(Boolean)})});setMealFor(null);setNotice("Meal option added.");load()}catch(e:any){setNotice(e.message)}}
+  const [plans,setPlans]=useState<any[]>([]);
+  const [show,setShow]=useState(false);
+  const [mealFor,setMealFor]=useState<any|null>(null);
+  const [editingPlan,setEditingPlan]=useState<any|null>(null);
+  const [editingMeal,setEditingMeal]=useState<any|null>(null);
+
+  async function load(){
+    setPlans(
+      await api<any[]>("/admin/nutrition-plans")
+    );
+  }
+
+  useEffect(()=>{
+    load().catch(e=>setNotice(e.message));
+  },[]);
+
+  async function create(e:FormEvent<HTMLFormElement>){
+    e.preventDefault();
+
+    const f=new FormData(e.currentTarget);
+
+    try{
+      await api("/admin/nutrition-plans",{
+        method:"POST",
+        body:JSON.stringify({
+          name:f.get("name"),
+          calories:Number(f.get("calories"))||undefined,
+          proteinG:Number(f.get("protein"))||undefined,
+          carbsG:Number(f.get("carbs"))||undefined,
+          fatsG:Number(f.get("fats"))||undefined,
+          notes:f.get("notes")
+        })
+      });
+
+      setShow(false);
+      setNotice("Nutrition plan created.");
+      load();
+    }catch(e:any){
+      setNotice(e.message);
+    }
+  }
+
+  async function savePlan(e:FormEvent<HTMLFormElement>){
+    e.preventDefault();
+
+    if(!editingPlan)return;
+
+    const f=new FormData(e.currentTarget);
+
+    try{
+      await api(
+        `/admin/nutrition-plans/${editingPlan.id}`,
+        {
+          method:"PATCH",
+          body:JSON.stringify({
+            name:f.get("name"),
+            calories:Number(f.get("calories"))||undefined,
+            proteinG:Number(f.get("protein"))||undefined,
+            carbsG:Number(f.get("carbs"))||undefined,
+            fatsG:Number(f.get("fats"))||undefined,
+            notes:f.get("notes")
+          })
+        }
+      );
+
+      setEditingPlan(null);
+      setNotice("Nutrition plan updated.");
+      load();
+    }catch(e:any){
+      setNotice(e.message);
+    }
+  }
+
+  async function deletePlan(id:string){
+    if(!window.confirm(
+      "Delete this nutrition plan? Any client assignments using it will also be removed."
+    ))return;
+
+    try{
+      await api(`/admin/nutrition-plans/${id}`,{
+        method:"DELETE"
+      });
+
+      setNotice("Nutrition plan deleted.");
+      load();
+    }catch(e:any){
+      setNotice(e.message);
+    }
+  }
+
+  async function meal(e:FormEvent<HTMLFormElement>){
+    e.preventDefault();
+
+    if(!mealFor)return;
+
+    const f=new FormData(e.currentTarget);
+
+    try{
+      await api(
+        `/admin/nutrition-plans/${mealFor.id}/meal-options`,
+        {
+          method:"POST",
+          body:JSON.stringify({
+            mealLabel:f.get("mealLabel"),
+            optionLabel:f.get("optionLabel"),
+            calories:Number(f.get("calories"))||undefined,
+            proteinG:Number(f.get("protein"))||undefined,
+            carbsG:Number(f.get("carbs"))||undefined,
+            fatsG:Number(f.get("fats"))||undefined,
+            foods:String(f.get("foods"))
+              .split("\n")
+              .map(x=>x.trim())
+              .filter(Boolean)
+          })
+        }
+      );
+
+      setMealFor(null);
+      setNotice("Meal option added.");
+      load();
+    }catch(e:any){
+      setNotice(e.message);
+    }
+  }
+
+  async function saveMeal(e:FormEvent<HTMLFormElement>){
+    e.preventDefault();
+
+    if(!editingMeal)return;
+
+    const f=new FormData(e.currentTarget);
+
+    try{
+      await api(
+        `/admin/nutrition-plans/${editingMeal.planId}/meal-options/${editingMeal.id}`,
+        {
+          method:"PATCH",
+          body:JSON.stringify({
+            mealLabel:f.get("mealLabel"),
+            optionLabel:f.get("optionLabel"),
+            calories:Number(f.get("calories"))||undefined,
+            proteinG:Number(f.get("protein"))||undefined,
+            carbsG:Number(f.get("carbs"))||undefined,
+            fatsG:Number(f.get("fats"))||undefined,
+            foods:String(f.get("foods"))
+              .split("\n")
+              .map(x=>x.trim())
+              .filter(Boolean)
+          })
+        }
+      );
+
+      setEditingMeal(null);
+      setNotice("Meal option updated.");
+      load();
+    }catch(e:any){
+      setNotice(e.message);
+    }
+  }
+
+  async function deleteMeal(
+    planId:string,
+    mealId:string
+  ){
+    if(!window.confirm(
+      "Delete this meal option?"
+    ))return;
+
+    try{
+      await api(
+        `/admin/nutrition-plans/${planId}/meal-options/${mealId}`,
+        {method:"DELETE"}
+      );
+
+      setNotice("Meal option deleted.");
+      load();
+    }catch(e:any){
+      setNotice(e.message);
+    }
+  }
+
   async function uploadPdf(id:string,file:File){
     try{
       const fd=new FormData();
@@ -3241,7 +3689,9 @@ function AdminNutrition({setNotice}:{setNotice:(s:string)=>void}){
   }
 
   async function removePdf(id:string){
-    if(!window.confirm("Remove this diet plan PDF? The nutrition plan and meal options will stay.")) return;
+    if(!window.confirm(
+      "Remove this diet plan PDF? The nutrition plan and meal options will stay."
+    ))return;
 
     try{
       await api(`/admin/nutrition-plans/${id}/pdf`,{
@@ -3254,39 +3704,452 @@ function AdminNutrition({setNotice}:{setNotice:(s:string)=>void}){
       setNotice(e.message);
     }
   }
-  return <><div className="toolbar"><p className="muted">Create macro targets and several interchangeable food options.</p><button className="btn red" onClick={()=>setShow(true)}>+ New Nutrition Plan</button></div><div className="planGrid">{plans.map(p=><div className="planCard" key={p.id}><h3>{p.name}</h3><div className="macroRow"><span>{p.calories||"—"} kcal</span><span>P {p.proteinG||"—"}g</span><span>C {p.carbsG||"—"}g</span><span>F {p.fatsG||"—"}g</span></div>{p.mealOptions?.length?p.mealOptions.map((m:any)=><div className="mealRow" key={m.id}><b>{m.mealLabel} · {m.optionLabel}</b><small>{Array.isArray(m.foods)?m.foods.join(" + "):"Food option"}</small><span>P {m.proteinG||"—"} · C {m.carbsG||"—"} · F {m.fatsG||"—"}</span></div>):<Empty text="No meal alternatives yet."/>}
 
-<div style={{display:"flex",gap:"10px",flexWrap:"wrap",marginTop:"14px"}}>
-  <label className="btn ghost" style={{cursor:"pointer"}}>
-    {p.pdfUrl ? "Replace Diet PDF" : "Upload Diet PDF"}
-    <input
-      type="file"
-      accept="application/pdf,.pdf"
-      style={{display:"none"}}
-      onChange={e=>{
-        const file=e.target.files?.[0];
-        if(file) uploadPdf(p.id,file);
-        e.currentTarget.value="";
-      }}
-    />
-  </label>
+  return <>
+    <div className="toolbar">
+      <p className="muted">
+        Create macro targets and several interchangeable
+        food options.
+      </p>
 
-  {p.pdfUrl&&
-    <button
-      type="button"
-      className="btn ghost"
-      onClick={()=>removePdf(p.id)}
-    >
-      Remove PDF
-    </button>
-  }
-</div>
+      <button
+        className="btn red"
+        onClick={()=>setShow(true)}
+      >
+        + New Nutrition Plan
+      </button>
+    </div>
 
-<button className="btn ghost full" onClick={()=>setMealFor(p)}>+ Add Meal Option</button></div>)}</div>
-  {show&&<Dialog title="New Nutrition Plan" close={()=>setShow(false)}><form onSubmit={create}><input name="name" placeholder="Plan name" required/><div className="formGrid"><input name="calories" type="number" placeholder="Calories"/><input name="protein" type="number" placeholder="Protein g"/></div><div className="formGrid"><input name="carbs" type="number" placeholder="Carbs g"/><input name="fats" type="number" placeholder="Fats g"/></div><textarea name="notes" placeholder="Coach notes"/><button className="btn red full">Create</button></form></Dialog>}
-  {mealFor&&<Dialog title={`Meal option · ${mealFor.name}`} close={()=>setMealFor(null)}><form onSubmit={meal}><div className="formGrid"><input name="mealLabel" placeholder="e.g. Breakfast" required/><input name="optionLabel" placeholder="Option A" required/></div><textarea name="foods" placeholder={"Foods — one per line\n60g oats\n1 scoop whey\n2 eggs"} required/><div className="formGrid four"><input name="calories" type="number" placeholder="kcal"/><input name="protein" type="number" placeholder="P"/><input name="carbs" type="number" placeholder="C"/><input name="fats" type="number" placeholder="F"/></div><button className="btn red full">Add Option</button></form></Dialog>}
-  </>
+    <div className="planGrid">
+      {plans.map(p=>
+        <div className="planCard" key={p.id}>
+          <div
+            style={{
+              display:"flex",
+              justifyContent:"space-between",
+              gap:"12px",
+              alignItems:"flex-start"
+            }}
+          >
+            <h3>{p.name}</h3>
+
+            <div
+              style={{
+                display:"flex",
+                gap:"7px",
+                flexWrap:"wrap"
+              }}
+            >
+              <button
+                type="button"
+                className="btn ghost"
+                onClick={()=>setEditingPlan(p)}
+              >
+                Edit Plan
+              </button>
+
+              <button
+                type="button"
+                className="btn ghost dangerButton"
+                onClick={()=>deletePlan(p.id)}
+              >
+                Delete Plan
+              </button>
+            </div>
+          </div>
+
+          <div className="macroRow">
+            <span>
+              {p.calories||"—"} kcal
+            </span>
+            <span>
+              P {p.proteinG||"—"}g
+            </span>
+            <span>
+              C {p.carbsG||"—"}g
+            </span>
+            <span>
+              F {p.fatsG||"—"}g
+            </span>
+          </div>
+
+          {p.mealOptions?.length
+            ?p.mealOptions.map((m:any)=>
+              <div className="mealRow" key={m.id}>
+                <div
+                  style={{
+                    display:"flex",
+                    justifyContent:"space-between",
+                    gap:"10px",
+                    alignItems:"flex-start"
+                  }}
+                >
+                  <b>
+                    {m.mealLabel} · {m.optionLabel}
+                  </b>
+
+                  <div
+                    style={{
+                      display:"flex",
+                      gap:"6px",
+                      flexWrap:"wrap"
+                    }}
+                  >
+                    <button
+                      type="button"
+                      className="workoutDeleteButton"
+                      onClick={()=>setEditingMeal({
+                        ...m,
+                        planId:p.id
+                      })}
+                    >
+                      Edit
+                    </button>
+
+                    <button
+                      type="button"
+                      className="workoutDeleteButton"
+                      onClick={()=>deleteMeal(
+                        p.id,
+                        m.id
+                      )}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+
+                <small>
+                  {Array.isArray(m.foods)
+                    ?m.foods.join(" + ")
+                    :"Food option"}
+                </small>
+
+                <span>
+                  P {m.proteinG||"—"} ·
+                  C {m.carbsG||"—"} ·
+                  F {m.fatsG||"—"}
+                </span>
+              </div>
+            )
+            :<Empty text="No meal alternatives yet."/>
+          }
+
+          <div
+            style={{
+              display:"flex",
+              gap:"10px",
+              flexWrap:"wrap",
+              marginTop:"14px"
+            }}
+          >
+            <label
+              className="btn ghost"
+              style={{cursor:"pointer"}}
+            >
+              {p.pdfUrl
+                ?"Replace Diet PDF"
+                :"Upload Diet PDF"}
+
+              <input
+                type="file"
+                accept="application/pdf,.pdf"
+                style={{display:"none"}}
+                onChange={e=>{
+                  const file=e.target.files?.[0];
+
+                  if(file){
+                    uploadPdf(p.id,file);
+                  }
+
+                  e.currentTarget.value="";
+                }}
+              />
+            </label>
+
+            {p.pdfUrl&&
+              <button
+                type="button"
+                className="btn ghost"
+                onClick={()=>removePdf(p.id)}
+              >
+                Remove PDF
+              </button>
+            }
+          </div>
+
+          <button
+            className="btn ghost full"
+            onClick={()=>setMealFor(p)}
+          >
+            + Add Meal Option
+          </button>
+        </div>
+      )}
+    </div>
+
+
+    {show&&
+      <Dialog
+        title="New Nutrition Plan"
+        close={()=>setShow(false)}
+      >
+        <form onSubmit={create}>
+          <input
+            name="name"
+            placeholder="Plan name"
+            required
+          />
+
+          <div className="formGrid">
+            <input
+              name="calories"
+              type="number"
+              placeholder="Calories"
+            />
+
+            <input
+              name="protein"
+              type="number"
+              placeholder="Protein g"
+            />
+          </div>
+
+          <div className="formGrid">
+            <input
+              name="carbs"
+              type="number"
+              placeholder="Carbs g"
+            />
+
+            <input
+              name="fats"
+              type="number"
+              placeholder="Fats g"
+            />
+          </div>
+
+          <textarea
+            name="notes"
+            placeholder="Coach notes"
+          />
+
+          <button className="btn red full">
+            Create
+          </button>
+        </form>
+      </Dialog>
+    }
+
+
+    {editingPlan&&
+      <Dialog
+        title="Edit Nutrition Plan"
+        close={()=>setEditingPlan(null)}
+      >
+        <form onSubmit={savePlan}>
+          <input
+            name="name"
+            defaultValue={editingPlan.name}
+            required
+          />
+
+          <div className="formGrid">
+            <input
+              name="calories"
+              type="number"
+              defaultValue={editingPlan.calories||""}
+              placeholder="Calories"
+            />
+
+            <input
+              name="protein"
+              type="number"
+              defaultValue={editingPlan.proteinG||""}
+              placeholder="Protein g"
+            />
+          </div>
+
+          <div className="formGrid">
+            <input
+              name="carbs"
+              type="number"
+              defaultValue={editingPlan.carbsG||""}
+              placeholder="Carbs g"
+            />
+
+            <input
+              name="fats"
+              type="number"
+              defaultValue={editingPlan.fatsG||""}
+              placeholder="Fats g"
+            />
+          </div>
+
+          <textarea
+            name="notes"
+            defaultValue={
+              editingPlan.content?.notes||""
+            }
+            placeholder="Coach notes"
+          />
+
+          <div className="dialogActions">
+            <button
+              type="button"
+              className="btn ghost"
+              onClick={()=>setEditingPlan(null)}
+            >
+              Cancel
+            </button>
+
+            <button className="btn red">
+              Save Changes
+            </button>
+          </div>
+        </form>
+      </Dialog>
+    }
+
+
+    {mealFor&&
+      <Dialog
+        title={`Meal option · ${mealFor.name}`}
+        close={()=>setMealFor(null)}
+      >
+        <form onSubmit={meal}>
+          <div className="formGrid">
+            <input
+              name="mealLabel"
+              placeholder="e.g. Breakfast"
+              required
+            />
+
+            <input
+              name="optionLabel"
+              placeholder="Option A"
+              required
+            />
+          </div>
+
+          <textarea
+            name="foods"
+            placeholder={
+              "Foods — one per line\n60g oats\n1 scoop whey\n2 eggs"
+            }
+            required
+          />
+
+          <div className="formGrid four">
+            <input
+              name="calories"
+              type="number"
+              placeholder="kcal"
+            />
+            <input
+              name="protein"
+              type="number"
+              placeholder="P"
+            />
+            <input
+              name="carbs"
+              type="number"
+              placeholder="C"
+            />
+            <input
+              name="fats"
+              type="number"
+              placeholder="F"
+            />
+          </div>
+
+          <button className="btn red full">
+            Add Option
+          </button>
+        </form>
+      </Dialog>
+    }
+
+
+    {editingMeal&&
+      <Dialog
+        title="Edit Meal Option"
+        close={()=>setEditingMeal(null)}
+      >
+        <form onSubmit={saveMeal}>
+          <div className="formGrid">
+            <input
+              name="mealLabel"
+              defaultValue={editingMeal.mealLabel}
+              required
+            />
+
+            <input
+              name="optionLabel"
+              defaultValue={editingMeal.optionLabel}
+              required
+            />
+          </div>
+
+          <textarea
+            name="foods"
+            defaultValue={
+              Array.isArray(editingMeal.foods)
+                ?editingMeal.foods.join("\n")
+                :""
+            }
+            required
+          />
+
+          <div className="formGrid four">
+            <input
+              name="calories"
+              type="number"
+              defaultValue={editingMeal.calories||""}
+              placeholder="kcal"
+            />
+
+            <input
+              name="protein"
+              type="number"
+              defaultValue={editingMeal.proteinG||""}
+              placeholder="P"
+            />
+
+            <input
+              name="carbs"
+              type="number"
+              defaultValue={editingMeal.carbsG||""}
+              placeholder="C"
+            />
+
+            <input
+              name="fats"
+              type="number"
+              defaultValue={editingMeal.fatsG||""}
+              placeholder="F"
+            />
+          </div>
+
+          <div className="dialogActions">
+            <button
+              type="button"
+              className="btn ghost"
+              onClick={()=>setEditingMeal(null)}
+            >
+              Cancel
+            </button>
+
+            <button className="btn red">
+              Save Meal
+            </button>
+          </div>
+        </form>
+      </Dialog>
+    }
+  </>;
 }
+
 
 function AdminCheckins({setNotice}:{setNotice:(s:string)=>void}){
   const [items,setItems]=useState<any[]>([]);

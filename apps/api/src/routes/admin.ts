@@ -1184,6 +1184,32 @@ adminRouter.post("/workout-plans", async (req, res) => {
   res.status(201).json(item);
 });
 
+
+adminRouter.patch("/workout-plans/:id", async (req, res) => {
+  const parsed = z.object({
+    name: z.string().min(2),
+    description: z.string().optional()
+  }).safeParse(req.body);
+
+  if (!parsed.success) {
+    return res.status(400).json({ error: "Invalid input" });
+  }
+
+  const item = await prisma.workoutPlan.update({
+    where: { id: req.params.id },
+    data: parsed.data
+  });
+
+  await audit(
+    req.auth!.sub,
+    "UPDATE",
+    "WORKOUT_PLAN",
+    item.id
+  );
+
+  res.json(item);
+});
+
 adminRouter.post("/workout-plans/:id/exercises", async (req, res) => {
   const parsed = z.object({
     exerciseId: z.string(),
@@ -1208,6 +1234,50 @@ adminRouter.post("/workout-plans/:id/exercises", async (req, res) => {
     create: { workoutPlanId: req.params.id, ...parsed.data }
   });
   res.status(201).json(item);
+});
+
+adminRouter.patch("/workout-plans/:planId/exercises/:itemId", async (req, res) => {
+  const parsed = z.object({
+    exerciseId: z.string(),
+    dayLabel: z.string().min(1),
+    position: z.number().int().positive(),
+    sets: z.string().max(250).optional(),
+    reps: z.string().max(250).optional(),
+    restSeconds: z.string().max(250).optional(),
+    notes: z.string().max(4000).optional()
+  }).safeParse(req.body);
+
+  if (!parsed.success) {
+    return res.status(400).json({ error: "Invalid input" });
+  }
+
+  const existing = await prisma.workoutExercise.findFirst({
+    where: {
+      id: req.params.itemId,
+      workoutPlanId: req.params.planId
+    }
+  });
+
+  if (!existing) {
+    return res.status(404).json({
+      error: "Workout exercise not found"
+    });
+  }
+
+  const item = await prisma.workoutExercise.update({
+    where: { id: existing.id },
+    data: parsed.data
+  });
+
+  await audit(
+    req.auth!.sub,
+    "UPDATE_EXERCISE_IN_WORKOUT",
+    "WORKOUT_PLAN",
+    req.params.planId,
+    { workoutExerciseId: item.id }
+  );
+
+  res.json(item);
 });
 
 adminRouter.delete("/workout-plans/:planId/exercises/:itemId", async (req, res) => {
@@ -1304,6 +1374,85 @@ adminRouter.post("/nutrition-plans", async (req, res) => {
     }
   });
   res.status(201).json(item);
+});
+
+adminRouter.patch("/nutrition-plans/:id", async (req, res) => {
+  const parsed = z.object({
+    name: z.string().min(2),
+    calories: z.number().int().positive().optional(),
+    proteinG: z.number().int().nonnegative().optional(),
+    carbsG: z.number().int().nonnegative().optional(),
+    fatsG: z.number().int().nonnegative().optional(),
+    notes: z.string().optional()
+  }).safeParse(req.body);
+
+  if (!parsed.success) {
+    return res.status(400).json({ error: "Invalid input" });
+  }
+
+  const item = await prisma.nutritionPlan.update({
+    where: { id: req.params.id },
+    data: {
+      name: parsed.data.name,
+      calories: parsed.data.calories,
+      proteinG: parsed.data.proteinG,
+      carbsG: parsed.data.carbsG,
+      fatsG: parsed.data.fatsG,
+      content: {
+        notes: parsed.data.notes ?? ""
+      }
+    }
+  });
+
+  await audit(
+    req.auth!.sub,
+    "UPDATE",
+    "NUTRITION_PLAN",
+    item.id
+  );
+
+  res.json(item);
+});
+
+adminRouter.delete("/nutrition-plans/:id", async (req, res) => {
+  const plan = await prisma.nutritionPlan.findUnique({
+    where: { id: req.params.id },
+    select: {
+      id: true,
+      pdfUrl: true
+    }
+  });
+
+  if (!plan) {
+    return res.status(404).json({
+      error: "Nutrition plan not found"
+    });
+  }
+
+  if (plan.pdfUrl?.startsWith("/api/media/")) {
+    const filename = plan.pdfUrl.split("/").pop();
+
+    if (filename) {
+      const fullPath = safeUploadPath(filename);
+
+      if (fs.existsSync(fullPath)) {
+        fs.unlinkSync(fullPath);
+      }
+    }
+  }
+
+  await prisma.nutritionPlan.delete({
+    where: { id: plan.id }
+  });
+
+  await audit(
+    req.auth!.sub,
+    "DELETE",
+    "NUTRITION_PLAN",
+    plan.id
+  );
+
+  res.json({ ok: true });
 });
 
 adminRouter.post("/nutrition-plans/:id/pdf", pdfUpload.single("pdf"), async (req, res) => {
@@ -1403,6 +1552,79 @@ adminRouter.post("/nutrition-plans/:id/meal-options", async (req, res) => {
     data: { nutritionPlanId: req.params.id, ...rest, foods }
   });
   res.status(201).json(item);
+});
+
+adminRouter.patch("/nutrition-plans/:planId/meal-options/:mealId", async (req, res) => {
+  const parsed = z.object({
+    mealLabel: z.string().min(1),
+    optionLabel: z.string().min(1),
+    calories: z.number().int().optional(),
+    proteinG: z.number().int().optional(),
+    carbsG: z.number().int().optional(),
+    fatsG: z.number().int().optional(),
+    foods: z.array(z.string()).min(1)
+  }).safeParse(req.body);
+
+  if (!parsed.success) {
+    return res.status(400).json({ error: "Invalid input" });
+  }
+
+  const existing = await prisma.mealOption.findFirst({
+    where: {
+      id: req.params.mealId,
+      nutritionPlanId: req.params.planId
+    }
+  });
+
+  if (!existing) {
+    return res.status(404).json({
+      error: "Meal option not found"
+    });
+  }
+
+  const item = await prisma.mealOption.update({
+    where: { id: existing.id },
+    data: parsed.data
+  });
+
+  await audit(
+    req.auth!.sub,
+    "UPDATE_MEAL_OPTION",
+    "NUTRITION_PLAN",
+    req.params.planId,
+    { mealOptionId: item.id }
+  );
+
+  res.json(item);
+});
+
+adminRouter.delete("/nutrition-plans/:planId/meal-options/:mealId", async (req, res) => {
+  const existing = await prisma.mealOption.findFirst({
+    where: {
+      id: req.params.mealId,
+      nutritionPlanId: req.params.planId
+    }
+  });
+
+  if (!existing) {
+    return res.status(404).json({
+      error: "Meal option not found"
+    });
+  }
+
+  await prisma.mealOption.delete({
+    where: { id: existing.id }
+  });
+
+  await audit(
+    req.auth!.sub,
+    "DELETE_MEAL_OPTION",
+    "NUTRITION_PLAN",
+    req.params.planId,
+    { mealOptionId: existing.id }
+  );
+
+  res.json({ ok: true });
 });
 
 adminRouter.post("/clients/:id/nutrition", async (req, res) => {
