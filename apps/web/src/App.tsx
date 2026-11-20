@@ -4942,7 +4942,10 @@ function ClientPanel({user,logout}:{user:User;logout:()=>void}){
     }
 
     {tab==="nutrition"&&!data?.error&&
-      <ClientNutrition data={data}/>
+      <ClientNutrition
+        data={data}
+        clientName={user.fullName}
+      />
     }
     {tab==="weekly check-in"&&<div className="settingsCard"><h2>Weekly Check-In</h2><form onSubmit={checkin}><div className="formGrid"><input name="weight" type="number" step=".1" placeholder="Current weight kg"/><select name="performance" defaultValue=""><option value="" disabled>Training performance</option><option value="BETTER">Better</option><option value="SAME">Same</option><option value="WORSE">Worse</option></select></div><div className="formGrid"><input name="adherence" type="number" min="0" max="100" placeholder="Diet adherence %"/><input name="energy" type="number" min="1" max="10" placeholder="Energy 1–10"/></div><div className="formGrid"><input name="sleep" type="number" step=".1" placeholder="Average sleep hours"/><input name="steps" placeholder="Steps / cardio completed"/></div><textarea name="issues" placeholder="Any problems with training or diet?"/><textarea name="questions" placeholder="Anything you want Jay to know or ask?"/><label className="uploadLabel">Progress photos — front / side / back<input name="photos" type="file" accept="image/jpeg,image/png,image/webp" multiple/></label><textarea name="notes" placeholder="Other weekly notes (optional)"/><button className="btn red">Submit Check-In</button></form></div>}
     {tab==="chat"&&<ClientChat/>}
@@ -5318,12 +5321,23 @@ function DietPdfButton({src}:{src:string}){
   </button>;
 }
 
-function ClientNutrition({data}:any){
+function ClientNutrition({
+  data,
+  clientName
+}:{
+  data:any;
+  clientName:string;
+}){
+  const displayName=clientName?.trim()||"Your";
+  const dietTitle=displayName.endsWith("s")
+    ?`${displayName}' Diet Plan`
+    :`${displayName}'s Diet Plan`;
+
   return <div className="planGrid">
     {data?.length?
       data.map((a:any)=>
         <div className="planCard" key={a.id}>
-          <h2>{a.nutritionPlan.name}</h2>
+          <h2>{dietTitle}</h2>
 
           <div className="macroRow">
             <span>{a.nutritionPlan.calories||"—"} kcal</span>
