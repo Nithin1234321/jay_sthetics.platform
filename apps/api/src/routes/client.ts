@@ -170,11 +170,37 @@ clientRouter.get("/training", async (req,res) => {
 });
 
 clientRouter.get("/nutrition", async (req,res) => {
-  res.json(await prisma.nutritionAssignment.findMany({
-    where:{userId:req.auth!.sub},
-    include:{nutritionPlan:{include:{mealOptions:true}}},
-    orderBy:{assignedAt:"desc"}
-  }));
+  const [user,assignments] = await Promise.all([
+    prisma.user.findUnique({
+      where:{id:req.auth!.sub},
+      select:{fullName:true}
+    }),
+    prisma.nutritionAssignment.findMany({
+      where:{userId:req.auth!.sub},
+      include:{
+        nutritionPlan:{
+          include:{mealOptions:true}
+        }
+      },
+      orderBy:{assignedAt:"desc"}
+    })
+  ]);
+
+  const fullName=user?.fullName?.trim()||"Your";
+
+  const clientDietName=fullName.endsWith("s")
+    ? `${fullName}' Diet Plan`
+    : `${fullName}'s Diet Plan`;
+
+  res.json(
+    assignments.map(assignment=>({
+      ...assignment,
+      nutritionPlan:{
+        ...assignment.nutritionPlan,
+        name:clientDietName
+      }
+    }))
+  );
 });
 
 clientRouter.get("/progress", async (req,res) => {
