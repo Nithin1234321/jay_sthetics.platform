@@ -7625,3 +7625,112 @@ img{
 
 }
 
+
+
+/* ==========================================================
+   MOBILE MODAL CLOSE FIX
+   ========================================================== */
+
+.modalCard .close{
+  width:46px!important;
+  height:46px!important;
+  min-width:46px!important;
+  min-height:46px!important;
+
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+
+  padding:0!important;
+
+  top:8px!important;
+  right:8px!important;
+
+  z-index:50!important;
+
+  color:#fff!important;
+  background:#111!important;
+
+  border:1px solid #333!important;
+  border-radius:50%!important;
+
+  font-size:27px!important;
+  line-height:1!important;
+
+  cursor:pointer!important;
+
+  pointer-events:auto!important;
+  touch-action:manipulation!important;
+
+  -webkit-tap-highlight-color:transparent;
+}
+
+
+/* Keep title clear of close button */
+
+.modalCard>h2{
+  padding-right:54px;
+}
+
+
+@media(max-width:700px){
+
+  .modal{
+    z-index:9999!important;
+  }
+
+  .modalCard,
+  .modalCard.wide{
+    position:relative!important;
+    overflow-y:auto!important;
+    -webkit-overflow-scrolling:touch;
+  }
+
+  /*
+     Sticky keeps the close button available even after
+     scrolling down a long workout/diet form.
+  */
+
+  .modalCard .close{
+    position:sticky!important;
+
+    top:0!important;
+
+    float:right!important;
+
+    margin:
+      -8px
+      -2px
+      4px
+      12px!important;
+
+    width:48px!important;
+    height:48px!important;
+    min-width:48px!important;
+    min-height:48px!important;
+
+    flex:0 0 48px!important;
+  }
+
+  .modalCard>h2{
+    min-height:48px;
+    padding-right:4px!important;
+    margin-top:0!important;
+  }
+
+}
+
+
+/* Touch feedback */
+
+@media(pointer:coarse){
+
+  .modalCard .close:active{
+    transform:scale(.90)!important;
+
+    background:#fff!important;
+    color:#000!important;
+  }
+
+}
+

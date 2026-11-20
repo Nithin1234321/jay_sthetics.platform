@@ -5810,7 +5810,30 @@ function CheckoutPage({user}:{user:User}){
   </div>;
 }
 
-function Dialog({title,close,children,wide=false}:{title:string;close:()=>void;children:any;wide?:boolean}){return <div className="modal" onMouseDown={e=>e.target===e.currentTarget&&close()}><div className={`modalCard ${wide?"wide":""}`}><button className="close" onClick={close}>×</button><h2>{title}</h2>{children}</div></div>}
+function Dialog({title,close,children,wide=false}:{title:string;close:()=>void;children:any;wide?:boolean}){
+  return <div
+    className="modal"
+    onMouseDown={e=>e.target===e.currentTarget&&close()}
+  >
+    <div className={`modalCard ${wide?"wide":""}`}>
+      <button
+        type="button"
+        className="close"
+        aria-label="Close dialog"
+        onClick={e=>{
+          e.preventDefault();
+          e.stopPropagation();
+          close();
+        }}
+      >
+        ×
+      </button>
+
+      <h2>{title}</h2>
+      {children}
+    </div>
+  </div>;
+}
 function Info({k,v}:{k:string;v:any}){return <div className="info"><small>{k}</small><b>{v}</b></div>}
 function Empty({text}:{text:string}){return <div className="empty">{text}</div>}
 function Locked({message}:{message:string}){return <div className="lockedBox"><span>🔒</span><h2>Active subscription required</h2><p>{message}</p><p className="muted">Choose a programme and complete payment to unlock training, nutrition, progress and coaching features.</p><a className="btn red" href="/programs">Choose Programme & Pay</a></div>}
