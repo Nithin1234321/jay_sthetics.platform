@@ -7734,3 +7734,39 @@ img{
 
 }
 
+
+/* ==========================================================
+   HOMEPAGE HERO COLLAGE
+   Uses the exact supplied photos; no retouching or recoloring.
+   ========================================================== */
+
+.publicPage .hero{
+  background:
+    linear-gradient(
+      90deg,
+      #050505 0%,
+      rgba(5,5,5,.96) 28%,
+      rgba(5,5,5,.72) 48%,
+      rgba(5,5,5,.30) 72%,
+      rgba(5,5,5,.18) 100%
+    ),
+    url('/assets/jay-hero-collage.jpeg')
+      center center / cover
+      no-repeat!important;
+}
+
+@media(max-width:700px){
+  .publicPage .hero{
+    background:
+      linear-gradient(
+        180deg,
+        rgba(0,0,0,.22) 0%,
+        rgba(0,0,0,.40) 38%,
+        rgba(0,0,0,.82) 70%,
+        #050505 94%
+      ),
+      url('/assets/jay-hero-collage-mobile.jpeg')
+        center center / cover
+        no-repeat!important;
+  }
+}
