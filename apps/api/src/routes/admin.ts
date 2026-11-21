@@ -435,6 +435,9 @@ adminRouter.patch("/clients/:id/status", async (req, res) => {
 adminRouter.delete("/clients/:id", async (req,res) => {
   const clientId=String(req.params.id);
 
+  const force=
+    String(req.query.force||"").toLowerCase()==="true";
+
   const client=await prisma.user.findFirst({
     where:{
       id:clientId,
@@ -460,13 +463,26 @@ adminRouter.delete("/clients/:id", async (req,res) => {
     }
   });
 
-  if(successfulPayments>0){
+  if(successfulPayments>0&&!force){
     return res.status(409).json({
-      error:"This client has successful payment history and cannot be permanently deleted. Disable the account instead so financial records remain intact."
+      error:"This client has successful payment history and cannot be permanently deleted with normal delete. Use Force Delete only if you intentionally want to remove the client and their financial records."
     });
   }
 
   await prisma.$transaction(async tx=>{
+
+    // Force delete explicitly removes financial history first
+    // so paid/cancelled clients can be deleted safely.
+    if(force){
+      await tx.payment.deleteMany({
+        where:{userId:clientId}
+      });
+
+      await tx.subscription.deleteMany({
+        where:{userId:clientId}
+      });
+    }
+
     await tx.workoutAssignment.deleteMany({
       where:{userId:clientId}
     });
@@ -483,10 +499,33 @@ adminRouter.delete("/clients/:id", async (req,res) => {
       where:{userId:clientId}
     });
 
+    await tx.checkIn.deleteMany({
+      where:{userId:clientId}
+    });
+
     await tx.appointment.deleteMany({
       where:{userId:clientId}
     });
 
+    await tx.message.deleteMany({
+      where:{
+        OR:[
+          {senderId:clientId},
+          {receiverId:clientId}
+        ]
+      }
+    });
+
+    await tx.coachNote.deleteMany({
+      where:{userId:clientId}
+    });
+
+    await tx.clientWeeklyCall.deleteMany({
+      where:{userId:clientId}
+    });
+
+    // Normal unpaid/demo deletion can rely on cascade for
+    // subscriptions/payments if there is no protected history.
     await tx.user.delete({
       where:{id:clientId}
     });
@@ -502,16 +541,21 @@ adminRouter.delete("/clients/:id", async (req,res) => {
 
   await audit(
     req.auth!.sub,
-    "DELETE",
+    force?"FORCE_DELETE":"DELETE",
     "CLIENT",
     clientId,
     {
       name:client.fullName,
-      email:client.email
+      email:client.email,
+      successfulPayments,
+      force
     }
   );
 
-  res.json({ok:true});
+  res.json({
+    ok:true,
+    force
+  });
 });
 
 adminRouter.delete("/check-ins/:id", async (req,res) => {
@@ -1884,31 +1928,138 @@ adminRouter.patch("/appointments/:id", async (req, res) => {
 
 // MESSAGES
 adminRouter.get("/conversations", async (req, res) => {
-  const clients = await prisma.user.findMany({
-    where: { role: "CLIENT" },
-    select: { id: true, fullName: true, email: true },
-    orderBy: { fullName: "asc" }
-  });
+  const adminId=req.auth!.sub;
 
-  const unread = await prisma.message.groupBy({
-    by: ["senderId"],
-    where: {
-      receiverId: req.auth!.sub,
-      readAt: null
+  const clients=await prisma.user.findMany({
+    where:{
+      role:"CLIENT"
     },
-    _count: { _all: true }
+
+    select:{
+      id:true,
+      fullName:true,
+      email:true,
+
+      clientProfile:{
+        select:{
+          profilePhotoUrl:true
+        }
+      }
+    }
   });
 
-  const unreadMap = new Map(
-    unread.map(x => [x.senderId, x._count._all])
-  );
+  const clientIds=clients.map(c=>c.id);
 
-  res.json(
-    clients.map(c => ({
-      ...c,
-      unreadCount: unreadMap.get(c.id) || 0
-    }))
-  );
+  if(!clientIds.length){
+    return res.json([]);
+  }
+
+  const messages=await prisma.message.findMany({
+    where:{
+      OR:[
+        {
+          senderId:adminId,
+          receiverId:{
+            in:clientIds
+          }
+        },
+        {
+          senderId:{
+            in:clientIds
+          },
+          receiverId:adminId
+        }
+      ]
+    },
+
+    orderBy:{
+      createdAt:"desc"
+    },
+
+    select:{
+      id:true,
+      senderId:true,
+      receiverId:true,
+      body:true,
+      readAt:true,
+      createdAt:true
+    }
+  });
+
+
+  const latestMap=new Map<string,typeof messages[number]>();
+  const unreadMap=new Map<string,number>();
+
+  for(const message of messages){
+    const clientId=
+      message.senderId===adminId
+        ?message.receiverId
+        :message.senderId;
+
+    if(!latestMap.has(clientId)){
+      latestMap.set(clientId,message);
+    }
+
+    if(
+      message.senderId===clientId &&
+      message.receiverId===adminId &&
+      !message.readAt
+    ){
+      unreadMap.set(
+        clientId,
+        (unreadMap.get(clientId)||0)+1
+      );
+    }
+  }
+
+
+  const rows=clients.map(client=>{
+    const latest=latestMap.get(client.id);
+
+    return{
+      ...client,
+
+      unreadCount:
+        unreadMap.get(client.id)||0,
+
+      lastMessage:latest
+        ?{
+            id:latest.id,
+            body:latest.body,
+            senderId:latest.senderId,
+            receiverId:latest.receiverId,
+            createdAt:latest.createdAt
+          }
+        :null
+    };
+  });
+
+
+  rows.sort((a,b)=>{
+    if(
+      (b.unreadCount>0)!==
+      (a.unreadCount>0)
+    ){
+      return b.unreadCount>0?1:-1;
+    }
+
+    const aTime=a.lastMessage
+      ?new Date(a.lastMessage.createdAt).getTime()
+      :0;
+
+    const bTime=b.lastMessage
+      ?new Date(b.lastMessage.createdAt).getTime()
+      :0;
+
+    if(aTime!==bTime){
+      return bTime-aTime;
+    }
+
+    return a.fullName.localeCompare(b.fullName);
+  });
+
+
+  res.json(rows);
 });
 
 // PAYMENTS

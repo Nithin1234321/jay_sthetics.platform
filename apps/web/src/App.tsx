@@ -1475,6 +1475,43 @@ function AdminClients({setNotice}:{setNotice:(s:string)=>void}){
     }
   }
 
+  async function forceDeleteClient(){
+    if(!selected)return;
+
+    const typed=window.prompt(
+      `FORCE DELETE ${selected.fullName}\n\nThis permanently deletes the client, subscriptions, payments, messages, check-ins, measurements and coaching data.\n\nType DELETE to continue.`
+    );
+
+    if(typed!=="DELETE"){
+      return;
+    }
+
+    if(!window.confirm(
+      "FINAL WARNING: This also removes payment history for this client. This cannot be undone. Continue?"
+    )){
+      return;
+    }
+
+    try{
+      await api(
+        `/admin/clients/${selected.id}?force=true`,
+        {
+          method:"DELETE"
+        }
+      );
+
+      setNotice(
+        "Client force deleted, including financial records."
+      );
+
+      setSelected(null);
+      load();
+
+    }catch(e:any){
+      setNotice(e.message);
+    }
+  }
+
   async function deleteCheckIn(id:string){
     if(!window.confirm(
       "Delete this check-in permanently?"
@@ -1818,13 +1855,24 @@ function AdminClients({setNotice}:{setNotice:(s:string)=>void}){
     {selected.subscriptions?.[0]?.status||"NO PLAN"}
   </div>
 
-  <button
-    type="button"
-    className="btn dangerBtn"
-    onClick={deleteClient}
-  >
-    Delete Client
-  </button>
+  <div className="clientDeleteActions">
+    <button
+      type="button"
+      className="btn dangerBtn"
+      onClick={deleteClient}
+    >
+      Delete Client
+    </button>
+
+    <button
+      type="button"
+      className="btn forceDeleteBtn"
+      onClick={forceDeleteClient}
+      title="Permanently delete client including payment records"
+    >
+      Force Delete
+    </button>
+  </div>
 </div></div>
       <div className="clientTabs">{["overview","profile","subscription","workout","nutrition","check-ins","calls","payments","notes"].map(t=><button key={t} className={clientTab===t?"active":""} onClick={()=>setClientTab(t)}>{t}</button>)}</div><div className="clientWorkspaceBody">
       {clientTab==="overview"&&<div className="clientOverviewGrid"><div className="clientHeroCard"><small>COACHING STATUS</small><h2>{selected.subscriptions?.[0]?.program?.name||"No programme assigned"}</h2><p>{selected.subscriptions?.[0]?.status||"No coaching access yet."}</p></div><Info k="Goal" v={selected.clientProfile?.fitnessGoal||"Not added"}/><Info k="Weight" v={selected.clientProfile?.currentWeightKg?`${selected.clientProfile.currentWeightKg} kg`:"Not added"}/><Info k="Height" v={selected.clientProfile?.heightCm?`${selected.clientProfile.heightCm} cm`:"Not added"}/><Info k="Experience" v={selected.clientProfile?.trainingExperience||selected.clientProfile?.experienceLevel||"Not added"}/></div>}
@@ -5096,28 +5144,49 @@ function AdminMessages(){
 
   async function refreshClients(){
     try{
-      setClients(await api<any[]>("/admin/conversations"));
+      const rows=await api<any[]>(
+        "/admin/conversations"
+      );
+
+      setClients(rows);
+
+      setSelected((current:any)=>{
+        if(!current)return current;
+
+        return rows.find(
+          row=>row.id===current.id
+        )||current;
+      });
+
     }catch{}
   }
+
 
   async function refreshMessages(client:any){
     if(!client)return;
 
     try{
-      const rows=await api<any[]>(`/messages/${client.id}`);
+      const rows=await api<any[]>(
+        `/messages/${client.id}`
+      );
+
       setMessages(rows);
+
     }catch{}
   }
+
 
   useEffect(()=>{
     refreshClients();
 
-    const id=setInterval(()=>{
-      refreshClients();
-    },3000);
+    const id=setInterval(
+      refreshClients,
+      3000
+    );
 
     return()=>clearInterval(id);
   },[]);
+
 
   useEffect(()=>{
     if(!selected)return;
@@ -5129,105 +5198,449 @@ function AdminMessages(){
     },3000);
 
     return()=>clearInterval(id);
+
   },[selected?.id]);
+
 
   async function open(c:any){
     setSelected(c);
+
     await refreshMessages(c);
     await refreshClients();
   }
 
-  async function send(e:FormEvent<HTMLFormElement>){
+
+  async function send(
+    e:FormEvent<HTMLFormElement>
+  ){
     e.preventDefault();
 
     if(!selected||sending)return;
 
     const form=e.currentTarget;
     const f=new FormData(form);
-    const body=String(f.get("body")||"").trim();
+
+    const body=String(
+      f.get("body")||""
+    ).trim();
 
     if(!body)return;
 
     try{
       setSending(true);
 
-      const created=await api<any>("/messages",{
-        method:"POST",
-        body:JSON.stringify({
-          receiverId:selected.id,
-          body
-        })
-      });
+      const created=await api<any>(
+        "/messages",
+        {
+          method:"POST",
+
+          body:JSON.stringify({
+            receiverId:selected.id,
+            body
+          })
+        }
+      );
 
       form.reset();
 
       setMessages(prev=>[
-        ...prev.filter(m=>m.id!==created.id),
+        ...prev.filter(
+          m=>m.id!==created.id
+        ),
         created
       ]);
 
       await refreshClients();
+
     }catch(e:any){
       alert(e.message);
+
     }finally{
       setSending(false);
     }
   }
 
-  return <div className="chatLayout">
-    <div className="conversationList">
-      {clients.map(c=>
-        <button
-          key={c.id}
-          className={selected?.id===c.id?"selected":""}
-          onClick={()=>open(c)}
-        >
-          <div className="conversationName">
-            <b>{c.fullName}</b>
-            {!!c.unreadCount&&
-              <span className="messageBadge">{c.unreadCount}</span>
-            }
+
+  const conversationTime=(
+    value?:string
+  )=>{
+    if(!value)return "";
+
+    const d=new Date(value);
+    const now=new Date();
+
+    const sameDay=
+      d.toDateString()===
+      now.toDateString();
+
+    if(sameDay){
+      return d.toLocaleTimeString(
+        [],
+        {
+          hour:"numeric",
+          minute:"2-digit"
+        }
+      );
+    }
+
+    const yesterday=new Date(now);
+    yesterday.setDate(
+      now.getDate()-1
+    );
+
+    if(
+      d.toDateString()===
+      yesterday.toDateString()
+    ){
+      return "Yesterday";
+    }
+
+    return d.toLocaleDateString(
+      [],
+      {
+        month:"short",
+        day:"numeric"
+      }
+    );
+  };
+
+
+  const messageDay=(value:string)=>{
+    const d=new Date(value);
+    const now=new Date();
+
+    if(
+      d.toDateString()===
+      now.toDateString()
+    ){
+      return "Today";
+    }
+
+    const yesterday=new Date(now);
+    yesterday.setDate(
+      now.getDate()-1
+    );
+
+    if(
+      d.toDateString()===
+      yesterday.toDateString()
+    ){
+      return "Yesterday";
+    }
+
+    return d.toLocaleDateString(
+      [],
+      {
+        month:"short",
+        day:"numeric",
+        year:
+          d.getFullYear()!==
+          now.getFullYear()
+            ?"numeric"
+            :undefined
+      }
+    );
+  };
+
+
+  const unreadTotal=clients.reduce(
+    (sum,c)=>
+      sum+(c.unreadCount||0),
+    0
+  );
+
+
+  return (
+    <div
+      className={`adminMessagesShell ${
+        selected
+          ?"conversationOpen"
+          :""
+      }`}
+    >
+
+      {/* CONVERSATION LIST */}
+
+      <aside className="messageHierarchy">
+
+        <div className="messageHierarchyHead">
+          <div>
+            <small>
+              CLIENT MESSAGES
+            </small>
+
+            <h2>
+              Conversations
+            </h2>
           </div>
 
-          <small>{c.email}</small>
-        </button>
-      )}
-    </div>
-
-    <div className="chatPanel">
-      {selected?<>
-        <div className="chatTitle">
-          <b>{selected.fullName}</b>
-          <small>Updates automatically</small>
+          {unreadTotal>0&&
+            <span className="messageUnreadTotal">
+              {unreadTotal} unread
+            </span>
+          }
         </div>
 
-        <div className="messages">
-          {messages.map(m=>
-            <div
-              key={m.id}
-              className={`bubble ${m.senderId===selected.id?"theirs":"mine"}`}
+
+        <div className="messageHierarchyList">
+
+          {clients.map(c=>{
+            const last=c.lastMessage;
+
+            const preview=
+              last?.body||
+              "No messages yet";
+
+            const mine=
+              last?.senderId!==c.id;
+
+            return(
+              <button
+                type="button"
+                key={c.id}
+                className={[
+                  "messageConversationRow",
+
+                  selected?.id===c.id
+                    ?"selected"
+                    :"",
+
+                  c.unreadCount
+                    ?"unread"
+                    :""
+                ].join(" ")}
+                onClick={()=>open(c)}
+              >
+
+                <ProfilePhoto
+                  src={
+                    c.clientProfile
+                      ?.profilePhotoUrl
+                  }
+                  name={c.fullName}
+                  size={48}
+                />
+
+
+                <div className="messageConversationContent">
+
+                  <div className="messageConversationTop">
+                    <b>
+                      {c.fullName}
+                    </b>
+
+                    <time>
+                      {conversationTime(
+                        last?.createdAt
+                      )}
+                    </time>
+                  </div>
+
+
+                  <div className="messageConversationBottom">
+
+                    <span>
+                      {mine&&last
+                        ?"You: "
+                        :""
+                      }
+
+                      {preview}
+                    </span>
+
+                    {!!c.unreadCount&&
+                      <strong className="messageBadge">
+                        {c.unreadCount}
+                      </strong>
+                    }
+
+                  </div>
+
+                </div>
+
+              </button>
+            );
+          })}
+
+        </div>
+      </aside>
+
+
+      {/* CHAT */}
+
+      <section className="messageThreadPanel">
+
+        {selected?<>
+          <div className="messageThreadHead">
+
+            <button
+              type="button"
+              className="messageMobileBack"
+              onClick={()=>
+                setSelected(null)
+              }
             >
-              {m.body}
-              <small>{date(m.createdAt)}</small>
+              ←
+            </button>
+
+
+            <ProfilePhoto
+              src={
+                selected.clientProfile
+                  ?.profilePhotoUrl
+              }
+              name={selected.fullName}
+              size={42}
+            />
+
+
+            <div>
+              <b>
+                {selected.fullName}
+              </b>
+
+              <small>
+                {selected.email}
+              </small>
             </div>
-          )}
-        </div>
 
-        <form className="chatForm" onSubmit={send}>
-          <input
-            name="body"
-            placeholder="Message client…"
-            autoComplete="off"
-            required
-          />
+          </div>
 
-          <button className="btn red" disabled={sending}>
-            {sending?"Sending…":"Send"}
-          </button>
-        </form>
-      </>:<Empty text="Choose a client to open the conversation."/>}
+
+          <div className="messageThread">
+
+            {messages.map(
+              (m,index)=>{
+
+                const previous=
+                  messages[index-1];
+
+                const showDay=
+                  !previous||
+                  new Date(
+                    previous.createdAt
+                  ).toDateString()!==
+                  new Date(
+                    m.createdAt
+                  ).toDateString();
+
+                const theirs=
+                  m.senderId===
+                  selected.id;
+
+                return(
+                  <div
+                    key={m.id}
+                    className="messageThreadItem"
+                  >
+
+                    {showDay&&
+                      <div className="messageDaySeparator">
+                        <span>
+                          {messageDay(
+                            m.createdAt
+                          )}
+                        </span>
+                      </div>
+                    }
+
+
+                    <div
+                      className={
+                        `bubble ${
+                          theirs
+                            ?"theirs"
+                            :"mine"
+                        }`
+                      }
+                    >
+                      <div>
+                        {m.body}
+                      </div>
+
+                      <small>
+                        {new Date(
+                          m.createdAt
+                        ).toLocaleTimeString(
+                          [],
+                          {
+                            hour:"numeric",
+                            minute:"2-digit"
+                          }
+                        )}
+                      </small>
+                    </div>
+
+                  </div>
+                );
+              }
+            )}
+
+            {!messages.length&&
+              <div className="messageEmptyThread">
+                <b>
+                  No messages yet
+                </b>
+
+                <span>
+                  Start the conversation with {
+                    selected.fullName
+                  }.
+                </span>
+              </div>
+            }
+
+          </div>
+
+
+          <form
+            className="messageComposer"
+            onSubmit={send}
+          >
+            <input
+              name="body"
+              placeholder={
+                `Message ${selected.fullName}…`
+              }
+              autoComplete="off"
+              required
+            />
+
+            <button
+              className="btn red"
+              disabled={sending}
+            >
+              {sending
+                ?"Sending…"
+                :"Send"
+              }
+            </button>
+          </form>
+
+        </>:(
+          <div className="messageNoSelection">
+
+            <div className="messageNoSelectionIcon">
+              ✉
+            </div>
+
+            <h3>
+              Select a conversation
+            </h3>
+
+            <p>
+              Unread conversations appear first,
+              followed by the most recently active
+              clients.
+            </p>
+
+          </div>
+        )}
+
+      </section>
+
     </div>
-  </div>;
+  );
 }
 
 function AdminPayments(){
