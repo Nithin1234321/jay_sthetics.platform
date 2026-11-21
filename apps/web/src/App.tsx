@@ -2330,6 +2330,74 @@ function AdminClients({setNotice}:{setNotice:(s:string)=>void}){
 
           </div>
 
+          {!!x.measurements?.length&&
+            <div className="checkinRecordSection">
+              <div className="checkinRecordSectionHead">
+                <small>BODY MEASUREMENTS</small>
+                <span>
+                  {x.measurements.length} recorded
+                </span>
+              </div>
+
+              <div className="checkinMeasurementResults">
+                {x.measurements.map((m:any)=>
+                  <div key={m.id}>
+                    <small>{m.metric}</small>
+                    <b>{m.value} {m.unit}</b>
+                  </div>
+                )}
+              </div>
+            </div>
+          }
+
+
+          {!!x.strengthRecords?.length&&
+            <div className="checkinRecordSection">
+              <div className="checkinRecordSectionHead">
+                <small>STRENGTH RECORDS</small>
+                <span>
+                  {x.strengthRecords.length} exercise{
+                    x.strengthRecords.length===1?"":"s"
+                  }
+                </span>
+              </div>
+
+              <div className="checkinStrengthResults">
+                {x.strengthRecords.map((r:any)=>
+                  <div
+                    className="checkinStrengthResult"
+                    key={r.id}
+                  >
+                    <b>{r.exerciseName}</b>
+
+                    <span>
+                      {r.sets
+                        ?`${r.sets} sets`
+                        :"Sets —"
+                      }
+                      {" · "}
+                      {r.reps
+                        ?`${r.reps} reps`
+                        :"Reps —"
+                      }
+                      {" · "}
+                      {r.weightKg!==null &&
+                       r.weightKg!==undefined
+                        ?`${r.weightKg} kg`
+                        :"Weight —"
+                      }
+                    </span>
+
+                    {r.notes&&
+                      <p>{r.notes}</p>
+                    }
+                  </div>
+                )}
+              </div>
+            </div>
+          }
+
+
           {!!x.photoUrls?.length&&
             <div className="progressPhotos" style={{marginTop:"14px"}}>
               {x.photoUrls.map((u:string)=>
@@ -4676,6 +4744,74 @@ function AdminCheckins({setNotice}:{setNotice:(s:string)=>void}){
 
             </div>
 
+            {!!c.measurements?.length&&
+              <div className="adminCheckinRecordSection">
+                <div className="checkinSectionTitle">
+                  <small>BODY MEASUREMENTS</small>
+                  <span>
+                    {c.measurements.length} recorded
+                  </span>
+                </div>
+
+                <div className="checkinMeasurementResults">
+                  {c.measurements.map((m:any)=>
+                    <div key={m.id}>
+                      <small>{m.metric}</small>
+                      <b>{m.value} {m.unit}</b>
+                    </div>
+                  )}
+                </div>
+              </div>
+            }
+
+
+            {!!c.strengthRecords?.length&&
+              <div className="adminCheckinRecordSection">
+                <div className="checkinSectionTitle">
+                  <small>STRENGTH RECORDS</small>
+                  <span>
+                    {c.strengthRecords.length} exercise{
+                      c.strengthRecords.length===1?"":"s"
+                    }
+                  </span>
+                </div>
+
+                <div className="checkinStrengthResults">
+                  {c.strengthRecords.map((r:any)=>
+                    <div
+                      className="checkinStrengthResult"
+                      key={r.id}
+                    >
+                      <b>{r.exerciseName}</b>
+
+                      <span>
+                        {r.sets
+                          ?`${r.sets} sets`
+                          :"Sets —"
+                        }
+                        {" · "}
+                        {r.reps
+                          ?`${r.reps} reps`
+                          :"Reps —"
+                        }
+                        {" · "}
+                        {r.weightKg!==null &&
+                         r.weightKg!==undefined
+                          ?`${r.weightKg} kg`
+                          :"Weight —"
+                        }
+                      </span>
+
+                      {r.notes&&
+                        <p>{r.notes}</p>
+                      }
+                    </div>
+                  )}
+                </div>
+              </div>
+            }
+
+
             {!!c.photoUrls?.length&&
               <div className="adminCheckinPhotos">
                 <div className="checkinSectionTitle">
@@ -5142,6 +5278,18 @@ function ClientPanel({user,logout}:{user:User;logout:()=>void}){
   const [tab,setTab]=useState("dashboard"),[data,setData]=useState<any>(null),[notice,setNotice]=useState("");
   const [clientUnread,setClientUnread]=useState(0);
 
+  const emptyStrengthRecord=()=>({
+    exerciseName:"",
+    sets:"",
+    reps:"",
+    weightKg:"",
+    notes:""
+  });
+
+  const [strengthRecords,setStrengthRecords]=useState<any[]>([
+    emptyStrengthRecord()
+  ]);
+
   useEffect(()=>{load()},[tab]);
 
   useEffect(()=>{
@@ -5195,18 +5343,170 @@ function ClientPanel({user,logout}:{user:User;logout:()=>void}){
       setNotice(e.message);
     }
   }
-  async function checkin(e:FormEvent<HTMLFormElement>){e.preventDefault();const form=e.currentTarget;const f=new FormData(form);try{
-    let photoUrls:string[]=[];
-    const input=form.elements.namedItem("photos") as HTMLInputElement|null;
-    if(input?.files?.length){
-      const upload=new FormData();
-      Array.from(input.files).slice(0,3).forEach(file=>upload.append("photos",file));
-      const r=await api<{photoUrls:string[]}>("/client/check-in-photos",{method:"POST",body:upload});
-      photoUrls=r.photoUrls;
+  async function checkin(
+    e:FormEvent<HTMLFormElement>
+  ){
+    e.preventDefault();
+
+    const form=e.currentTarget;
+    const f=new FormData(form);
+
+    try{
+      let photoUrls:string[]=[];
+
+      const input=form.elements.namedItem(
+        "photos"
+      ) as HTMLInputElement|null;
+
+      if(input?.files?.length){
+        const upload=new FormData();
+
+        Array.from(input.files)
+          .slice(0,3)
+          .forEach(file=>
+            upload.append("photos",file)
+          );
+
+        const r=await api<{
+          photoUrls:string[]
+        }>(
+          "/client/check-in-photos",
+          {
+            method:"POST",
+            body:upload
+          }
+        );
+
+        photoUrls=r.photoUrls;
+      }
+
+
+      const measurementMap=[
+        ["rightArm","Right arm"],
+        ["leftArm","Left arm"],
+        ["rightForearm","Right forearm"],
+        ["leftForearm","Left forearm"],
+        ["chest","Chest"],
+        ["waist","Waist"],
+        ["rightQuad","Right quad"],
+        ["leftQuad","Left quad"],
+        ["rightCalf","Right calf"],
+        ["leftCalf","Left calf"]
+      ] as const;
+
+
+      const measurements=measurementMap
+        .map(([field,metric])=>{
+          const raw=String(f.get(field)||"").trim();
+
+          if(!raw)return null;
+
+          const value=Number(raw);
+
+          if(!Number.isFinite(value)||value<=0){
+            return null;
+          }
+
+          return{
+            metric,
+            value
+          };
+        })
+        .filter(Boolean);
+
+
+      const strengthPayload=strengthRecords
+        .filter(record=>
+          record.exerciseName.trim()
+        )
+        .map(record=>({
+          exerciseName:record.exerciseName.trim(),
+
+          sets:
+            record.sets!==""
+              ?Number(record.sets)
+              :undefined,
+
+          reps:
+            record.reps!==""
+              ?Number(record.reps)
+              :undefined,
+
+          weightKg:
+            record.weightKg!==""
+              ?Number(record.weightKg)
+              :undefined,
+
+          notes:
+            record.notes.trim()||
+            undefined
+        }));
+
+
+      await api(
+        "/client/check-ins",
+        {
+          method:"POST",
+
+          body:JSON.stringify({
+            weightKg:
+              Number(f.get("weight"))||
+              undefined,
+
+            sleepHours:
+              Number(f.get("sleep"))||
+              undefined,
+
+            energyLevel:
+              Number(f.get("energy"))||
+              undefined,
+
+            dietAdherence:
+              Number(f.get("adherence"))||
+              undefined,
+
+            trainingPerformance:
+              f.get("performance")||
+              undefined,
+
+            stepsCardio:
+              f.get("steps")||
+              undefined,
+
+            issues:
+              f.get("issues")||
+              undefined,
+
+            questions:
+              f.get("questions")||
+              undefined,
+
+            notes:
+              f.get("notes")||
+              undefined,
+
+            photoUrls,
+            strengthRecords:strengthPayload,
+            measurements
+          })
+        }
+      );
+
+      setNotice(
+        "Weekly check-in submitted."
+      );
+
+      form.reset();
+
+      setStrengthRecords([
+        emptyStrengthRecord()
+      ]);
+
+    }catch(e:any){
+      setNotice(e.message);
     }
-    await api("/client/check-ins",{method:"POST",body:JSON.stringify({weightKg:Number(f.get("weight"))||undefined,sleepHours:Number(f.get("sleep"))||undefined,energyLevel:Number(f.get("energy"))||undefined,dietAdherence:Number(f.get("adherence"))||undefined,trainingPerformance:f.get("performance")||undefined,stepsCardio:f.get("steps")||undefined,issues:f.get("issues")||undefined,questions:f.get("questions")||undefined,notes:f.get("notes")||undefined,photoUrls})});
-    setNotice("Weekly check-in submitted.");form.reset()
-  }catch(e:any){setNotice(e.message)}}
+  }
+
   return <div className="appShell"><Sidebar items={tabs} tab={tab} setTab={setTab} logout={logout} badges={{chat:clientUnread}}/><main className="dash premiumDash"><div className="dashTop premiumTop"><div><small className="redText">jay.__sthetics · CLIENT</small><h1>{tab.toUpperCase()}</h1></div><div className="topRight"><div className="topStatus"><span></span>Active</div><div className="avatar premiumAvatar">{user.fullName?.split(" ").map((x:string)=>x[0]).join("").slice(0,2)}</div></div></div>{notice&&<div className="inlineNotice">{notice}</div>}
     {data?.error&&<Locked message={data.error}/>}
     {tab==="dashboard"&&!data?.error&&<ClientDashboard data={data}/>}
@@ -5251,7 +5551,452 @@ function ClientPanel({user,logout}:{user:User;logout:()=>void}){
         clientName={user.fullName}
       />
     }
-    {tab==="weekly check-in"&&<div className="settingsCard"><h2>Weekly Check-In</h2><form onSubmit={checkin}><div className="formGrid"><input name="weight" type="number" step=".1" placeholder="Current weight kg"/><select name="performance" defaultValue=""><option value="" disabled>Training performance</option><option value="BETTER">Better</option><option value="SAME">Same</option><option value="WORSE">Worse</option></select></div><div className="formGrid"><input name="adherence" type="number" min="0" max="100" placeholder="Diet adherence %"/><input name="energy" type="number" min="1" max="10" placeholder="Energy 1–10"/></div><div className="formGrid"><input name="sleep" type="number" step=".1" placeholder="Average sleep hours"/><input name="steps" placeholder="Steps / cardio completed"/></div><textarea name="issues" placeholder="Any problems with training or diet?"/><textarea name="questions" placeholder="Anything you want Jay to know or ask?"/><label className="uploadLabel">Progress photos — front / side / back<input name="photos" type="file" accept="image/jpeg,image/png,image/webp" multiple/></label><textarea name="notes" placeholder="Other weekly notes (optional)"/><button className="btn red">Submit Check-In</button></form></div>}
+    {tab==="weekly check-in"&&
+      <div className="settingsCard weeklyCheckinForm">
+
+        <h2>Weekly Check-In</h2>
+
+        <p className="muted">
+          Share your weekly training, recovery, cardio,
+          measurements and strength performance with Jay.
+        </p>
+
+        <form onSubmit={checkin}>
+
+          <div className="formGrid">
+            <input
+              name="weight"
+              type="number"
+              step=".1"
+              placeholder="Current weight kg"
+            />
+
+            <select
+              name="performance"
+              defaultValue=""
+            >
+              <option value="" disabled>
+                Training performance
+              </option>
+
+              <option value="BETTER">
+                Better than last week
+              </option>
+
+              <option value="SAME">
+                About the same
+              </option>
+
+              <option value="WORSE">
+                Worse than last week
+              </option>
+            </select>
+          </div>
+
+
+          <div className="formGrid">
+            <input
+              name="adherence"
+              type="number"
+              min="0"
+              max="100"
+              placeholder="Diet adherence %"
+            />
+
+            <input
+              name="energy"
+              type="number"
+              min="1"
+              max="10"
+              placeholder="Energy 1–10"
+            />
+          </div>
+
+
+          <div className="formGrid">
+            <input
+              name="sleep"
+              type="number"
+              step=".1"
+              placeholder="Average sleep hours"
+            />
+
+            <select
+              name="steps"
+              defaultValue=""
+            >
+              <option value="" disabled>
+                Cardio completion
+              </option>
+
+              <option value="No cardio">
+                No cardio
+              </option>
+
+              <option value="50% done">
+                50% done
+              </option>
+
+              <option value="Almost done">
+                Almost done
+              </option>
+
+              <option value="Target completed">
+                Target completed
+              </option>
+            </select>
+          </div>
+
+
+          {/* BODY MEASUREMENTS */}
+
+          <div className="checkinSubSection">
+            <div className="checkinSubSectionHead">
+              <small className="redText">
+                BODY MEASUREMENTS
+              </small>
+
+              <h3>
+                Measurements
+              </h3>
+
+              <p className="muted">
+                Optional — enter measurements in centimeters.
+                Leave any field blank if you did not measure it
+                this week.
+              </p>
+            </div>
+
+            <div className="measurementCheckinGrid">
+
+              <label>
+                Right arm
+                <input
+                  name="rightArm"
+                  type="number"
+                  min="0"
+                  step=".1"
+                  placeholder="cm"
+                />
+              </label>
+
+              <label>
+                Left arm
+                <input
+                  name="leftArm"
+                  type="number"
+                  min="0"
+                  step=".1"
+                  placeholder="cm"
+                />
+              </label>
+
+              <label>
+                Right forearm
+                <input
+                  name="rightForearm"
+                  type="number"
+                  min="0"
+                  step=".1"
+                  placeholder="cm"
+                />
+              </label>
+
+              <label>
+                Left forearm
+                <input
+                  name="leftForearm"
+                  type="number"
+                  min="0"
+                  step=".1"
+                  placeholder="cm"
+                />
+              </label>
+
+              <label>
+                Chest
+                <input
+                  name="chest"
+                  type="number"
+                  min="0"
+                  step=".1"
+                  placeholder="cm"
+                />
+              </label>
+
+              <label>
+                Waist
+                <input
+                  name="waist"
+                  type="number"
+                  min="0"
+                  step=".1"
+                  placeholder="cm"
+                />
+              </label>
+
+              <label>
+                Right quad
+                <input
+                  name="rightQuad"
+                  type="number"
+                  min="0"
+                  step=".1"
+                  placeholder="cm"
+                />
+              </label>
+
+              <label>
+                Left quad
+                <input
+                  name="leftQuad"
+                  type="number"
+                  min="0"
+                  step=".1"
+                  placeholder="cm"
+                />
+              </label>
+
+              <label>
+                Right calf
+                <input
+                  name="rightCalf"
+                  type="number"
+                  min="0"
+                  step=".1"
+                  placeholder="cm"
+                />
+              </label>
+
+              <label>
+                Left calf
+                <input
+                  name="leftCalf"
+                  type="number"
+                  min="0"
+                  step=".1"
+                  placeholder="cm"
+                />
+              </label>
+
+            </div>
+          </div>
+
+
+          {/* STRENGTH RECORDS */}
+
+          <div className="checkinSubSection">
+            <div className="checkinStrengthHead">
+
+              <div>
+                <small className="redText">
+                  STRENGTH RECORDS
+                </small>
+
+                <h3>
+                  How did your lifts go?
+                </h3>
+
+                <p className="muted">
+                  Optional — add the important exercises you
+                  want Jay to review this week.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                className="btn ghost"
+                onClick={()=>
+                  setStrengthRecords(current=>[
+                    ...current,
+                    emptyStrengthRecord()
+                  ])
+                }
+              >
+                + Add Exercise
+              </button>
+            </div>
+
+
+            <div className="checkinStrengthList">
+
+              {strengthRecords.map(
+                (record,index)=>
+
+                <div
+                  className="checkinStrengthEntry"
+                  key={index}
+                >
+
+                  <div className="checkinStrengthEntryTop">
+                    <b>
+                      Strength Record {index+1}
+                    </b>
+
+                    {strengthRecords.length>1&&
+                      <button
+                        type="button"
+                        className="workoutDeleteButton"
+                        onClick={()=>
+                          setStrengthRecords(current=>
+                            current.filter(
+                              (_,i)=>i!==index
+                            )
+                          )
+                        }
+                      >
+                        Remove
+                      </button>
+                    }
+                  </div>
+
+
+                  <input
+                    value={record.exerciseName}
+                    placeholder="Exercise — e.g. Bench Press"
+                    onChange={e=>
+                      setStrengthRecords(current=>
+                        current.map((item,i)=>
+                          i===index
+                            ?{
+                                ...item,
+                                exerciseName:
+                                  e.target.value
+                              }
+                            :item
+                        )
+                      )
+                    }
+                  />
+
+
+                  <div className="strengthRecordNumbers">
+
+                    <input
+                      type="number"
+                      min="1"
+                      value={record.sets}
+                      placeholder="Sets"
+                      onChange={e=>
+                        setStrengthRecords(current=>
+                          current.map((item,i)=>
+                            i===index
+                              ?{
+                                  ...item,
+                                  sets:e.target.value
+                                }
+                              :item
+                          )
+                        )
+                      }
+                    />
+
+
+                    <input
+                      type="number"
+                      min="1"
+                      value={record.reps}
+                      placeholder="Reps"
+                      onChange={e=>
+                        setStrengthRecords(current=>
+                          current.map((item,i)=>
+                            i===index
+                              ?{
+                                  ...item,
+                                  reps:e.target.value
+                                }
+                              :item
+                          )
+                        )
+                      }
+                    />
+
+
+                    <input
+                      type="number"
+                      min="0"
+                      step=".25"
+                      value={record.weightKg}
+                      placeholder="Weight kg"
+                      onChange={e=>
+                        setStrengthRecords(current=>
+                          current.map((item,i)=>
+                            i===index
+                              ?{
+                                  ...item,
+                                  weightKg:
+                                    e.target.value
+                                }
+                              :item
+                          )
+                        )
+                      }
+                    />
+
+                  </div>
+
+
+                  <textarea
+                    value={record.notes}
+                    placeholder="Describe performance — strength changes, difficulty, technique, PRs, pain, form, last-set performance..."
+                    onChange={e=>
+                      setStrengthRecords(current=>
+                        current.map((item,i)=>
+                          i===index
+                            ?{
+                                ...item,
+                                notes:e.target.value
+                              }
+                            :item
+                        )
+                      )
+                    }
+                  />
+
+                </div>
+              )}
+
+            </div>
+          </div>
+
+
+          <textarea
+            name="issues"
+            placeholder="Any problems with training or diet?"
+          />
+
+          <textarea
+            name="questions"
+            placeholder="Anything you want Jay to know or ask?"
+          />
+
+
+          <label className="uploadLabel">
+            Progress photos — front / side / back
+
+            <input
+              name="photos"
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              multiple
+            />
+          </label>
+
+
+          <textarea
+            name="notes"
+            placeholder="Other weekly notes (optional)"
+          />
+
+
+          <button className="btn red">
+            Submit Check-In
+          </button>
+
+        </form>
+      </div>
+    }
+
     {tab==="chat"&&<ClientChat/>}
     {tab==="calls"&&<ClientCalls/>}
   </main></div>

@@ -304,19 +304,115 @@ clientRouter.post("/check-ins", async (req,res) => {
     energyLevel:z.number().int().min(1).max(10).optional(),
     dietAdherence:z.number().int().min(0).max(100).optional(),
     trainingPerformance:z.enum(["BETTER","SAME","WORSE"]).optional(),
-    stepsCardio:z.string().max(500).optional(),
+
+    stepsCardio:z.enum([
+      "No cardio",
+      "50% done",
+      "Almost done",
+      "Target completed"
+    ]).optional(),
+
     issues:z.string().max(2000).optional(),
     questions:z.string().max(2000).optional(),
     notes:z.string().max(4000).optional(),
-    photoUrls:z.array(z.string()).max(3).default([])
+
+    photoUrls:z.array(z.string()).max(3).default([]),
+
+    strengthRecords:z.array(
+      z.object({
+        exerciseName:z.string().min(1).max(150),
+        sets:z.number().int().positive().max(50).optional(),
+        reps:z.number().int().positive().max(1000).optional(),
+        weightKg:z.number().nonnegative().max(2000).optional(),
+        notes:z.string().max(2000).optional()
+      })
+    ).max(20).default([]),
+
+    measurements:z.array(
+      z.object({
+        metric:z.enum([
+          "Right arm",
+          "Left arm",
+          "Right forearm",
+          "Left forearm",
+          "Chest",
+          "Waist",
+          "Right quad",
+          "Left quad",
+          "Right calf",
+          "Left calf"
+        ]),
+        value:z.number().positive().max(500)
+      })
+    ).max(10).default([])
   }).safeParse(req.body);
-  if(!parsed.success)return res.status(400).json({error:"Invalid check-in information"});
-  const item=await prisma.checkIn.create({data:{userId:req.auth!.sub,...parsed.data}});
+
+  if(!parsed.success){
+    return res.status(400).json({
+      error:"Invalid check-in information"
+    });
+  }
+
+  const {
+    strengthRecords,
+    measurements,
+    ...checkInData
+  }=parsed.data;
+
+  const now=new Date();
+
+  const item=await prisma.checkIn.create({
+    data:{
+      userId:req.auth!.sub,
+      ...checkInData,
+
+      strengthRecords:{
+        create:strengthRecords.map(record=>({
+          userId:req.auth!.sub,
+          exerciseName:record.exerciseName,
+          sets:record.sets,
+          reps:record.reps,
+          weightKg:record.weightKg,
+          notes:record.notes,
+          performedAt:now
+        }))
+      },
+
+      measurements:{
+        create:measurements.map(measurement=>({
+          userId:req.auth!.sub,
+          metric:measurement.metric,
+          value:measurement.value,
+          unit:"cm",
+          measuredAt:now
+        }))
+      }
+    },
+
+    include:{
+      strengthRecords:true,
+      measurements:true
+    }
+  });
+
   if(parsed.data.weightKg){
     await prisma.user.update({
       where:{id:req.auth!.sub},
-      data:{clientProfile:{upsert:{create:{currentWeightKg:parsed.data.weightKg},update:{currentWeightKg:parsed.data.weightKg}}}}
+
+      data:{
+        clientProfile:{
+          upsert:{
+            create:{
+              currentWeightKg:parsed.data.weightKg
+            },
+            update:{
+              currentWeightKg:parsed.data.weightKg
+            }
+          }
+        }
+      }
     });
   }
+
   res.status(201).json(item);
 });

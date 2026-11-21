@@ -336,7 +336,18 @@ adminRouter.get("/clients/:id", async (req, res) => {
       id: true, fullName: true, email: true, phone: true, isActive: true, createdAt: true,
       clientProfile: true,
       subscriptions: { include: { program: true, payments: true }, orderBy: { createdAt: "desc" } },
-      checkIns: { orderBy: { createdAt: "desc" }, take: 20 }
+      checkIns:{
+        include:{
+          strengthRecords:{
+            orderBy:{performedAt:"asc"}
+          },
+          measurements:{
+            orderBy:{createdAt:"asc"}
+          }
+        },
+        orderBy:{createdAt:"desc"},
+        take:20
+      }
     }
   });
   if (!client) return res.status(404).json({ error: "Client not found" });
@@ -1826,7 +1837,23 @@ adminRouter.post("/clients/:id/nutrition", async (req, res) => {
 // CHECK-INS
 adminRouter.get("/check-ins", async (_req, res) => {
   res.json(await prisma.checkIn.findMany({
-    include: { user: { select: { id: true, fullName: true, email: true } } },
+    include:{
+      user:{
+        select:{
+          id:true,
+          fullName:true,
+          email:true
+        }
+      },
+
+      strengthRecords:{
+        orderBy:{performedAt:"asc"}
+      },
+
+      measurements:{
+        orderBy:{createdAt:"asc"}
+      }
+    },
     orderBy: { createdAt: "desc" },
     take: 250
   }));

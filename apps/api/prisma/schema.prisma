@@ -199,7 +199,9 @@ model CheckIn {
   notes         String?
   photoUrls     String[]
   createdAt     DateTime @default(now())
-  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user            User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  strengthRecords StrengthRecord[]
+  measurements    ProgressMeasurement[]
 
   @@index([userId, createdAt])
 }
@@ -340,14 +342,19 @@ model MealOption {
 }
 
 model ProgressMeasurement {
-  id String @id @default(cuid())
-  userId String
-  metric String
-  value Decimal @db.Decimal(8,2)
-  unit String
+  id         String   @id @default(cuid())
+  userId     String
+  checkInId  String?
+  metric     String
+  value      Decimal  @db.Decimal(8,2)
+  unit       String
   measuredAt DateTime @default(now())
-  createdAt DateTime @default(now())
+  createdAt  DateTime @default(now())
+
+  checkIn CheckIn? @relation(fields: [checkInId], references: [id], onDelete: Cascade)
+
   @@index([userId, metric, measuredAt])
+  @@index([checkInId])
 }
 
 model StrengthRecord {

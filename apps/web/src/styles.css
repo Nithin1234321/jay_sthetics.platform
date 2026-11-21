@@ -8706,3 +8706,267 @@ img{
 
 }
 
+
+
+/* ==========================================================
+   WEEKLY CHECK-IN — MEASUREMENTS + STRENGTH
+   ========================================================== */
+
+.checkinSubSection{
+  margin:20px 0;
+  padding:20px;
+
+  border:1px solid #303033;
+  border-radius:14px;
+
+  background:#0a0a0b;
+}
+
+
+.checkinSubSectionHead{
+  margin-bottom:16px;
+}
+
+
+.checkinSubSectionHead h3,
+.checkinStrengthHead h3{
+  margin:5px 0 6px;
+}
+
+
+.checkinSubSectionHead p,
+.checkinStrengthHead p{
+  margin:0;
+}
+
+
+.measurementCheckinGrid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:11px;
+}
+
+
+.measurementCheckinGrid label{
+  display:grid;
+  gap:7px;
+
+  color:#aaa;
+  font-size:11px;
+  font-weight:700;
+}
+
+
+.checkinStrengthHead{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:18px;
+
+  margin-bottom:16px;
+}
+
+
+.checkinStrengthList{
+  display:grid;
+  gap:12px;
+}
+
+
+.checkinStrengthEntry{
+  display:grid;
+  gap:10px;
+
+  padding:16px;
+
+  border:1px solid #29292c;
+  border-radius:11px;
+
+  background:#0e0e0f;
+}
+
+
+.checkinStrengthEntryTop{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+}
+
+
+.checkinStrengthEntryTop b{
+  font-size:12px;
+}
+
+
+.strengthRecordNumbers{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:9px;
+}
+
+
+.checkinStrengthEntry textarea{
+  min-height:100px!important;
+}
+
+
+/* ==========================================================
+   ADMIN CHECK-IN RECORD RESULTS
+   ========================================================== */
+
+.checkinRecordSection,
+.adminCheckinRecordSection{
+  margin-top:18px;
+  padding-top:16px;
+
+  border-top:1px solid #29292c;
+}
+
+
+.checkinRecordSectionHead{
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+
+  margin-bottom:10px;
+}
+
+
+.checkinRecordSectionHead small{
+  color:#777;
+
+  font-size:9px;
+  font-weight:900;
+  letter-spacing:.08em;
+}
+
+
+.checkinRecordSectionHead span{
+  color:#666;
+  font-size:10px;
+}
+
+
+.checkinMeasurementResults{
+  display:grid;
+  grid-template-columns:repeat(5,minmax(0,1fr));
+  gap:8px;
+}
+
+
+.checkinMeasurementResults>div{
+  display:grid;
+  gap:5px;
+
+  padding:11px;
+
+  border:1px solid #29292c;
+  border-radius:8px;
+
+  background:#0b0b0c;
+}
+
+
+.checkinMeasurementResults small{
+  color:#777;
+  font-size:9px;
+}
+
+
+.checkinMeasurementResults b{
+  color:#fff;
+  font-size:12px;
+}
+
+
+.checkinStrengthResults{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:9px;
+
+  margin-top:10px;
+}
+
+
+.checkinStrengthResult{
+  padding:13px 14px;
+
+  border:1px solid #29292c;
+  border-radius:9px;
+
+  background:#0b0b0c;
+}
+
+
+.checkinStrengthResult b{
+  display:block;
+
+  margin-bottom:5px;
+
+  color:#fff;
+  font-size:13px;
+}
+
+
+.checkinStrengthResult span{
+  display:block;
+
+  color:#aaa;
+  font-size:11px;
+}
+
+
+.checkinStrengthResult p{
+  margin:8px 0 0!important;
+
+  color:#aaa!important;
+
+  font-size:12px!important;
+  line-height:1.55!important;
+}
+
+
+/* ==========================================================
+   MOBILE
+   ========================================================== */
+
+@media(max-width:700px){
+
+  .checkinSubSection{
+    padding:15px;
+  }
+
+
+  .measurementCheckinGrid{
+    grid-template-columns:1fr 1fr;
+    gap:9px;
+  }
+
+
+  .checkinStrengthHead{
+    flex-direction:column;
+  }
+
+
+  .checkinStrengthHead .btn{
+    width:100%;
+  }
+
+
+  .strengthRecordNumbers{
+    grid-template-columns:1fr;
+  }
+
+
+  .checkinMeasurementResults{
+    grid-template-columns:1fr 1fr;
+  }
+
+
+  .checkinStrengthResults{
+    grid-template-columns:1fr;
+  }
+
+}
+
