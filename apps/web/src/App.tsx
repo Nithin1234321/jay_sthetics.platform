@@ -3938,6 +3938,23 @@ function AdminNutrition({setNotice}:{setNotice:(s:string)=>void}){
     }
   }
 
+  async function importDietLibrary(){
+    if(!window.confirm(
+      "Import all 43 Jay diet plans? Existing imported plans will be updated, not duplicated."
+    ))return;
+
+    try{
+      const result=await api<{created:number;updated:number;total:number}>(
+        "/admin/nutrition-plans/import-library",
+        {method:"POST"}
+      );
+      setNotice(`Diet library imported: ${result.created} created, ${result.updated} updated.`);
+      load();
+    }catch(e:any){
+      setNotice(e.message);
+    }
+  }
+
   return <>
     <div className="toolbar">
       <p className="muted">
@@ -3945,12 +3962,14 @@ function AdminNutrition({setNotice}:{setNotice:(s:string)=>void}){
         food options.
       </p>
 
-      <button
-        className="btn red"
-        onClick={()=>setShow(true)}
-      >
-        + New Nutrition Plan
-      </button>
+      <div className="toolbarActions">
+        <button type="button" className="btn ghost" onClick={importDietLibrary}>
+          Import Diet Library
+        </button>
+        <button className="btn red" onClick={()=>setShow(true)}>
+          + New Nutrition Plan
+        </button>
+      </div>
     </div>
 
     <div className="planGrid">
@@ -4138,12 +4157,14 @@ function AdminNutrition({setNotice}:{setNotice:(s:string)=>void}){
             <input
               name="calories"
               type="number"
+              step="0.1"
               placeholder="Calories"
             />
 
             <input
               name="protein"
               type="number"
+              step="0.1"
               placeholder="Protein g"
             />
           </div>
@@ -4152,12 +4173,14 @@ function AdminNutrition({setNotice}:{setNotice:(s:string)=>void}){
             <input
               name="carbs"
               type="number"
+              step="0.1"
               placeholder="Carbs g"
             />
 
             <input
               name="fats"
               type="number"
+              step="0.1"
               placeholder="Fats g"
             />
           </div>
@@ -4191,6 +4214,7 @@ function AdminNutrition({setNotice}:{setNotice:(s:string)=>void}){
             <input
               name="calories"
               type="number"
+              step="0.1"
               defaultValue={editingPlan.calories||""}
               placeholder="Calories"
             />
@@ -4198,6 +4222,7 @@ function AdminNutrition({setNotice}:{setNotice:(s:string)=>void}){
             <input
               name="protein"
               type="number"
+              step="0.1"
               defaultValue={editingPlan.proteinG||""}
               placeholder="Protein g"
             />
@@ -4207,6 +4232,7 @@ function AdminNutrition({setNotice}:{setNotice:(s:string)=>void}){
             <input
               name="carbs"
               type="number"
+              step="0.1"
               defaultValue={editingPlan.carbsG||""}
               placeholder="Carbs g"
             />
@@ -4214,6 +4240,7 @@ function AdminNutrition({setNotice}:{setNotice:(s:string)=>void}){
             <input
               name="fats"
               type="number"
+              step="0.1"
               defaultValue={editingPlan.fatsG||""}
               placeholder="Fats g"
             />
@@ -4277,21 +4304,25 @@ function AdminNutrition({setNotice}:{setNotice:(s:string)=>void}){
             <input
               name="calories"
               type="number"
+              step="0.1"
               placeholder="kcal"
             />
             <input
               name="protein"
               type="number"
+              step="0.1"
               placeholder="P"
             />
             <input
               name="carbs"
               type="number"
+              step="0.1"
               placeholder="C"
             />
             <input
               name="fats"
               type="number"
+              step="0.1"
               placeholder="F"
             />
           </div>
@@ -4338,6 +4369,7 @@ function AdminNutrition({setNotice}:{setNotice:(s:string)=>void}){
             <input
               name="calories"
               type="number"
+              step="0.1"
               defaultValue={editingMeal.calories||""}
               placeholder="kcal"
             />
@@ -4345,6 +4377,7 @@ function AdminNutrition({setNotice}:{setNotice:(s:string)=>void}){
             <input
               name="protein"
               type="number"
+              step="0.1"
               defaultValue={editingMeal.proteinG||""}
               placeholder="P"
             />
@@ -4352,6 +4385,7 @@ function AdminNutrition({setNotice}:{setNotice:(s:string)=>void}){
             <input
               name="carbs"
               type="number"
+              step="0.1"
               defaultValue={editingMeal.carbsG||""}
               placeholder="C"
             />
@@ -4359,6 +4393,7 @@ function AdminNutrition({setNotice}:{setNotice:(s:string)=>void}){
             <input
               name="fats"
               type="number"
+              step="0.1"
               defaultValue={editingMeal.fatsG||""}
               placeholder="F"
             />

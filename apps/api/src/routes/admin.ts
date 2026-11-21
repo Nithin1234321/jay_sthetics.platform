@@ -9,6 +9,7 @@ import ffmpegStatic from "ffmpeg-static";
 import { prisma } from "../db.js";
 import { requireAdmin, requireAuth } from "../middleware/auth.js";
 import { uploadDir, safeUploadPath } from "../utils/uploads.js";
+import { JAY_DIET_LIBRARY } from "../data/dietLibrary.js";
 
 export const adminRouter = Router();
 adminRouter.use(requireAuth, requireAdmin);
@@ -1478,6 +1479,59 @@ adminRouter.post("/clients/:id/workout", async (req, res) => {
 });
 
 // NUTRITION
+// Bulk import Jay's source diet library. Safe to run repeatedly.
+adminRouter.post("/nutrition-plans/import-library", async (req,res)=>{
+  let created=0;
+  let updated=0;
+
+  for(const source of JAY_DIET_LIBRARY){
+    const name=`${source.ffm}FFM · ${Math.round(source.carbsG)}C`;
+    const existing=await prisma.nutritionPlan.findFirst({where:{name},select:{id:true}});
+
+    const planData={
+      name,
+      calories:source.calories,
+      proteinG:source.proteinG,
+      carbsG:source.carbsG,
+      fatsG:source.fatsG,
+      content:{
+        notes:"Imported from Jay diet library",
+        ffm:source.ffm,
+        sourceFoods:source.dailyFoods
+      }
+    };
+
+    let planId:string;
+    if(existing){
+      await prisma.nutritionPlan.update({where:{id:existing.id},data:planData});
+      await prisma.mealOption.deleteMany({where:{nutritionPlanId:existing.id}});
+      planId=existing.id;
+      updated++;
+    }else{
+      const plan=await prisma.nutritionPlan.create({data:planData});
+      planId=plan.id;
+      created++;
+    }
+
+    for(const meal of source.meals){
+      await prisma.mealOption.create({
+        data:{
+          nutritionPlanId:planId,
+          mealLabel:meal.mealLabel,
+          optionLabel:meal.optionLabel,
+          calories:meal.calories,
+          proteinG:meal.proteinG,
+          carbsG:meal.carbsG,
+          fatsG:meal.fatsG,
+          foods:[...meal.foods]
+        }
+      });
+    }
+  }
+
+  res.json({created,updated,total:JAY_DIET_LIBRARY.length});
+});
+
 adminRouter.get("/nutrition-plans", async (_req, res) => {
   res.json(await prisma.nutritionPlan.findMany({
     include: { mealOptions: true },
@@ -1488,10 +1542,10 @@ adminRouter.get("/nutrition-plans", async (_req, res) => {
 adminRouter.post("/nutrition-plans", async (req, res) => {
   const parsed = z.object({
     name: z.string().min(2),
-    calories: z.number().int().positive().optional(),
-    proteinG: z.number().int().nonnegative().optional(),
-    carbsG: z.number().int().nonnegative().optional(),
-    fatsG: z.number().int().nonnegative().optional(),
+    calories: z.number().positive().optional(),
+    proteinG: z.number().nonnegative().optional(),
+    carbsG: z.number().nonnegative().optional(),
+    fatsG: z.number().nonnegative().optional(),
     notes: z.string().optional()
   }).safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: "Invalid input" });
@@ -1512,10 +1566,10 @@ adminRouter.post("/nutrition-plans", async (req, res) => {
 adminRouter.patch("/nutrition-plans/:id", async (req, res) => {
   const parsed = z.object({
     name: z.string().min(2),
-    calories: z.number().int().positive().optional(),
-    proteinG: z.number().int().nonnegative().optional(),
-    carbsG: z.number().int().nonnegative().optional(),
-    fatsG: z.number().int().nonnegative().optional(),
+    calories: z.number().positive().optional(),
+    proteinG: z.number().nonnegative().optional(),
+    carbsG: z.number().nonnegative().optional(),
+    fatsG: z.number().nonnegative().optional(),
     notes: z.string().optional()
   }).safeParse(req.body);
 
@@ -1673,10 +1727,10 @@ adminRouter.post("/nutrition-plans/:id/meal-options", async (req, res) => {
   const parsed = z.object({
     mealLabel: z.string().min(1),
     optionLabel: z.string().min(1),
-    calories: z.number().int().optional(),
-    proteinG: z.number().int().optional(),
-    carbsG: z.number().int().optional(),
-    fatsG: z.number().int().optional(),
+    calories: z.number().nonnegative().optional(),
+    proteinG: z.number().nonnegative().optional(),
+    carbsG: z.number().nonnegative().optional(),
+    fatsG: z.number().nonnegative().optional(),
     foods: z.array(z.string()).min(1)
   }).safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ error: "Invalid input" });
@@ -1691,10 +1745,10 @@ adminRouter.patch("/nutrition-plans/:planId/meal-options/:mealId", async (req, r
   const parsed = z.object({
     mealLabel: z.string().min(1),
     optionLabel: z.string().min(1),
-    calories: z.number().int().optional(),
-    proteinG: z.number().int().optional(),
-    carbsG: z.number().int().optional(),
-    fatsG: z.number().int().optional(),
+    calories: z.number().nonnegative().optional(),
+    proteinG: z.number().nonnegative().optional(),
+    carbsG: z.number().nonnegative().optional(),
+    fatsG: z.number().nonnegative().optional(),
     foods: z.array(z.string()).min(1)
   }).safeParse(req.body);
 

@@ -171,10 +171,10 @@ model WorkoutAssignment {
 model NutritionPlan {
   id          String   @id @default(cuid())
   name        String
-  calories    Int?
-  proteinG    Int?
-  carbsG      Int?
-  fatsG       Int?
+  calories    Decimal? @db.Decimal(8,1)
+  proteinG    Decimal? @db.Decimal(8,1)
+  carbsG      Decimal? @db.Decimal(8,1)
+  fatsG       Decimal? @db.Decimal(8,1)
   pdfUrl      String?
   content     Json
   isTemplate  Boolean  @default(true)
@@ -330,10 +330,10 @@ model MealOption {
   nutritionPlanId String
   mealLabel String
   optionLabel String
-  calories Int?
-  proteinG Int?
-  carbsG Int?
-  fatsG Int?
+  calories Decimal? @db.Decimal(8,1)
+  proteinG Decimal? @db.Decimal(8,1)
+  carbsG Decimal? @db.Decimal(8,1)
+  fatsG Decimal? @db.Decimal(8,1)
   foods Json
   nutritionPlan NutritionPlan @relation(fields: [nutritionPlanId], references: [id], onDelete: Cascade)
   @@index([nutritionPlanId, mealLabel])
