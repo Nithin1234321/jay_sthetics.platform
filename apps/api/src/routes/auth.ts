@@ -19,7 +19,8 @@ const registerSchema = z.object({
     v => (v === "" || v == null ? undefined : v),
     z.string().min(7).max(20).optional()
   ),
-  password: z.string().min(8).max(100)
+  password: z.string().min(8).max(100),
+  programId: z.string().min(1)
 });
 
 const loginLimiter = rateLimit({
@@ -179,9 +180,37 @@ authRouter.post("/register", codeLimiter, async (req, res) => {
     });
   }
 
-  const { fullName, email, phone, password } = parsed.data;
+  const {
+    fullName,
+    email,
+    phone,
+    password,
+    programId
+  } = parsed.data;
 
   const normalized = email.toLowerCase();
+
+  const program = await prisma.program.findFirst({
+    where: {
+      id: programId,
+      isActive: true,
+      NOT: {
+        slug: {
+          startsWith: "custom-"
+        }
+      }
+    },
+    select: {
+      id: true
+    }
+  });
+
+  if (!program) {
+    return res.status(400).json({
+      error:
+        "Choose a valid coaching programme before creating an account."
+    });
+  }
 
   const exists = await prisma.user.findUnique({
     where: {
@@ -277,15 +306,9 @@ authRouter.post(
     }
 
     if (user.emailVerifiedAt) {
-      const token = signToken({
-        sub: user.id,
-        role: user.role,
-        email: user.email
-      });
-
-      return res.json({
-        token,
-        user: publicUser(user)
+      return res.status(409).json({
+        error:
+          "This account is already verified. Sign in with your password instead."
       });
     }
 
@@ -566,4 +589,4 @@ authRouter.post(
       message: "Password updated. You can sign in now."
     });
   }
-);
+);  

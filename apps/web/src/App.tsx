@@ -286,18 +286,71 @@ export default function App(){
   }
 
   async function register(e:FormEvent<HTMLFormElement>){
-    e.preventDefault(); const f=new FormData(e.currentTarget);
+    e.preventDefault();
+
+    const f=new FormData(e.currentTarget);
+
     try{
-      const r=await api<{token?:string;user?:User;requiresVerification?:boolean;email?:string;devCode?:string;message?:string}>("/auth/register",{method:"POST",body:JSON.stringify({fullName:f.get("fullName"),email:f.get("email"),phone:f.get("phone"),password:f.get("password")})});
-      const signupProgram=new URLSearchParams(location.search).get("programId");
-      const nextProgram=selectedProgram?.id||signupProgram;
-      if(r.requiresVerification&&r.email){
-        if(r.devCode)sessionStorage.setItem("devVerificationCode",r.devCode);
-        location.href=`/verify-email?email=${encodeURIComponent(r.email)}${nextProgram?`&programId=${encodeURIComponent(nextProgram)}`:""}`;return;
+      const signupProgram=
+        new URLSearchParams(
+          location.search
+        ).get("programId");
+
+      const nextProgram=
+        selectedProgram?.id||
+        signupProgram;
+
+      if(!nextProgram){
+        throw new Error(
+          "Choose a coaching programme before creating your account."
+        );
       }
-      if(!r.token||!r.user)throw new Error(r.message||"Registration could not be completed");
-      session(r.token,r.user,nextProgram?`/checkout?programId=${nextProgram}`:undefined);
-    }catch(e:any){setNotice(e.message)}
+
+      const r=await api<{
+        requiresVerification?:boolean;
+        email?:string;
+        devCode?:string;
+        message?:string;
+      }>(
+        "/auth/register",
+        {
+          method:"POST",
+          body:JSON.stringify({
+            fullName:f.get("fullName"),
+            email:f.get("email"),
+            phone:f.get("phone"),
+            password:f.get("password"),
+            programId:nextProgram
+          })
+        }
+      );
+
+      if(
+        !r.requiresVerification||
+        !r.email
+      ){
+        throw new Error(
+          "Email verification is required before continuing."
+        );
+      }
+
+      if(r.devCode){
+        sessionStorage.setItem(
+          "devVerificationCode",
+          r.devCode
+        );
+      }
+
+      location.href=
+        `/verify-email?email=${
+          encodeURIComponent(r.email)
+        }&programId=${
+          encodeURIComponent(nextProgram)
+        }`;
+
+    }catch(e:any){
+      setNotice(e.message);
+    }
   }
 
   function chooseProgram(p:Program){
