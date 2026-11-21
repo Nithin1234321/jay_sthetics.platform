@@ -1439,6 +1439,34 @@ function AdminClients({setNotice}:{setNotice:(s:string)=>void}){
     }
   }
 
+  async function deleteProgramme(program:any){
+    if(!program?.id)return;
+
+    if(!window.confirm(
+      `Delete ${program.name||"this programme"} permanently?`
+    ))return;
+
+    try{
+      await api(
+        `/admin/programs/${program.id}`,
+        {
+          method:"DELETE"
+        }
+      );
+
+      setNotice("Programme deleted.");
+
+      await load();
+
+      if(selected){
+        await refresh();
+      }
+
+    }catch(e:any){
+      setNotice(e.message);
+    }
+  }
+
   async function copyCustomCheckout(programId:string){
     const url=
       `${location.origin}/checkout?programId=${programId}`;
