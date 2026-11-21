@@ -2290,9 +2290,45 @@ function AdminClients({setNotice}:{setNotice:(s:string)=>void}){
             Sleep: {x.sleepHours??"—"}h
           </p>
 
-          <p>
-            {x.stepsCardio||""} {x.issues||""} {x.questions||""} {x.notes||""}
-          </p>
+          <div className="clientCheckinAnswers">
+
+            <div className="clientCheckinAnswer">
+              <small>STEPS / CARDIO</small>
+              <p>
+                {x.stepsCardio||
+                  "Not provided"
+                }
+              </p>
+            </div>
+
+            <div className="clientCheckinAnswer">
+              <small>TRAINING / DIET PROBLEMS</small>
+              <p>
+                {x.issues||
+                  "None reported"
+                }
+              </p>
+            </div>
+
+            <div className="clientCheckinAnswer highlight">
+              <small>QUESTIONS FOR JAY</small>
+              <p>
+                {x.questions||
+                  "No questions"
+                }
+              </p>
+            </div>
+
+            <div className="clientCheckinAnswer">
+              <small>OTHER NOTES</small>
+              <p>
+                {x.notes||
+                  "No additional notes"
+                }
+              </p>
+            </div>
+
+          </div>
 
           {!!x.photoUrls?.length&&
             <div className="progressPhotos" style={{marginTop:"14px"}}>

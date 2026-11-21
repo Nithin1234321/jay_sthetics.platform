@@ -8626,3 +8626,83 @@ img{
 
 }
 
+
+
+/* ==========================================================
+   ADMIN CLIENT PROFILE — CLEAR CHECK-IN ANSWERS
+   ========================================================== */
+
+.clientCheckinAnswers{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+
+  margin-top:16px;
+}
+
+
+.clientCheckinAnswer{
+  padding:14px 15px;
+
+  border:1px solid #29292c;
+  border-radius:10px;
+
+  background:#0b0b0c;
+}
+
+
+.clientCheckinAnswer small{
+  display:block;
+
+  margin-bottom:7px;
+
+  color:#707076;
+
+  font-size:9px;
+  font-weight:900;
+
+  letter-spacing:.08em;
+}
+
+
+.clientCheckinAnswer p{
+  margin:0!important;
+
+  color:#e7e7e9!important;
+
+  font-size:13px!important;
+  line-height:1.55!important;
+
+  word-break:break-word;
+}
+
+
+.clientCheckinAnswer.highlight{
+  border-color:#444;
+  background:#101011;
+}
+
+
+/* Mobile */
+
+@media(max-width:700px){
+
+  .clientCheckinAnswers{
+    grid-template-columns:1fr;
+    gap:9px;
+  }
+
+  .clientCheckinAnswer{
+    padding:13px 14px;
+  }
+
+  .clientCheckinAnswer small{
+    font-size:9px;
+  }
+
+  .clientCheckinAnswer p{
+    font-size:14px!important;
+  }
+
+}
+
