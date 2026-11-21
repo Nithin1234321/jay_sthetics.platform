@@ -2371,11 +2371,6 @@ function AdminClients({setNotice}:{setNotice:(s:string)=>void}){
                     <b>{r.exerciseName}</b>
 
                     <span>
-                      {r.sets
-                        ?`${r.sets} sets`
-                        :"Sets —"
-                      }
-                      {" · "}
                       {r.reps
                         ?`${r.reps} reps`
                         :"Reps —"
@@ -4785,11 +4780,6 @@ function AdminCheckins({setNotice}:{setNotice:(s:string)=>void}){
                       <b>{r.exerciseName}</b>
 
                       <span>
-                        {r.sets
-                          ?`${r.sets} sets`
-                          :"Sets —"
-                        }
-                        {" · "}
                         {r.reps
                           ?`${r.reps} reps`
                           :"Reps —"
@@ -5280,7 +5270,6 @@ function ClientPanel({user,logout}:{user:User;logout:()=>void}){
 
   const emptyStrengthRecord=()=>({
     exerciseName:"",
-    sets:"",
     reps:"",
     weightKg:"",
     notes:""
@@ -5382,16 +5371,16 @@ function ClientPanel({user,logout}:{user:User;logout:()=>void}){
 
 
       const measurementMap=[
-        ["rightArm","Right arm"],
         ["leftArm","Left arm"],
-        ["rightForearm","Right forearm"],
+        ["rightArm","Right arm"],
         ["leftForearm","Left forearm"],
+        ["rightForearm","Right forearm"],
         ["chest","Chest"],
         ["waist","Waist"],
-        ["rightQuad","Right quad"],
         ["leftQuad","Left quad"],
-        ["rightCalf","Right calf"],
-        ["leftCalf","Left calf"]
+        ["rightQuad","Right quad"],
+        ["leftCalf","Left calf"],
+        ["rightCalf","Right calf"]
       ] as const;
 
 
@@ -5421,11 +5410,6 @@ function ClientPanel({user,logout}:{user:User;logout:()=>void}){
         )
         .map(record=>({
           exerciseName:record.exerciseName.trim(),
-
-          sets:
-            record.sets!==""
-              ?Number(record.sets)
-              :undefined,
 
           reps:
             record.reps!==""
@@ -5670,17 +5654,6 @@ function ClientPanel({user,logout}:{user:User;logout:()=>void}){
             <div className="measurementCheckinGrid">
 
               <label>
-                Right arm
-                <input
-                  name="rightArm"
-                  type="number"
-                  min="0"
-                  step=".1"
-                  placeholder="cm"
-                />
-              </label>
-
-              <label>
                 Left arm
                 <input
                   name="leftArm"
@@ -5692,9 +5665,9 @@ function ClientPanel({user,logout}:{user:User;logout:()=>void}){
               </label>
 
               <label>
-                Right forearm
+                Right arm
                 <input
-                  name="rightForearm"
+                  name="rightArm"
                   type="number"
                   min="0"
                   step=".1"
@@ -5706,6 +5679,17 @@ function ClientPanel({user,logout}:{user:User;logout:()=>void}){
                 Left forearm
                 <input
                   name="leftForearm"
+                  type="number"
+                  min="0"
+                  step=".1"
+                  placeholder="cm"
+                />
+              </label>
+
+              <label>
+                Right forearm
+                <input
+                  name="rightForearm"
                   type="number"
                   min="0"
                   step=".1"
@@ -5736,17 +5720,6 @@ function ClientPanel({user,logout}:{user:User;logout:()=>void}){
               </label>
 
               <label>
-                Right quad
-                <input
-                  name="rightQuad"
-                  type="number"
-                  min="0"
-                  step=".1"
-                  placeholder="cm"
-                />
-              </label>
-
-              <label>
                 Left quad
                 <input
                   name="leftQuad"
@@ -5758,9 +5731,9 @@ function ClientPanel({user,logout}:{user:User;logout:()=>void}){
               </label>
 
               <label>
-                Right calf
+                Right quad
                 <input
-                  name="rightCalf"
+                  name="rightQuad"
                   type="number"
                   min="0"
                   step=".1"
@@ -5772,6 +5745,17 @@ function ClientPanel({user,logout}:{user:User;logout:()=>void}){
                 Left calf
                 <input
                   name="leftCalf"
+                  type="number"
+                  min="0"
+                  step=".1"
+                  placeholder="cm"
+                />
+              </label>
+
+              <label>
+                Right calf
+                <input
+                  name="rightCalf"
                   type="number"
                   min="0"
                   step=".1"
@@ -5871,26 +5855,6 @@ function ClientPanel({user,logout}:{user:User;logout:()=>void}){
 
 
                   <div className="strengthRecordNumbers">
-
-                    <input
-                      type="number"
-                      min="1"
-                      value={record.sets}
-                      placeholder="Sets"
-                      onChange={e=>
-                        setStrengthRecords(current=>
-                          current.map((item,i)=>
-                            i===index
-                              ?{
-                                  ...item,
-                                  sets:e.target.value
-                                }
-                              :item
-                          )
-                        )
-                      }
-                    />
-
 
                     <input
                       type="number"

@@ -321,7 +321,6 @@ clientRouter.post("/check-ins", async (req,res) => {
     strengthRecords:z.array(
       z.object({
         exerciseName:z.string().min(1).max(150),
-        sets:z.number().int().positive().max(50).optional(),
         reps:z.number().int().positive().max(1000).optional(),
         weightKg:z.number().nonnegative().max(2000).optional(),
         notes:z.string().max(2000).optional()
@@ -370,7 +369,6 @@ clientRouter.post("/check-ins", async (req,res) => {
         create:strengthRecords.map(record=>({
           userId:req.auth!.sub,
           exerciseName:record.exerciseName,
-          sets:record.sets,
           reps:record.reps,
           weightKg:record.weightKg,
           notes:record.notes,
