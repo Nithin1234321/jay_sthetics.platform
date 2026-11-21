@@ -1120,8 +1120,19 @@ function AdminOverview(){
   </div>;
 }
 
-function ProfilePhoto({src,name,size=52}:{src?:string|null;name?:string;size?:number}){
+function ProfilePhoto({
+  src,
+  name,
+  size=52,
+  zoomable=false
+}:{
+  src?:string|null;
+  name?:string;
+  size?:number;
+  zoomable?:boolean;
+}){
   const [url,setUrl]=useState("");
+  const [zoomed,setZoomed]=useState(false);
 
   useEffect(()=>{
     let objectUrl="";
@@ -1153,6 +1164,74 @@ function ProfilePhoto({src,name,size=52}:{src?:string|null;name?:string;size?:nu
   },[src]);
 
   if(url){
+    if(zoomable){
+      return <>
+        <button
+          type="button"
+          className="profilePhotoZoomButton"
+          aria-label={`View ${name||"client"} profile photo`}
+          onClick={e=>{
+            e.preventDefault();
+            e.stopPropagation();
+            setZoomed(true);
+          }}
+          style={{
+            width:size,
+            height:size
+          }}
+        >
+          <img
+            src={url}
+            alt={name||"Client"}
+          />
+        </button>
+
+        {zoomed&&
+          <div
+            className="profilePhotoLightbox"
+            role="dialog"
+            aria-modal="true"
+            aria-label={`${name||"Client"} profile photo`}
+            onClick={e=>{
+              e.preventDefault();
+              e.stopPropagation();
+
+              if(e.target===e.currentTarget){
+                setZoomed(false);
+              }
+            }}
+          >
+            <button
+              type="button"
+              className="profilePhotoLightboxClose"
+              aria-label="Close profile photo"
+              onClick={e=>{
+                e.preventDefault();
+                e.stopPropagation();
+                setZoomed(false);
+              }}
+            >
+              ×
+            </button>
+
+            <div
+              className="profilePhotoLightboxContent"
+              onClick={e=>e.stopPropagation()}
+            >
+              <img
+                src={url}
+                alt={name||"Client"}
+              />
+
+              <div className="profilePhotoLightboxName">
+                {name||"Client"}
+              </div>
+            </div>
+          </div>
+        }
+      </>;
+    }
+
     return <img
       src={url}
       alt={name||"Client"}
@@ -1579,6 +1658,7 @@ function AdminClients({setNotice}:{setNotice:(s:string)=>void}){
                 src={c.clientProfile?.profilePhotoUrl}
                 name={c.fullName}
                 size={42}
+                zoomable
               />
 
               <span>
@@ -1709,6 +1789,7 @@ function AdminClients({setNotice}:{setNotice:(s:string)=>void}){
     src={selected.clientProfile?.profilePhotoUrl}
     name={selected.fullName}
     size={64}
+    zoomable
   />
 
   <div>
