@@ -1701,52 +1701,59 @@ adminRouter.post("/clients/:id/workout", async (req, res) => {
 // NUTRITION
 // Bulk import Jay's source diet library. Safe to run repeatedly.
 adminRouter.post("/nutrition-plans/import-library", async (req,res)=>{
+  const existingCount=
+    await prisma.nutritionPlan.count();
+
+  if(existingCount>0){
+    return res.status(409).json({
+      error:
+        "Nutrition is not empty. Delete all existing nutrition plans before importing the new library."
+    });
+  }
+
   let created=0;
 
-  // FULL RESET:
-  // Delete ALL existing nutrition plans first.
-  // Meal options and client nutrition assignments linked
-  // to those plans are removed by Prisma cascade.
-  await prisma.nutritionPlan.deleteMany({});
+  await prisma.$transaction(async tx=>{
+    for(const source of JAY_DIET_LIBRARY){
+      const name=
+        `${source.ffm}FFM · ${Math.round(source.carbsG)}C`;
 
-  for(const source of JAY_DIET_LIBRARY){
-    const name=
-      `${source.ffm}FFM · ${Math.round(source.carbsG)}C`;
+      const plan=
+        await tx.nutritionPlan.create({
+          data:{
+            name,
+            calories:source.calories,
+            proteinG:source.proteinG,
+            carbsG:source.carbsG,
+            fatsG:source.fatsG,
 
-    const plan=await prisma.nutritionPlan.create({
-      data:{
-        name,
-        calories:source.calories,
-        proteinG:source.proteinG,
-        carbsG:source.carbsG,
-        fatsG:source.fatsG,
+            content:{
+              notes:"Imported from Jay diet library",
+              source:"JAY_DIET_LIBRARY",
+              ffm:source.ffm,
+              sourceFoods:source.dailyFoods
+            }
+          }
+        });
 
-        content:{
-          notes:"Imported from Jay diet library",
-          source:"JAY_DIET_LIBRARY",
-          ffm:source.ffm,
-          sourceFoods:source.dailyFoods
-        }
+      created++;
+
+      for(const meal of source.meals){
+        await tx.mealOption.create({
+          data:{
+            nutritionPlanId:plan.id,
+            mealLabel:meal.mealLabel,
+            optionLabel:meal.optionLabel,
+            calories:meal.calories,
+            proteinG:meal.proteinG,
+            carbsG:meal.carbsG,
+            fatsG:meal.fatsG,
+            foods:[...meal.foods]
+          }
+        });
       }
-    });
-
-    created++;
-
-    for(const meal of source.meals){
-      await prisma.mealOption.create({
-        data:{
-          nutritionPlanId:plan.id,
-          mealLabel:meal.mealLabel,
-          optionLabel:meal.optionLabel,
-          calories:meal.calories,
-          proteinG:meal.proteinG,
-          carbsG:meal.carbsG,
-          fatsG:meal.fatsG,
-          foods:[...meal.foods]
-        }
-      });
     }
-  }
+  });
 
   res.json({
     created,
@@ -1822,6 +1829,54 @@ adminRouter.patch("/nutrition-plans/:id", async (req, res) => {
 
   res.json(item);
 });
+
+adminRouter.delete("/nutrition-plans", async (req,res)=>{
+  const plans=
+    await prisma.nutritionPlan.findMany({
+      select:{
+        id:true,
+        pdfUrl:true
+      }
+    });
+
+  const deletedCount=plans.length;
+
+  // NutritionAssignment and MealOption use cascade deletion.
+  await prisma.nutritionPlan.deleteMany({});
+
+  // Remove uploaded nutrition PDFs from disk too.
+  for(const plan of plans){
+    if(plan.pdfUrl?.startsWith("/api/media/")){
+      const filename=
+        plan.pdfUrl.split("/").pop();
+
+      if(filename){
+        const fullPath=
+          safeUploadPath(filename);
+
+        if(fs.existsSync(fullPath)){
+          fs.unlinkSync(fullPath);
+        }
+      }
+    }
+  }
+
+  await audit(
+    req.auth!.sub,
+    "DELETE_ALL",
+    "NUTRITION_PLAN",
+    undefined,
+    {
+      deletedCount
+    }
+  );
+
+  res.json({
+    ok:true,
+    deletedCount
+  });
+});
+
 
 adminRouter.delete("/nutrition-plans/:id", async (req, res) => {
   const plan = await prisma.nutritionPlan.findUnique({

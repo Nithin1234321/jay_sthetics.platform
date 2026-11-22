@@ -4394,9 +4394,40 @@ function AdminNutrition({setNotice}:{setNotice:(s:string)=>void}){
     }
   }
 
+  async function deleteAllNutrition(){
+    if(!window.confirm(
+      "DELETE ALL nutrition plans? This will also remove meal options and client nutrition assignments linked to these plans. This cannot be undone."
+    ))return;
+
+    if(!window.confirm(
+      "Final confirmation: permanently delete EVERY nutrition plan?"
+    ))return;
+
+    try{
+      const result=await api<{
+        ok:boolean;
+        deletedCount:number;
+      }>(
+        "/admin/nutrition-plans",
+        {
+          method:"DELETE"
+        }
+      );
+
+      setNotice(
+        `All nutrition plans deleted: ${result.deletedCount} removed.`
+      );
+
+      await load();
+    }catch(e:any){
+      setNotice(e.message);
+    }
+  }
+
+
   async function importDietLibrary(){
     if(!window.confirm(
-      "DELETE ALL existing nutrition plans and replace them with the new 56 Jay diet plans? Existing client nutrition assignments linked to old plans will also be removed."
+      "Import the new 56 Jay diet plans?"
     ))return;
 
     try{
@@ -4405,13 +4436,16 @@ function AdminNutrition({setNotice}:{setNotice:(s:string)=>void}){
         total:number;
       }>(
         "/admin/nutrition-plans/import-library",
-        {method:"POST"}
+        {
+          method:"POST"
+        }
       );
 
       setNotice(
-        `Nutrition reset complete: ${result.created} new plans created.`
+        `New nutrition library imported: ${result.created} plans created.`
       );
-      load();
+
+      await load();
     }catch(e:any){
       setNotice(e.message);
     }
@@ -4425,10 +4459,26 @@ function AdminNutrition({setNotice}:{setNotice:(s:string)=>void}){
       </p>
 
       <div className="toolbarActions">
-        <button type="button" className="btn ghost" onClick={importDietLibrary}>
+        <button
+          type="button"
+          className="btn ghost"
+          onClick={deleteAllNutrition}
+        >
+          Delete All Nutrition
+        </button>
+
+        <button
+          type="button"
+          className="btn ghost"
+          onClick={importDietLibrary}
+        >
           Import Diet Library
         </button>
-        <button className="btn red" onClick={()=>setShow(true)}>
+
+        <button
+          className="btn red"
+          onClick={()=>setShow(true)}
+        >
           + New Nutrition Plan
         </button>
       </div>
