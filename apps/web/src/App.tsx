@@ -4538,7 +4538,23 @@ function AdminNutrition({setNotice}:{setNotice:(s:string)=>void}){
           </div>
 
           {p.mealOptions?.length
-            ?p.mealOptions.map((m:any)=>
+            ?[...p.mealOptions]
+              .sort((a:any,b:any)=>{
+                const mealNumber=(label:string)=>{
+                  const match=String(label||"").match(/Meal-(\d+)/i);
+                  return match?Number(match[1]):999;
+                };
+
+                const mealDiff=
+                  mealNumber(a.mealLabel)-
+                  mealNumber(b.mealLabel);
+
+                if(mealDiff!==0)return mealDiff;
+
+                return String(a.optionLabel||"")
+                  .localeCompare(String(b.optionLabel||""));
+              })
+              .map((m:any)=>
               <div className="mealRow" key={m.id}>
                 <div
                   style={{
