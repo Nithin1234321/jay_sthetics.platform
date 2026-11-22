@@ -4,7 +4,25 @@ import { downloadExcel } from "./lib/excel";
 
 type User={id:string;fullName:string;email:string;role:"ADMIN"|"CLIENT"};
 type Program={id:string;slug:string;name:string;description:string;pricePaise:number;durationDays?:number|null;isActive:boolean};
-type Overview={clients:number;activeSubscriptions:number;newLeads:number;upcomingAppointments:number;recentCheckIns:number;revenuePaise:number;exercises:number};
+type Overview={
+  clients:number;
+  activeSubscriptions:number;
+  newLeads:number;
+  upcomingAppointments:number;
+  recentCheckIns:number;
+  revenuePaise:number;
+  exercises:number;
+
+  manualClientsCount:number;
+
+  manualClients:Array<{
+    id:string;
+    fullName:string;
+    email:string;
+    createdAt:string;
+    isActive:boolean;
+  }>;
+};
 
 const fallback:Program[]=[
 {id:"n3",slug:"natural-3-months",name:"Natural Training — 3 Months",description:"Training, nutrition, weekly check-ins and progress support.",pricePaise:900000,durationDays:90,isActive:true},
@@ -1153,6 +1171,13 @@ function AdminOverview(){
   useEffect(()=>{api<Overview>("/admin/overview").then(setO).catch(()=>{})},[]);
   const rows=[
     ["Active Clients",o?.clients,"Current coaching clients"],
+
+    [
+      "Manual Clients",
+      o?.manualClientsCount,
+      "Added by Jay · no successful payment"
+    ],
+
     ["Subscriptions",o?.activeSubscriptions,"Paid active access"],
     ["New Leads",o?.newLeads,"Waiting for follow-up"],
     ["Upcoming Calls",o?.upcomingAppointments,"Scheduled coaching calls"],
@@ -1167,8 +1192,130 @@ function AdminOverview(){
     </div>
     <div className="metricGrid premiumMetrics">{rows.map(([a,b,c])=><div className="metric premiumMetric" key={String(a)}><div className="metricTop"><small>{a}</small><span>↗</span></div><b>{b??"—"}</b><p>{c}</p></div>)}</div>
     <div className="adminGrid2">
-      <div className="infoPanel premiumPanel"><div className="panelTitle"><div><small>QUICK ACCESS</small><h3>Daily Workflow</h3></div></div><div className="quickLinks"><div><b>Clients</b><span>Review coaching status and assign plans</span></div><div><b>Check-ins</b><span>Review weekly progress and adherence</span></div><div><b>Messages</b><span>Respond to client questions</span></div><div><b>Payments</b><span>Review successful and pending records</span></div></div></div>
-      <div className="infoPanel premiumPanel"><div className="panelTitle"><div><small>PLATFORM</small><h3>Coaching Hub</h3></div></div><div className="platformStatus"><div><span></span><b>Database</b><small>Connected</small></div><div><span></span><b>Client Portal</b><small>Active</small></div><div><span></span><b>Admin Portal</b><small>Protected</small></div><div><span></span><b>Payments</b><small>Test-ready</small></div></div></div>
+
+      <div className="infoPanel premiumPanel">
+        <div className="panelTitle">
+          <div>
+            <small>QUICK ACCESS</small>
+            <h3>Daily Workflow</h3>
+          </div>
+        </div>
+
+        <div className="quickLinks">
+          <div>
+            <b>Clients</b>
+            <span>
+              Review coaching status and assign plans
+            </span>
+          </div>
+
+          <div>
+            <b>Check-ins</b>
+            <span>
+              Review weekly progress and adherence
+            </span>
+          </div>
+
+          <div>
+            <b>Messages</b>
+            <span>
+              Respond to client questions
+            </span>
+          </div>
+
+          <div>
+            <b>Payments</b>
+            <span>
+              Review successful and pending records
+            </span>
+          </div>
+        </div>
+      </div>
+
+
+      <div className="infoPanel premiumPanel">
+        <div className="panelTitle">
+          <div>
+            <small>MANUAL CLIENTS</small>
+            <h3>
+              No Payment
+            </h3>
+          </div>
+
+          <b className="manualClientCount">
+            {o?.manualClientsCount??0}
+          </b>
+        </div>
+
+        <div className="manualClientDashboardList">
+
+          {o?.manualClients?.length
+            ?o.manualClients.map(client=>
+              <div
+                className="manualClientDashboardRow"
+                key={client.id}
+              >
+                <div>
+                  <b>
+                    {client.fullName}
+                  </b>
+
+                  <small>
+                    {client.email}
+                  </small>
+                </div>
+
+                <span>
+                  MANUAL
+                </span>
+              </div>
+            )
+            :(
+              <div className="manualClientEmpty">
+                No manually added unpaid clients.
+              </div>
+            )
+          }
+
+        </div>
+      </div>
+
+
+      <div className="infoPanel premiumPanel">
+        <div className="panelTitle">
+          <div>
+            <small>PLATFORM</small>
+            <h3>Coaching Hub</h3>
+          </div>
+        </div>
+
+        <div className="platformStatus">
+          <div>
+            <span></span>
+            <b>Database</b>
+            <small>Connected</small>
+          </div>
+
+          <div>
+            <span></span>
+            <b>Client Portal</b>
+            <small>Active</small>
+          </div>
+
+          <div>
+            <span></span>
+            <b>Admin Portal</b>
+            <small>Protected</small>
+          </div>
+
+          <div>
+            <span></span>
+            <b>Payments</b>
+            <small>Test-ready</small>
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>;
 }

@@ -136,24 +136,136 @@ async function audit(adminId: string, action: string, entityType: string, entity
 
 // OVERVIEW
 adminRouter.get("/overview", async (_req, res) => {
-  const [clients, activeSubscriptions, leads, calls, checkIns, revenue, exercises] = await Promise.all([
-    prisma.user.count({ where: { role: "CLIENT", isActive: true } }),
-    prisma.subscription.count({ where: { status: "ACTIVE", OR: [{ endsAt: null }, { endsAt: { gt: new Date() } }] } }),
-    prisma.lead.count({ where: { status: "NEW" } }),
-    prisma.appointment.count({ where: { status: { in: ["REQUESTED", "CONFIRMED"] } } }),
-    prisma.checkIn.count({ where: { createdAt: { gte: new Date(Date.now() - 7 * 86400000) } } }),
-    prisma.payment.aggregate({ where: { status: "SUCCESS" }, _sum: { amountPaise: true } }),
-    prisma.exercise.count({ where: { isActive: true } })
+  const [
+    clients,
+    activeSubscriptions,
+    leads,
+    calls,
+    checkIns,
+    revenue,
+    exercises,
+    manualCreateLogs
+  ] = await Promise.all([
+    prisma.user.count({
+      where:{
+        role:"CLIENT",
+        isActive:true
+      }
+    }),
+
+    prisma.subscription.count({
+      where:{
+        status:"ACTIVE",
+        OR:[
+          {endsAt:null},
+          {endsAt:{gt:new Date()}}
+        ]
+      }
+    }),
+
+    prisma.lead.count({
+      where:{status:"NEW"}
+    }),
+
+    prisma.appointment.count({
+      where:{
+        status:{
+          in:["REQUESTED","CONFIRMED"]
+        }
+      }
+    }),
+
+    prisma.checkIn.count({
+      where:{
+        createdAt:{
+          gte:new Date(
+            Date.now()-7*86400000
+          )
+        }
+      }
+    }),
+
+    prisma.payment.aggregate({
+      where:{status:"SUCCESS"},
+      _sum:{amountPaise:true}
+    }),
+
+    prisma.exercise.count({
+      where:{isActive:true}
+    }),
+
+    prisma.adminAuditLog.findMany({
+      where:{
+        action:"CREATE",
+        entityType:"CLIENT",
+        entityId:{
+          not:null
+        }
+      },
+
+      select:{
+        entityId:true
+      }
+    })
   ]);
+
+
+  const manualClientIds=[
+    ...new Set(
+      manualCreateLogs
+        .map(x=>x.entityId)
+        .filter(
+          (id):id is string=>!!id
+        )
+    )
+  ];
+
+
+  const manualClients=manualClientIds.length
+    ?await prisma.user.findMany({
+        where:{
+          id:{
+            in:manualClientIds
+          },
+
+          role:"CLIENT",
+
+          payments:{
+            none:{
+              status:"SUCCESS"
+            }
+          }
+        },
+
+        select:{
+          id:true,
+          fullName:true,
+          email:true,
+          createdAt:true,
+          isActive:true
+        },
+
+        orderBy:{
+          createdAt:"desc"
+        }
+      })
+    :[];
+
 
   res.json({
     clients,
     activeSubscriptions,
-    newLeads: leads,
-    upcomingAppointments: calls,
-    recentCheckIns: checkIns,
-    revenuePaise: revenue._sum.amountPaise ?? 0,
-    exercises
+    newLeads:leads,
+    upcomingAppointments:calls,
+    recentCheckIns:checkIns,
+    revenuePaise:
+      revenue._sum.amountPaise??0,
+    exercises,
+
+    manualClientsCount:
+      manualClients.length,
+
+    manualClients
   });
 });
 

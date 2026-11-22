@@ -9751,3 +9751,118 @@ img{
   }
 }
 
+
+
+/* ==========================================================
+   ADMIN DASHBOARD — MANUAL CLIENTS
+   ========================================================== */
+
+.manualClientCount{
+  min-width:34px;
+  height:34px;
+
+  display:grid;
+  place-items:center;
+
+  padding:0 9px;
+
+  border:1px solid #303034;
+  border-radius:999px;
+
+  background:#111113;
+  color:#fff;
+
+  font-size:13px;
+}
+
+
+.manualClientDashboardList{
+  display:grid;
+  gap:8px;
+
+  max-height:280px;
+
+  overflow-y:auto;
+}
+
+
+.manualClientDashboardRow{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+
+  padding:11px 12px;
+
+  border:1px solid #27272a;
+  border-radius:9px;
+
+  background:#0d0d0f;
+}
+
+
+.manualClientDashboardRow>div{
+  min-width:0;
+
+  display:grid;
+  gap:3px;
+}
+
+
+.manualClientDashboardRow b{
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+
+  color:#eee;
+  font-size:12px;
+}
+
+
+.manualClientDashboardRow small{
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+
+  color:#707076;
+  font-size:9px;
+}
+
+
+.manualClientDashboardRow span{
+  flex:0 0 auto;
+
+  padding:4px 6px;
+
+  border:1px solid #353539;
+  border-radius:999px;
+
+  color:#aaa;
+
+  font-size:8px;
+  font-weight:900;
+  letter-spacing:.05em;
+}
+
+
+.manualClientEmpty{
+  padding:20px;
+
+  border:1px dashed #29292c;
+  border-radius:9px;
+
+  color:#707076;
+
+  font-size:11px;
+  text-align:center;
+}
+
+
+@media(max-width:700px){
+
+  .manualClientDashboardRow{
+    padding:12px;
+  }
+
+}
+
