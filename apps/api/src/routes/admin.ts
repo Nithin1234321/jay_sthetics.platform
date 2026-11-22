@@ -153,15 +153,9 @@ adminRouter.get("/overview", async (_req, res) => {
       }
     }),
 
-    prisma.subscription.count({
+    prisma.user.count({
       where:{
-        status:"ACTIVE",
-
-        OR:[
-          {endsAt:null},
-          {endsAt:{gt:new Date()}}
-        ],
-
+        role:"CLIENT",
         payments:{
           some:{
             status:"SUCCESS"

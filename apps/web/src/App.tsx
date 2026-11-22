@@ -1178,7 +1178,7 @@ function AdminOverview(){
       "Added by Jay · no successful payment"
     ],
 
-    ["Subscriptions",o?.activeSubscriptions,"Paid active access"],
+    ["Subscription Clients",o?.activeSubscriptions,"Clients with successful payment"],
     ["New Leads",o?.newLeads,"Waiting for follow-up"],
     ["Upcoming Calls",o?.upcomingAppointments,"Scheduled coaching calls"],
     ["Check-ins",o?.recentCheckIns,"Submitted this week"],
