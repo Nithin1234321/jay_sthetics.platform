@@ -245,8 +245,8 @@ adminRouter.get("/overview", async (_req, res) => {
     manualClients.map(client=>client.id);
 
 
-  const activeSubscriptions=
-    await prisma.user.count({
+  const subscriptionCandidates=
+    await prisma.user.findMany({
       where:{
         role:"CLIENT",
         isActive:true,
@@ -258,20 +258,51 @@ adminRouter.get("/overview", async (_req, res) => {
               }
             }
           :{}
-        ),
+        )
+      },
+
+      select:{
+        id:true,
 
         subscriptions:{
-          some:{
-            status:"ACTIVE",
+          orderBy:{
+            createdAt:"desc"
+          },
 
-            OR:[
-              {endsAt:null},
-              {endsAt:{gt:new Date()}}
-            ]
+          take:1,
+
+          select:{
+            status:true,
+            endsAt:true
           }
         }
       }
     });
+
+
+  const now=new Date();
+
+  const activeSubscriptions=
+    subscriptionCandidates.filter(client=>{
+      const latest=client.subscriptions[0];
+
+      if(!latest){
+        return false;
+      }
+
+      if(latest.status!=="ACTIVE"){
+        return false;
+      }
+
+      if(
+        latest.endsAt &&
+        latest.endsAt<=now
+      ){
+        return false;
+      }
+
+      return true;
+    }).length;
 
 
   res.json({
