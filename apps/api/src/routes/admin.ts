@@ -138,7 +138,6 @@ async function audit(adminId: string, action: string, entityType: string, entity
 adminRouter.get("/overview", async (_req, res) => {
   const [
     clients,
-    activeSubscriptions,
     leads,
     calls,
     checkIns,
@@ -150,17 +149,6 @@ adminRouter.get("/overview", async (_req, res) => {
       where:{
         role:"CLIENT",
         isActive:true
-      }
-    }),
-
-    prisma.user.count({
-      where:{
-        role:"CLIENT",
-        payments:{
-          some:{
-            status:"SUCCESS"
-          }
-        }
       }
     }),
 
@@ -251,6 +239,39 @@ adminRouter.get("/overview", async (_req, res) => {
         }
       })
     :[];
+
+
+  const manualUnpaidClientIds=
+    manualClients.map(client=>client.id);
+
+
+  const activeSubscriptions=
+    await prisma.user.count({
+      where:{
+        role:"CLIENT",
+        isActive:true,
+
+        ...(manualUnpaidClientIds.length
+          ?{
+              id:{
+                notIn:manualUnpaidClientIds
+              }
+            }
+          :{}
+        ),
+
+        subscriptions:{
+          some:{
+            status:"ACTIVE",
+
+            OR:[
+              {endsAt:null},
+              {endsAt:{gt:new Date()}}
+            ]
+          }
+        }
+      }
+    });
 
 
   res.json({
