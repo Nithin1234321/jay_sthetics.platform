@@ -4396,14 +4396,12 @@ function AdminNutrition({setNotice}:{setNotice:(s:string)=>void}){
 
   async function importDietLibrary(){
     if(!window.confirm(
-      "Import all 56 Jay diet plans (35-70 FFM, 100-400g carbs)? Existing imported plans will be updated and obsolete imported plans removed."
+      "DELETE ALL existing nutrition plans and replace them with the new 56 Jay diet plans? Existing client nutrition assignments linked to old plans will also be removed."
     ))return;
 
     try{
       const result=await api<{
         created:number;
-        updated:number;
-        removed:number;
         total:number;
       }>(
         "/admin/nutrition-plans/import-library",
@@ -4411,7 +4409,7 @@ function AdminNutrition({setNotice}:{setNotice:(s:string)=>void}){
       );
 
       setNotice(
-        `Diet library synced: ${result.total} plans · ${result.created} created · ${result.updated} updated · ${result.removed} obsolete removed.`
+        `Nutrition reset complete: ${result.created} new plans created.`
       );
       load();
     }catch(e:any){

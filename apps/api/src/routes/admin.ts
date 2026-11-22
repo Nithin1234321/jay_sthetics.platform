@@ -1702,72 +1702,40 @@ adminRouter.post("/clients/:id/workout", async (req, res) => {
 // Bulk import Jay's source diet library. Safe to run repeatedly.
 adminRouter.post("/nutrition-plans/import-library", async (req,res)=>{
   let created=0;
-  let updated=0;
-  let removed=0;
 
-  const desiredNames=new Set(
-    JAY_DIET_LIBRARY.map(
-      source=>`${source.ffm}FFM · ${Math.round(source.carbsG)}C`
-    )
-  );
-
-  const existingPlans=await prisma.nutritionPlan.findMany({
-    select:{
-      id:true,
-      name:true,
-      content:true
-    }
-  });
-
-  for(const plan of existingPlans){
-    const content=plan.content as any;
-
-    if(
-      content?.notes==="Imported from Jay diet library" &&
-      !desiredNames.has(plan.name)
-    ){
-      await prisma.nutritionPlan.delete({
-        where:{id:plan.id}
-      });
-
-      removed++;
-    }
-  }
+  // FULL RESET:
+  // Delete ALL existing nutrition plans first.
+  // Meal options and client nutrition assignments linked
+  // to those plans are removed by Prisma cascade.
+  await prisma.nutritionPlan.deleteMany({});
 
   for(const source of JAY_DIET_LIBRARY){
-    const name=`${source.ffm}FFM · ${Math.round(source.carbsG)}C`;
-    const existing=await prisma.nutritionPlan.findFirst({where:{name},select:{id:true}});
+    const name=
+      `${source.ffm}FFM · ${Math.round(source.carbsG)}C`;
 
-    const planData={
-      name,
-      calories:source.calories,
-      proteinG:source.proteinG,
-      carbsG:source.carbsG,
-      fatsG:source.fatsG,
-      content:{
-        notes:"Imported from Jay diet library",
-        source:"JAY_DIET_LIBRARY",
-        ffm:source.ffm,
-        sourceFoods:source.dailyFoods
+    const plan=await prisma.nutritionPlan.create({
+      data:{
+        name,
+        calories:source.calories,
+        proteinG:source.proteinG,
+        carbsG:source.carbsG,
+        fatsG:source.fatsG,
+
+        content:{
+          notes:"Imported from Jay diet library",
+          source:"JAY_DIET_LIBRARY",
+          ffm:source.ffm,
+          sourceFoods:source.dailyFoods
+        }
       }
-    };
+    });
 
-    let planId:string;
-    if(existing){
-      await prisma.nutritionPlan.update({where:{id:existing.id},data:planData});
-      await prisma.mealOption.deleteMany({where:{nutritionPlanId:existing.id}});
-      planId=existing.id;
-      updated++;
-    }else{
-      const plan=await prisma.nutritionPlan.create({data:planData});
-      planId=plan.id;
-      created++;
-    }
+    created++;
 
     for(const meal of source.meals){
       await prisma.mealOption.create({
         data:{
-          nutritionPlanId:planId,
+          nutritionPlanId:plan.id,
           mealLabel:meal.mealLabel,
           optionLabel:meal.optionLabel,
           calories:meal.calories,
@@ -1780,7 +1748,10 @@ adminRouter.post("/nutrition-plans/import-library", async (req,res)=>{
     }
   }
 
-  res.json({created,updated,removed,total:JAY_DIET_LIBRARY.length});
+  res.json({
+    created,
+    total:JAY_DIET_LIBRARY.length
+  });
 });
 
 adminRouter.get("/nutrition-plans", async (_req, res) => {
