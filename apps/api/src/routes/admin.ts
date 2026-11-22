@@ -1839,12 +1839,28 @@ adminRouter.delete("/nutrition-plans", async (req,res)=>{
       }
     });
 
-  const deletedCount=plans.length;
+  const beforeCount=plans.length;
 
-  // NutritionAssignment and MealOption use cascade deletion.
-  await prisma.nutritionPlan.deleteMany({});
+  const deleted=
+    await prisma.$transaction(async tx=>{
+      const assignments=
+        await tx.nutritionAssignment.deleteMany({});
 
-  // Remove uploaded nutrition PDFs from disk too.
+      const mealOptions=
+        await tx.mealOption.deleteMany({});
+
+      const nutritionPlans=
+        await tx.nutritionPlan.deleteMany({});
+
+      return {
+        assignments:assignments.count,
+        mealOptions:mealOptions.count,
+        nutritionPlans:nutritionPlans.count
+      };
+    });
+
+
+  // Remove uploaded nutrition PDFs from disk.
   for(const plan of plans){
     if(plan.pdfUrl?.startsWith("/api/media/")){
       const filename=
@@ -1861,19 +1877,42 @@ adminRouter.delete("/nutrition-plans", async (req,res)=>{
     }
   }
 
+
+  const remaining=
+    await prisma.nutritionPlan.count();
+
+
+  if(remaining!==0){
+    return res.status(500).json({
+      error:
+        `Nutrition deletion incomplete. ${remaining} plans still remain.`,
+      beforeCount,
+      deleted,
+      remaining
+    });
+  }
+
+
   await audit(
     req.auth!.sub,
     "DELETE_ALL",
     "NUTRITION_PLAN",
     undefined,
     {
-      deletedCount
+      beforeCount,
+      deletedAssignments:deleted.assignments,
+      deletedMealOptions:deleted.mealOptions,
+      deletedNutritionPlans:deleted.nutritionPlans
     }
   );
 
+
   res.json({
     ok:true,
-    deletedCount
+    deletedCount:deleted.nutritionPlans,
+    deletedAssignments:deleted.assignments,
+    deletedMealOptions:deleted.mealOptions,
+    remaining
   });
 });
 
