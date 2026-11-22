@@ -1703,6 +1703,36 @@ adminRouter.post("/clients/:id/workout", async (req, res) => {
 adminRouter.post("/nutrition-plans/import-library", async (req,res)=>{
   let created=0;
   let updated=0;
+  let removed=0;
+
+  const desiredNames=new Set(
+    JAY_DIET_LIBRARY.map(
+      source=>`${source.ffm}FFM · ${Math.round(source.carbsG)}C`
+    )
+  );
+
+  const existingPlans=await prisma.nutritionPlan.findMany({
+    select:{
+      id:true,
+      name:true,
+      content:true
+    }
+  });
+
+  for(const plan of existingPlans){
+    const content=plan.content as any;
+
+    if(
+      content?.notes==="Imported from Jay diet library" &&
+      !desiredNames.has(plan.name)
+    ){
+      await prisma.nutritionPlan.delete({
+        where:{id:plan.id}
+      });
+
+      removed++;
+    }
+  }
 
   for(const source of JAY_DIET_LIBRARY){
     const name=`${source.ffm}FFM · ${Math.round(source.carbsG)}C`;
@@ -1716,6 +1746,7 @@ adminRouter.post("/nutrition-plans/import-library", async (req,res)=>{
       fatsG:source.fatsG,
       content:{
         notes:"Imported from Jay diet library",
+        source:"JAY_DIET_LIBRARY",
         ffm:source.ffm,
         sourceFoods:source.dailyFoods
       }
@@ -1749,7 +1780,7 @@ adminRouter.post("/nutrition-plans/import-library", async (req,res)=>{
     }
   }
 
-  res.json({created,updated,total:JAY_DIET_LIBRARY.length});
+  res.json({created,updated,removed,total:JAY_DIET_LIBRARY.length});
 });
 
 adminRouter.get("/nutrition-plans", async (_req, res) => {
