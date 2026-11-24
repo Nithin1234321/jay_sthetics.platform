@@ -1770,7 +1770,8 @@ adminRouter.get("/nutrition-plans", async (_req, res) => {
 
 adminRouter.post("/nutrition-plans/paste", async (req,res)=>{
   const parsed=z.object({
-    rawText:z.string().min(20)
+    rawText:z.string().min(20),
+    planId:z.string().optional()
   }).safeParse(req.body);
 
   if(!parsed.success){
@@ -2004,10 +2005,15 @@ adminRouter.post("/nutrition-plans/paste", async (req,res)=>{
         async tx=>{
 
           const existing=
-            await tx.nutritionPlan.findFirst({
-              where:{name},
-              select:{id:true}
-            });
+            parsed.data.planId
+              ?await tx.nutritionPlan.findUnique({
+                  where:{id:parsed.data.planId},
+                  select:{id:true}
+                })
+              :await tx.nutritionPlan.findFirst({
+                  where:{name},
+                  select:{id:true}
+                });
 
 
           let planId:string;

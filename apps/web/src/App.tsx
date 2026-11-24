@@ -4180,74 +4180,110 @@ function AdminWorkouts({setNotice}:{setNotice:(s:string)=>void}){
 
 function AdminNutrition({setNotice}:{setNotice:(s:string)=>void}){
   const [plans,setPlans]=useState<any[]>([]);
-  const [show,setShow]=useState(false);
-  const [mealFor,setMealFor]=useState<any|null>(null);
+  const [search,setSearch]=useState("");
+  const [editorOpen,setEditorOpen]=useState(false);
   const [editingPlan,setEditingPlan]=useState<any|null>(null);
-  const [editingMeal,setEditingMeal]=useState<any|null>(null);
-  const [showPasteDiet,setShowPasteDiet]=useState(false);
 
   async function load(){
-    setPlans(
-      await api<any[]>("/admin/nutrition-plans")
-    );
+    setPlans(await api<any[]>("/admin/nutrition-plans"));
   }
 
   useEffect(()=>{
     load().catch(e=>setNotice(e.message));
   },[]);
 
-  async function create(e:FormEvent<HTMLFormElement>){
-    e.preventDefault();
-
-    const f=new FormData(e.currentTarget);
-
-    try{
-      await api("/admin/nutrition-plans",{
-        method:"POST",
-        body:JSON.stringify({
-          name:f.get("name"),
-          calories:Number(f.get("calories"))||undefined,
-          proteinG:Number(f.get("protein"))||undefined,
-          carbsG:Number(f.get("carbs"))||undefined,
-          fatsG:Number(f.get("fats"))||undefined,
-          notes:f.get("notes")
-        })
-      });
-
-      setShow(false);
-      setNotice("Nutrition plan created.");
-      load();
-    }catch(e:any){
-      setNotice(e.message);
-    }
+  function mealNumber(label:string){
+    const match=String(label||"").match(/Meal-(\d+)/i);
+    return match?Number(match[1]):999;
   }
 
-  async function savePlan(e:FormEvent<HTMLFormElement>){
+  function planToText(plan:any){
+    const ffm=
+      plan.content?.ffm ||
+      String(plan.name||"").match(/(\d+)\s*FFM/i)?.[1] ||
+      "";
+
+    const dailyFoods=
+      Array.isArray(plan.content?.sourceFoods)
+        ?plan.content.sourceFoods.map((food:any)=>`${food.name}-${food.amount}`)
+        :[];
+
+    const meals=
+      [...(plan.mealOptions||[])]
+        .sort((a:any,b:any)=>mealNumber(a.mealLabel)-mealNumber(b.mealLabel))
+        .map((meal:any)=>{
+          const foods=Array.isArray(meal.foods)?meal.foods.join("\n"):"";
+          return [
+            meal.mealLabel,
+            foods,
+            `(P-${meal.proteinG||0},F-${meal.fatsG||0},C-${meal.carbsG||0})(calories-${meal.calories||0})`
+          ].join("\n");
+        });
+
+    return [
+      `${ffm}FFM,`,
+      `(PROTEIN -${plan.proteinG||0},FAT-${plan.fatsG||0},CARBS-${plan.carbsG||0})`,
+      `(calories-${plan.calories||0})`,
+      "",
+      ...dailyFoods,
+      "",
+      ...meals.flatMap((meal:string,index:number)=>index===0?[meal]:["",meal])
+    ].join("\n");
+  }
+
+  function openNew(){
+    setEditingPlan(null);
+    setEditorOpen(true);
+  }
+
+  function openEdit(plan:any){
+    setEditingPlan(plan);
+    setEditorOpen(true);
+  }
+
+  function closeEditor(){
+    setEditorOpen(false);
+    setEditingPlan(null);
+  }
+
+  async function saveDiet(e:FormEvent<HTMLFormElement>){
     e.preventDefault();
 
-    if(!editingPlan)return;
-
     const f=new FormData(e.currentTarget);
+    const rawText=String(f.get("rawText")||"").trim();
+
+    if(!rawText){
+      setNotice("Paste the complete diet plan.");
+      return;
+    }
 
     try{
-      await api(
-        `/admin/nutrition-plans/${editingPlan.id}`,
+      const result=await api<{
+        ok:boolean;
+        id:string;
+        name:string;
+        created:boolean;
+        meals:number;
+      }>(
+        "/admin/nutrition-plans/paste",
         {
-          method:"PATCH",
+          method:"POST",
           body:JSON.stringify({
-            name:f.get("name"),
-            calories:Number(f.get("calories"))||undefined,
-            proteinG:Number(f.get("protein"))||undefined,
-            carbsG:Number(f.get("carbs"))||undefined,
-            fatsG:Number(f.get("fats"))||undefined,
-            notes:f.get("notes")
+            rawText,
+            planId:editingPlan?.id
           })
         }
       );
 
-      setEditingPlan(null);
-      setNotice("Nutrition plan updated.");
-      load();
+      closeEditor();
+
+      setNotice(
+        result.created
+          ?`${result.name} created with ${result.meals} meals.`
+          :`${result.name} updated with ${result.meals} meals.`
+      );
+
+      await load();
     }catch(e:any){
       setNotice(e.message);
     }
@@ -4255,492 +4291,182 @@ function AdminNutrition({setNotice}:{setNotice:(s:string)=>void}){
 
   async function deletePlan(id:string){
     if(!window.confirm(
-      "Delete this nutrition plan? Any client assignments using it will also be removed."
+      "Delete this diet plan? Client assignments using it will also be removed."
     ))return;
 
     try{
-      await api(`/admin/nutrition-plans/${id}`,{
-        method:"DELETE"
-      });
-
-      setNotice("Nutrition plan deleted.");
-      load();
+      await api(`/admin/nutrition-plans/${id}`,{method:"DELETE"});
+      setNotice("Diet plan deleted.");
+      await load();
     }catch(e:any){
       setNotice(e.message);
     }
   }
 
-  async function meal(e:FormEvent<HTMLFormElement>){
-    e.preventDefault();
-
-    if(!mealFor)return;
-
-    const f=new FormData(e.currentTarget);
-
-    try{
-      await api(
-        `/admin/nutrition-plans/${mealFor.id}/meal-options`,
-        {
-          method:"POST",
-          body:JSON.stringify({
-            mealLabel:f.get("mealLabel"),
-            optionLabel:f.get("optionLabel"),
-            calories:Number(f.get("calories"))||undefined,
-            proteinG:Number(f.get("protein"))||undefined,
-            carbsG:Number(f.get("carbs"))||undefined,
-            fatsG:Number(f.get("fats"))||undefined,
-            foods:String(f.get("foods"))
-              .split("\n")
-              .map(x=>x.trim())
-              .filter(Boolean)
-          })
-        }
-      );
-
-      setMealFor(null);
-      setNotice("Meal option added.");
-      load();
-    }catch(e:any){
-      setNotice(e.message);
-    }
-  }
-
-  async function saveMeal(e:FormEvent<HTMLFormElement>){
-    e.preventDefault();
-
-    if(!editingMeal)return;
-
-    const f=new FormData(e.currentTarget);
-
-    try{
-      await api(
-        `/admin/nutrition-plans/${editingMeal.planId}/meal-options/${editingMeal.id}`,
-        {
-          method:"PATCH",
-          body:JSON.stringify({
-            mealLabel:f.get("mealLabel"),
-            optionLabel:f.get("optionLabel"),
-            calories:Number(f.get("calories"))||undefined,
-            proteinG:Number(f.get("protein"))||undefined,
-            carbsG:Number(f.get("carbs"))||undefined,
-            fatsG:Number(f.get("fats"))||undefined,
-            foods:String(f.get("foods"))
-              .split("\n")
-              .map(x=>x.trim())
-              .filter(Boolean)
-          })
-        }
-      );
-
-      setEditingMeal(null);
-      setNotice("Meal option updated.");
-      load();
-    }catch(e:any){
-      setNotice(e.message);
-    }
-  }
-
-  async function deleteMeal(
-    planId:string,
-    mealId:string
-  ){
+  async function deleteAll(){
     if(!window.confirm(
-      "Delete this meal option?"
+      "Delete ALL nutrition plans? This also removes linked client nutrition assignments."
+    ))return;
+
+    if(!window.confirm(
+      "Final confirmation: permanently delete every diet plan?"
     ))return;
 
     try{
-      await api(
-        `/admin/nutrition-plans/${planId}/meal-options/${mealId}`,
+      const result=await api<{ok:boolean;deletedCount:number}>(
+        "/admin/nutrition-plans",
         {method:"DELETE"}
       );
 
-      setNotice("Meal option deleted.");
-      load();
-    }catch(e:any){
-      setNotice(e.message);
-    }
-  }
-
-  async function uploadPdf(id:string,file:File){
-    try{
-      const fd=new FormData();
-      fd.append("pdf",file);
-
-      await api(`/admin/nutrition-plans/${id}/pdf`,{
-        method:"POST",
-        body:fd
-      });
-
-      setNotice("Diet plan PDF uploaded.");
-      load();
-    }catch(e:any){
-      setNotice(e.message);
-    }
-  }
-
-  async function removePdf(id:string){
-    if(!window.confirm(
-      "Remove this diet plan PDF? The nutrition plan and meal options will stay."
-    ))return;
-
-    try{
-      await api(`/admin/nutrition-plans/${id}/pdf`,{
-        method:"DELETE"
-      });
-
-      setNotice("Diet plan PDF removed.");
-      load();
-    }catch(e:any){
-      setNotice(e.message);
-    }
-  }
-
-  async function pasteDietPlan(
-    e:FormEvent<HTMLFormElement>
-  ){
-    e.preventDefault();
-
-    const f=
-      new FormData(e.currentTarget);
-
-    const rawText=
-      String(f.get("rawText")||"").trim();
-
-    if(!rawText){
-      setNotice(
-        "Paste the complete diet plan."
-      );
-      return;
-    }
-
-    try{
-      const result=
-        await api<{
-          ok:boolean;
-          id:string;
-          name:string;
-          created:boolean;
-          meals:number;
-        }>(
-          "/admin/nutrition-plans/paste",
-          {
-            method:"POST",
-            body:JSON.stringify({
-              rawText
-            })
-          }
-        );
-
-      setShowPasteDiet(false);
-
-      setNotice(
-        result.created
-          ?`${result.name} created with ${result.meals} meals.`
-          :`${result.name} replaced with ${result.meals} meals.`
-      );
-
-      await load();
-
-    }catch(e:any){
-      setNotice(e.message);
-    }
-  }
-
-
-  async function deleteAllNutrition(){
-    if(!window.confirm(
-      "DELETE ALL nutrition plans? This will also remove meal options and client nutrition assignments linked to these plans. This cannot be undone."
-    ))return;
-
-    if(!window.confirm(
-      "Final confirmation: permanently delete EVERY nutrition plan?"
-    ))return;
-
-    try{
-      const result=await api<{
-        ok:boolean;
-        deletedCount:number;
-      }>(
-        "/admin/nutrition-plans",
-        {
-          method:"DELETE"
-        }
-      );
-
-      setNotice(
-        `All nutrition plans deleted: ${result.deletedCount} removed.`
-      );
-
+      setNotice(`All nutrition plans deleted: ${result.deletedCount} removed.`);
       await load();
     }catch(e:any){
       setNotice(e.message);
     }
   }
 
+  const visiblePlans=
+    plans.filter((plan:any)=>{
+      const q=search.trim().toLowerCase();
+      if(!q)return true;
 
-  async function importDietLibrary(){
-    if(!window.confirm(
-      "Import the new 56 Jay diet plans?"
-    ))return;
+      const sourceFoods=
+        Array.isArray(plan.content?.sourceFoods)
+          ?plan.content.sourceFoods.map((food:any)=>`${food.name} ${food.amount}`)
+          :[];
 
-    try{
-      const result=await api<{
-        created:number;
-        total:number;
-      }>(
-        "/admin/nutrition-plans/import-library",
-        {
-          method:"POST"
-        }
-      );
+      const mealText=
+        (plan.mealOptions||[]).flatMap((meal:any)=>[
+          meal.mealLabel,
+          meal.calories,
+          meal.proteinG,
+          meal.carbsG,
+          meal.fatsG,
+          ...(Array.isArray(meal.foods)?meal.foods:[])
+        ]);
 
-      setNotice(
-        `New nutrition library imported: ${result.created} plans created.`
-      );
-
-      await load();
-    }catch(e:any){
-      setNotice(e.message);
-    }
-  }
+      return [
+        plan.name,
+        plan.calories,
+        plan.proteinG,
+        plan.carbsG,
+        plan.fatsG,
+        ...sourceFoods,
+        ...mealText
+      ].join(" ").toLowerCase().includes(q);
+    });
 
   return <>
     <div className="toolbar">
-      <p className="muted">
-        Create macro targets and several interchangeable
-        food options.
-      </p>
+      <div style={{flex:"1 1 360px"}}>
+        <h2 style={{margin:"0 0 6px"}}>Nutrition Plans</h2>
+
+        <p className="muted" style={{margin:"0 0 12px"}}>
+          Paste the complete diet in one box. The plan and Meal sections are created automatically.
+        </p>
+
+        <input
+          value={search}
+          onChange={e=>setSearch(e.target.value)}
+          placeholder="Search 35FFM, 100C, chicken, cooked rice..."
+          style={{width:"100%",maxWidth:"560px"}}
+        />
+      </div>
 
       <div className="toolbarActions">
-        <button
-          type="button"
-          className="btn ghost"
-          onClick={deleteAllNutrition}
-        >
+        <button type="button" className="btn ghost dangerButton" onClick={deleteAll}>
           Delete All Nutrition
         </button>
 
-        <button
-          type="button"
-          className="btn ghost"
-          onClick={importDietLibrary}
-        >
-          Import Diet Library
-        </button>
-
-        <button
-          type="button"
-          className="btn red"
-          onClick={()=>setShowPasteDiet(true)}
-        >
-          + Paste Diet Plan
+        <button type="button" className="btn red" onClick={openNew}>
+          + New Diet Plan
         </button>
       </div>
     </div>
 
     <div className="planGrid">
-      {plans.map(p=>
-        <div className="planCard" key={p.id}>
-          <div
-            style={{
-              display:"flex",
-              justifyContent:"space-between",
-              gap:"12px",
-              alignItems:"flex-start"
-            }}
-          >
-            <h3>{p.name}</h3>
+      {visiblePlans.map((plan:any)=>
+        <article className="planCard" key={plan.id}>
+          <div style={{
+            display:"flex",
+            justifyContent:"space-between",
+            alignItems:"flex-start",
+            gap:"12px"
+          }}>
+            <div>
+              <h3 style={{marginTop:0}}>{plan.name}</h3>
 
-            <div
-              style={{
-                display:"flex",
-                gap:"7px",
-                flexWrap:"wrap"
-              }}
-            >
-              <button
-                type="button"
-                className="btn ghost"
-                onClick={()=>setEditingPlan(p)}
-              >
-                Edit Plan
+              <div className="macroRow">
+                <span>{plan.calories||"—"} kcal</span>
+                <span>P {plan.proteinG||"—"}g</span>
+                <span>C {plan.carbsG||"—"}g</span>
+                <span>F {plan.fatsG||"—"}g</span>
+              </div>
+            </div>
+
+            <div style={{display:"flex",gap:"7px",flexWrap:"wrap"}}>
+              <button type="button" className="btn ghost" onClick={()=>openEdit(plan)}>
+                Edit Diet
               </button>
 
               <button
                 type="button"
                 className="btn ghost dangerButton"
-                onClick={()=>deletePlan(p.id)}
+                onClick={()=>deletePlan(plan.id)}
               >
-                Delete Plan
+                Delete Diet
               </button>
             </div>
           </div>
 
-          <div className="macroRow">
-            <span>
-              {p.calories||"—"} kcal
-            </span>
-            <span>
-              P {p.proteinG||"—"}g
-            </span>
-            <span>
-              C {p.carbsG||"—"}g
-            </span>
-            <span>
-              F {p.fatsG||"—"}g
-            </span>
-          </div>
+          <div style={{marginTop:"14px"}}>
+            {[...(plan.mealOptions||[])]
+              .sort((a:any,b:any)=>mealNumber(a.mealLabel)-mealNumber(b.mealLabel))
+              .map((meal:any)=>
+                <div className="mealRow" key={meal.id}>
+                  <b>{meal.mealLabel}</b>
 
-          {p.mealOptions?.length
-            ?[...p.mealOptions]
-              .sort((a:any,b:any)=>{
-                const mealNumber=(label:string)=>{
-                  const match=String(label||"").match(/Meal-(\d+)/i);
-                  return match?Number(match[1]):999;
-                };
+                  <small>
+                    {Array.isArray(meal.foods)?meal.foods.join(" + "):""}
+                  </small>
 
-                const mealDiff=
-                  mealNumber(a.mealLabel)-
-                  mealNumber(b.mealLabel);
-
-                if(mealDiff!==0)return mealDiff;
-
-                return String(a.optionLabel||"")
-                  .localeCompare(String(b.optionLabel||""));
-              })
-              .map((m:any)=>
-              <div className="mealRow" key={m.id}>
-                <div
-                  style={{
-                    display:"flex",
-                    justifyContent:"space-between",
-                    gap:"10px",
-                    alignItems:"flex-start"
-                  }}
-                >
-                  <b>
-                    {m.mealLabel} · {m.optionLabel}
-                  </b>
-
-                  <div
-                    style={{
-                      display:"flex",
-                      gap:"6px",
-                      flexWrap:"wrap"
-                    }}
-                  >
-                    <button
-                      type="button"
-                      className="workoutDeleteButton"
-                      onClick={()=>setEditingMeal({
-                        ...m,
-                        planId:p.id
-                      })}
-                    >
-                      Edit
-                    </button>
-
-                    <button
-                      type="button"
-                      className="workoutDeleteButton"
-                      onClick={()=>deleteMeal(
-                        p.id,
-                        m.id
-                      )}
-                    >
-                      Delete
-                    </button>
-                  </div>
+                  <span>
+                    P {meal.proteinG||"—"} ·
+                    C {meal.carbsG||"—"} ·
+                    F {meal.fatsG||"—"} ·
+                    {meal.calories||"—"} kcal
+                  </span>
                 </div>
-
-                <small>
-                  {Array.isArray(m.foods)
-                    ?m.foods.join(" + ")
-                    :"Food option"}
-                </small>
-
-                <span>
-                  P {m.proteinG||"—"} ·
-                  C {m.carbsG||"—"} ·
-                  F {m.fatsG||"—"}
-                </span>
-              </div>
-            )
-            :<Empty text="No meal alternatives yet."/>
-          }
-
-          <div
-            style={{
-              display:"flex",
-              gap:"10px",
-              flexWrap:"wrap",
-              marginTop:"14px"
-            }}
-          >
-            <label
-              className="btn ghost"
-              style={{cursor:"pointer"}}
-            >
-              {p.pdfUrl
-                ?"Replace Diet PDF"
-                :"Upload Diet PDF"}
-
-              <input
-                type="file"
-                accept="application/pdf,.pdf"
-                style={{display:"none"}}
-                onChange={e=>{
-                  const file=e.target.files?.[0];
-
-                  if(file){
-                    uploadPdf(p.id,file);
-                  }
-
-                  e.currentTarget.value="";
-                }}
-              />
-            </label>
-
-            {p.pdfUrl&&
-              <button
-                type="button"
-                className="btn ghost"
-                onClick={()=>removePdf(p.id)}
-              >
-                Remove PDF
-              </button>
+              )
             }
           </div>
-
-          <button
-            className="btn ghost full"
-            onClick={()=>setMealFor(p)}
-          >
-            + Add Meal Option
-          </button>
-        </div>
+        </article>
       )}
+
+      {!visiblePlans.length&&
+        <Empty
+          text={search.trim()?"No diets match your search.":"No nutrition plans yet."}
+        />
+      }
     </div>
 
-
-    {showPasteDiet&&
+    {editorOpen&&
       <Dialog
-        title="Paste Diet Plan"
-        close={()=>setShowPasteDiet(false)}
+        title={editingPlan?"Edit Diet Plan":"New Diet Plan"}
+        wide
+        close={closeEditor}
       >
-        <form onSubmit={pasteDietPlan}>
+        <form onSubmit={saveDiet}>
+          <label>
+            Complete diet plan
 
-          <p className="muted">
-            Paste the complete diet exactly as written.
-            The system will automatically create the
-            plan macros and all Meal sections.
-          </p>
-
-          <textarea
-            name="rawText"
-            required
-            rows={26}
-            placeholder={`35FFM,
+            <textarea
+              key={editingPlan?.id||"new-diet"}
+              name="rawText"
+              required
+              rows={28}
+              defaultValue={editingPlan?planToText(editingPlan):""}
+              placeholder={`35FFM,
 (PROTEIN -88,FAT-35,CARBS-100)
 (calories-1070)
 
@@ -4768,307 +4494,26 @@ Meal-3
 
 Meal-4
 ...`}
-            style={{
-              minHeight:"520px",
-              width:"100%",
-              resize:"vertical",
-              whiteSpace:"pre-wrap"
-            }}
-          />
+              style={{
+                minHeight:"560px",
+                width:"100%",
+                resize:"vertical",
+                whiteSpace:"pre-wrap"
+              }}
+            />
+          </label>
 
-          <p
-            className="muted"
-            style={{
-              marginTop:"10px"
-            }}
-          >
-            Keep the meal headings as
-            Meal-1, Meal-2, Meal-3, Meal-4.
-            If the same FFM/carbs plan already exists,
-            pasting it again will replace that plan.
+          <p className="muted">
+            Keep the headings exactly as Meal-1, Meal-2, Meal-3 and Meal-4.
           </p>
 
-          <button
-            type="submit"
-            className="btn red full"
-          >
-            Save Diet Plan
-          </button>
-
-        </form>
-      </Dialog>
-    }
-
-
-    {show&&
-      <Dialog
-        title="New Nutrition Plan"
-        close={()=>setShow(false)}
-      >
-        <form onSubmit={create}>
-          <input
-            name="name"
-            placeholder="Plan name"
-            required
-          />
-
-          <div className="formGrid">
-            <input
-              name="calories"
-              type="number"
-              step="0.1"
-              placeholder="Calories"
-            />
-
-            <input
-              name="protein"
-              type="number"
-              step="0.1"
-              placeholder="Protein g"
-            />
-          </div>
-
-          <div className="formGrid">
-            <input
-              name="carbs"
-              type="number"
-              step="0.1"
-              placeholder="Carbs g"
-            />
-
-            <input
-              name="fats"
-              type="number"
-              step="0.1"
-              placeholder="Fats g"
-            />
-          </div>
-
-          <textarea
-            name="notes"
-            placeholder="Coach notes"
-          />
-
-          <button className="btn red full">
-            Create
-          </button>
-        </form>
-      </Dialog>
-    }
-
-
-    {editingPlan&&
-      <Dialog
-        title="Edit Nutrition Plan"
-        close={()=>setEditingPlan(null)}
-      >
-        <form onSubmit={savePlan}>
-          <input
-            name="name"
-            defaultValue={editingPlan.name}
-            required
-          />
-
-          <div className="formGrid">
-            <input
-              name="calories"
-              type="number"
-              step="0.1"
-              defaultValue={editingPlan.calories||""}
-              placeholder="Calories"
-            />
-
-            <input
-              name="protein"
-              type="number"
-              step="0.1"
-              defaultValue={editingPlan.proteinG||""}
-              placeholder="Protein g"
-            />
-          </div>
-
-          <div className="formGrid">
-            <input
-              name="carbs"
-              type="number"
-              step="0.1"
-              defaultValue={editingPlan.carbsG||""}
-              placeholder="Carbs g"
-            />
-
-            <input
-              name="fats"
-              type="number"
-              step="0.1"
-              defaultValue={editingPlan.fatsG||""}
-              placeholder="Fats g"
-            />
-          </div>
-
-          <textarea
-            name="notes"
-            defaultValue={
-              editingPlan.content?.notes||""
-            }
-            placeholder="Coach notes"
-          />
-
           <div className="dialogActions">
-            <button
-              type="button"
-              className="btn ghost"
-              onClick={()=>setEditingPlan(null)}
-            >
+            <button type="button" className="btn ghost" onClick={closeEditor}>
               Cancel
             </button>
 
-            <button className="btn red">
-              Save Changes
-            </button>
-          </div>
-        </form>
-      </Dialog>
-    }
-
-
-    {mealFor&&
-      <Dialog
-        title={`Meal option · ${mealFor.name}`}
-        close={()=>setMealFor(null)}
-      >
-        <form onSubmit={meal}>
-          <div className="formGrid">
-            <input
-              name="mealLabel"
-              placeholder="e.g. Breakfast"
-              required
-            />
-
-            <input
-              name="optionLabel"
-              placeholder="Option A"
-              required
-            />
-          </div>
-
-          <textarea
-            name="foods"
-            placeholder={
-              "Foods — one per line\n60g oats\n1 scoop whey\n2 eggs"
-            }
-            required
-          />
-
-          <div className="formGrid four">
-            <input
-              name="calories"
-              type="number"
-              step="0.1"
-              placeholder="kcal"
-            />
-            <input
-              name="protein"
-              type="number"
-              step="0.1"
-              placeholder="P"
-            />
-            <input
-              name="carbs"
-              type="number"
-              step="0.1"
-              placeholder="C"
-            />
-            <input
-              name="fats"
-              type="number"
-              step="0.1"
-              placeholder="F"
-            />
-          </div>
-
-          <button className="btn red full">
-            Add Option
-          </button>
-        </form>
-      </Dialog>
-    }
-
-
-    {editingMeal&&
-      <Dialog
-        title="Edit Meal Option"
-        close={()=>setEditingMeal(null)}
-      >
-        <form onSubmit={saveMeal}>
-          <div className="formGrid">
-            <input
-              name="mealLabel"
-              defaultValue={editingMeal.mealLabel}
-              required
-            />
-
-            <input
-              name="optionLabel"
-              defaultValue={editingMeal.optionLabel}
-              required
-            />
-          </div>
-
-          <textarea
-            name="foods"
-            defaultValue={
-              Array.isArray(editingMeal.foods)
-                ?editingMeal.foods.join("\n")
-                :""
-            }
-            required
-          />
-
-          <div className="formGrid four">
-            <input
-              name="calories"
-              type="number"
-              step="0.1"
-              defaultValue={editingMeal.calories||""}
-              placeholder="kcal"
-            />
-
-            <input
-              name="protein"
-              type="number"
-              step="0.1"
-              defaultValue={editingMeal.proteinG||""}
-              placeholder="P"
-            />
-
-            <input
-              name="carbs"
-              type="number"
-              step="0.1"
-              defaultValue={editingMeal.carbsG||""}
-              placeholder="C"
-            />
-
-            <input
-              name="fats"
-              type="number"
-              step="0.1"
-              defaultValue={editingMeal.fatsG||""}
-              placeholder="F"
-            />
-          </div>
-
-          <div className="dialogActions">
-            <button
-              type="button"
-              className="btn ghost"
-              onClick={()=>setEditingMeal(null)}
-            >
-              Cancel
-            </button>
-
-            <button className="btn red">
-              Save Meal
+            <button type="submit" className="btn red">
+              {editingPlan?"Save Changes":"Save Diet Plan"}
             </button>
           </div>
         </form>
@@ -5076,7 +4521,6 @@ Meal-4
     }
   </>;
 }
-
 
 function AdminCheckins({setNotice}:{setNotice:(s:string)=>void}){
   const [items,setItems]=useState<any[]>([]);
