@@ -4240,6 +4240,9 @@ function AdminNutrition({setNotice}:{setNotice:(s:string)=>void}){
     const fatsText=
       String(f.get("fatsG")||"").trim();
 
+    const fiberText=
+      String(f.get("fiberG")||"").trim();
+
     const rawText=
       String(f.get("rawText")||"");
 
@@ -4254,10 +4257,11 @@ function AdminNutrition({setNotice}:{setNotice:(s:string)=>void}){
       !caloriesText ||
       !proteinText ||
       !carbsText ||
-      !fatsText
+      !fatsText ||
+      !fiberText
     ){
       setNotice(
-        "Enter calories, protein, carbs and fats before saving."
+        "Enter calories, protein, carbs, fats and fiber before saving."
       );
       return;
     }
@@ -4266,19 +4270,22 @@ function AdminNutrition({setNotice}:{setNotice:(s:string)=>void}){
     const proteinG=Number(proteinText);
     const carbsG=Number(carbsText);
     const fatsG=Number(fatsText);
+    const fiberG=Number(fiberText);
 
     if(
       !Number.isFinite(calories) ||
       !Number.isFinite(proteinG) ||
       !Number.isFinite(carbsG) ||
       !Number.isFinite(fatsG) ||
+      !Number.isFinite(fiberG) ||
       calories<0 ||
       proteinG<0 ||
       carbsG<0 ||
-      fatsG<0
+      fatsG<0 ||
+      fiberG<0
     ){
       setNotice(
-        "Calories and macros must be valid numbers."
+        "Calories, macros and fiber must be valid numbers."
       );
       return;
     }
@@ -4304,6 +4311,7 @@ function AdminNutrition({setNotice}:{setNotice:(s:string)=>void}){
               proteinG,
               carbsG,
               fatsG,
+              fiberG,
               rawText
             })
           }
@@ -4400,6 +4408,7 @@ function AdminNutrition({setNotice}:{setNotice:(s:string)=>void}){
         plan.proteinG,
         plan.carbsG,
         plan.fatsG,
+        plan.content?.fiberG||"",
         plan.content?.rawText||""
       ]
         .join(" ")
@@ -4500,6 +4509,10 @@ function AdminNutrition({setNotice}:{setNotice:(s:string)=>void}){
 
                   <span>
                     F {plan.fatsG||0}g
+                  </span>
+
+                  <span>
+                    Fiber {plan.content?.fiberG||0}g
                   </span>
                 </div>
               </div>
@@ -4677,6 +4690,22 @@ function AdminNutrition({setNotice}:{setNotice:(s:string)=>void}){
               />
             </label>
           </div>
+
+          <label>
+            Fiber (g)
+
+            <input
+              name="fiberG"
+              type="number"
+              inputMode="numeric"
+              min="0"
+              step="1"
+              defaultValue={
+                editingPlan?.content?.fiberG||""
+              }
+              placeholder="30"
+            />
+          </label>
 
 
           <label
@@ -7015,6 +7044,10 @@ function ClientNutrition({
 
                 <span>
                   Fats {plan.fatsG||0}g
+                </span>
+
+                <span>
+                  Fiber {plan.content?.fiberG||0}g
                 </span>
               </div>
 

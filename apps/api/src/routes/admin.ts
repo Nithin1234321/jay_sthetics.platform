@@ -1776,6 +1776,7 @@ adminRouter.post("/nutrition-plans/paste", async (req,res)=>{
     proteinG:z.number().nonnegative(),
     carbsG:z.number().nonnegative(),
     fatsG:z.number().nonnegative(),
+    fiberG:z.number().nonnegative(),
     rawText:z.string()
   }).safeParse(req.body);
 
@@ -1792,6 +1793,7 @@ adminRouter.post("/nutrition-plans/paste", async (req,res)=>{
     proteinG,
     carbsG,
     fatsG,
+    fiberG,
     rawText
   }=parsed.data;
 
@@ -1840,6 +1842,7 @@ adminRouter.post("/nutrition-plans/paste", async (req,res)=>{
 
                 content:{
                   source:"FLEXIBLE_NUTRITION",
+                  fiberG,
                   rawText
                 }
               }
@@ -1862,6 +1865,7 @@ adminRouter.post("/nutrition-plans/paste", async (req,res)=>{
 
                 content:{
                   source:"FLEXIBLE_NUTRITION",
+                  fiberG,
                   rawText
                 }
               }
