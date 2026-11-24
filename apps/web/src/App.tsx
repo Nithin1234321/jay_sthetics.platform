@@ -4184,6 +4184,7 @@ function AdminNutrition({setNotice}:{setNotice:(s:string)=>void}){
   const [mealFor,setMealFor]=useState<any|null>(null);
   const [editingPlan,setEditingPlan]=useState<any|null>(null);
   const [editingMeal,setEditingMeal]=useState<any|null>(null);
+  const [showPasteDiet,setShowPasteDiet]=useState(false);
 
   async function load(){
     setPlans(
@@ -4394,6 +4395,58 @@ function AdminNutrition({setNotice}:{setNotice:(s:string)=>void}){
     }
   }
 
+  async function pasteDietPlan(
+    e:FormEvent<HTMLFormElement>
+  ){
+    e.preventDefault();
+
+    const f=
+      new FormData(e.currentTarget);
+
+    const rawText=
+      String(f.get("rawText")||"").trim();
+
+    if(!rawText){
+      setNotice(
+        "Paste the complete diet plan."
+      );
+      return;
+    }
+
+    try{
+      const result=
+        await api<{
+          ok:boolean;
+          id:string;
+          name:string;
+          created:boolean;
+          meals:number;
+        }>(
+          "/admin/nutrition-plans/paste",
+          {
+            method:"POST",
+            body:JSON.stringify({
+              rawText
+            })
+          }
+        );
+
+      setShowPasteDiet(false);
+
+      setNotice(
+        result.created
+          ?`${result.name} created with ${result.meals} meals.`
+          :`${result.name} replaced with ${result.meals} meals.`
+      );
+
+      await load();
+
+    }catch(e:any){
+      setNotice(e.message);
+    }
+  }
+
+
   async function deleteAllNutrition(){
     if(!window.confirm(
       "DELETE ALL nutrition plans? This will also remove meal options and client nutrition assignments linked to these plans. This cannot be undone."
@@ -4476,10 +4529,11 @@ function AdminNutrition({setNotice}:{setNotice:(s:string)=>void}){
         </button>
 
         <button
+          type="button"
           className="btn red"
-          onClick={()=>setShow(true)}
+          onClick={()=>setShowPasteDiet(true)}
         >
-          + New Nutrition Plan
+          + Paste Diet Plan
         </button>
       </div>
     </div>
@@ -4667,6 +4721,83 @@ function AdminNutrition({setNotice}:{setNotice:(s:string)=>void}){
         </div>
       )}
     </div>
+
+
+    {showPasteDiet&&
+      <Dialog
+        title="Paste Diet Plan"
+        close={()=>setShowPasteDiet(false)}
+      >
+        <form onSubmit={pasteDietPlan}>
+
+          <p className="muted">
+            Paste the complete diet exactly as written.
+            The system will automatically create the
+            plan macros and all Meal sections.
+          </p>
+
+          <textarea
+            name="rawText"
+            required
+            rows={26}
+            placeholder={`35FFM,
+(PROTEIN -88,FAT-35,CARBS-100)
+(calories-1070)
+
+chicken breast-230
+eggs-3
+oats-20
+potatoes-120
+curd-50
+milk-50
+banana-50
+cooked rice-65
+oil-10
+
+Meal-1
+oats-20g
+milk-50g
+banana-50g
+(P-5,F-3,C-26)(calories-151)
+
+Meal-2
+...
+
+Meal-3
+...
+
+Meal-4
+...`}
+            style={{
+              minHeight:"520px",
+              width:"100%",
+              resize:"vertical",
+              whiteSpace:"pre-wrap"
+            }}
+          />
+
+          <p
+            className="muted"
+            style={{
+              marginTop:"10px"
+            }}
+          >
+            Keep the meal headings as
+            Meal-1, Meal-2, Meal-3, Meal-4.
+            If the same FFM/carbs plan already exists,
+            pasting it again will replace that plan.
+          </p>
+
+          <button
+            type="submit"
+            className="btn red full"
+          >
+            Save Diet Plan
+          </button>
+
+        </form>
+      </Dialog>
+    }
 
 
     {show&&

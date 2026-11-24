@@ -1768,6 +1768,388 @@ adminRouter.get("/nutrition-plans", async (_req, res) => {
   }));
 });
 
+adminRouter.post("/nutrition-plans/paste", async (req,res)=>{
+  const parsed=z.object({
+    rawText:z.string().min(20)
+  }).safeParse(req.body);
+
+  if(!parsed.success){
+    return res.status(400).json({
+      error:"Paste the complete diet plan."
+    });
+  }
+
+  const text=parsed.data.rawText
+    .replace(/\r/g,"")
+    .trim();
+
+  // -------------------------------------------------------
+  // PLAN HEADER
+  // -------------------------------------------------------
+
+  const ffmMatch=
+    text.match(/(?:^|\n)\s*(\d+)\s*FFM\s*,?/i);
+
+  if(!ffmMatch){
+    return res.status(400).json({
+      error:"Could not find FFM. Example: 35FFM,"
+    });
+  }
+
+  const ffm=Number(ffmMatch[1]);
+
+  const macroPattern=
+    /\(\s*PROTEIN\s*-\s*([\d.]+)\s*,\s*FAT\s*-\s*([\d.]+)\s*,\s*CARBS\s*-\s*([\d.]+)\s*\)/gi;
+
+  const macroMatches=
+    [...text.matchAll(macroPattern)];
+
+  if(!macroMatches.length){
+    return res.status(400).json({
+      error:
+        "Could not find plan macros. Expected format: (PROTEIN -88,FAT-35,CARBS-100)"
+    });
+  }
+
+  const proteinG=Number(macroMatches[0][1]);
+  const fatsG=Number(macroMatches[0][2]);
+  const carbsG=Number(macroMatches[0][3]);
+
+  const caloriesMatch=
+    text.match(/\(\s*calories\s*-\s*([\d.]+)\s*\)/i);
+
+  if(!caloriesMatch){
+    return res.status(400).json({
+      error:
+        "Could not find plan calories. Expected format: (calories-1070)"
+    });
+  }
+
+  const calories=Number(caloriesMatch[1]);
+
+  const name=
+    `${ffm}FFM · ${Math.round(carbsG)}C`;
+
+
+  // -------------------------------------------------------
+  // DAILY FOOD TOTALS
+  // -------------------------------------------------------
+
+  const firstCaloriesIndex=
+    caloriesMatch.index??0;
+
+  const firstCaloriesEnd=
+    firstCaloriesIndex+caloriesMatch[0].length;
+
+  const secondMacroIndex=
+    macroMatches.length>1
+      ?macroMatches[1].index
+      :undefined;
+
+  const firstMealMatch=
+    text.match(/(?:^|\n)\s*Meal-\d+\s*(?:\n|$)/i);
+
+  const firstMealIndex=
+    firstMealMatch?.index??text.length;
+
+  const dailyEnd=
+    secondMacroIndex!==undefined
+      ?secondMacroIndex
+      :firstMealIndex;
+
+  const dailyBlock=
+    text.slice(
+      firstCaloriesEnd,
+      dailyEnd
+    );
+
+  const sourceFoods=
+    dailyBlock
+      .split("\n")
+      .map(line=>line.trim())
+      .filter(Boolean)
+      .map(line=>{
+        const match=
+          line.match(/^(.+?)\s*-\s*([\d.]+)\s*(g)?$/i);
+
+        if(!match)return null;
+
+        const foodName=
+          match[1].trim();
+
+        return{
+          name:foodName,
+          amount:Number(match[2]),
+          unit:/^eggs?$/i.test(foodName)
+            ?"count"
+            :"g"
+        };
+      })
+      .filter(
+        (
+          food
+        ):food is {
+          name:string;
+          amount:number;
+          unit:string;
+        }=>Boolean(food)
+      );
+
+
+  // -------------------------------------------------------
+  // MEALS
+  // -------------------------------------------------------
+
+  const mealHeadingPattern=
+    /(?:^|\n)\s*(Meal-\d+)\s*(?:\n|$)/gi;
+
+  const mealHeadings=
+    [...text.matchAll(mealHeadingPattern)];
+
+  if(!mealHeadings.length){
+    return res.status(400).json({
+      error:
+        "No meals found. Use full labels such as Meal-1, Meal-2, Meal-3, Meal-4."
+    });
+  }
+
+
+  const meals=mealHeadings.map(
+    (heading,index)=>{
+
+      // KEEP EXACT FULL MEAL LABEL.
+      // Meal-1 stays Meal-1.
+      const mealLabel=
+        heading[1];
+
+      const blockStart=
+        (heading.index??0)+
+        heading[0].length;
+
+      const blockEnd=
+        index+1<mealHeadings.length
+          ?mealHeadings[index+1].index??text.length
+          :text.length;
+
+      const block=
+        text.slice(
+          blockStart,
+          blockEnd
+        ).trim();
+
+
+      const mealMacro=
+        block.match(
+          /\(\s*P\s*-\s*([\d.]+)\s*,\s*F\s*-\s*([\d.]+)\s*,\s*C\s*-\s*([\d.]+)\s*\)/i
+        );
+
+      if(!mealMacro){
+        throw new Error(
+          `${mealLabel}: macros not found. Expected (P-5,F-3,C-26)`
+        );
+      }
+
+
+      const mealCalories=
+        block.match(
+          /\(\s*calories\s*-\s*([\d.]+)\s*\)/i
+        );
+
+      if(!mealCalories){
+        throw new Error(
+          `${mealLabel}: calories not found. Expected (calories-151)`
+        );
+      }
+
+
+      const foods=
+        block
+          .split("\n")
+          .map(line=>line.trim())
+          .filter(Boolean)
+          .filter(line=>
+            !/^\(\s*P\s*-/i.test(line) &&
+            !/^\(\s*calories\s*-/i.test(line)
+          );
+
+
+      if(!foods.length){
+        throw new Error(
+          `${mealLabel}: no food items found.`
+        );
+      }
+
+
+      return{
+        mealLabel,
+        optionLabel:"Standard",
+        calories:Number(mealCalories[1]),
+        proteinG:Number(mealMacro[1]),
+        fatsG:Number(mealMacro[2]),
+        carbsG:Number(mealMacro[3]),
+        foods
+      };
+    }
+  );
+
+
+  let result:{
+    planId:string;
+    created:boolean;
+  };
+
+  try{
+    result=
+      await prisma.$transaction(
+        async tx=>{
+
+          const existing=
+            await tx.nutritionPlan.findFirst({
+              where:{name},
+              select:{id:true}
+            });
+
+
+          let planId:string;
+
+
+          if(existing){
+
+            await tx.nutritionPlan.update({
+              where:{
+                id:existing.id
+              },
+
+              data:{
+                name,
+                calories,
+                proteinG,
+                carbsG,
+                fatsG,
+
+                content:{
+                  notes:
+                    "Created from admin pasted diet plan",
+                  source:
+                    "ADMIN_PASTE",
+                  ffm,
+                  sourceFoods
+                }
+              }
+            });
+
+
+            await tx.mealOption.deleteMany({
+              where:{
+                nutritionPlanId:
+                  existing.id
+              }
+            });
+
+
+            planId=
+              existing.id;
+
+          }else{
+
+            const plan=
+              await tx.nutritionPlan.create({
+                data:{
+                  name,
+                  calories,
+                  proteinG,
+                  carbsG,
+                  fatsG,
+
+                  content:{
+                    notes:
+                      "Created from admin pasted diet plan",
+                    source:
+                      "ADMIN_PASTE",
+                    ffm,
+                    sourceFoods
+                  }
+                }
+              });
+
+            planId=
+              plan.id;
+          }
+
+
+          for(const meal of meals){
+
+            await tx.mealOption.create({
+              data:{
+                nutritionPlanId:
+                  planId,
+
+                mealLabel:
+                  meal.mealLabel,
+
+                optionLabel:
+                  meal.optionLabel,
+
+                calories:
+                  meal.calories,
+
+                proteinG:
+                  meal.proteinG,
+
+                carbsG:
+                  meal.carbsG,
+
+                fatsG:
+                  meal.fatsG,
+
+                foods:
+                  meal.foods
+              }
+            });
+          }
+
+
+          return{
+            planId,
+            created:!existing
+          };
+        }
+      );
+
+  }catch(error:any){
+
+    return res.status(400).json({
+      error:
+        error?.message||
+        "Could not parse diet plan."
+    });
+  }
+
+
+  await audit(
+    req.auth!.sub,
+    result.created
+      ?"CREATE_PASTED_NUTRITION_PLAN"
+      :"REPLACE_PASTED_NUTRITION_PLAN",
+    "NUTRITION_PLAN",
+    result.planId,
+    {
+      name,
+      meals:meals.length
+    }
+  );
+
+
+  res.json({
+    ok:true,
+    id:result.planId,
+    name,
+    created:result.created,
+    meals:meals.length
+  });
+});
+
+
 adminRouter.post("/nutrition-plans", async (req, res) => {
   const parsed = z.object({
     name: z.string().min(2),
