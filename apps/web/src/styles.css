@@ -14,7 +14,16 @@ nav{margin-left:auto;display:flex;gap:28px;font-size:14px}nav a:hover{color:var(
 .placeholderGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.placeholderGrid div{aspect-ratio:4/3;border:1px dashed #444;border-radius:8px;display:grid;place-items:center;color:#666;background:#101010}
 .cta{min-height:330px;display:grid;place-items:center;text-align:center;background:radial-gradient(circle at center,#4a0909,#120606 42%,#080808 75%)}.cta .btn{margin:10px 5px}
 footer{padding:30px 6vw;border-top:1px solid #202020;display:flex;justify-content:space-between;align-items:center;color:#888}
-.modal{position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.78);backdrop-filter:blur(8px);display:grid;place-items:center;padding:20px}.modalCard{position:relative;width:min(520px,100%);padding:30px;background:#111;border:1px solid #333;border-radius:14px}.modalCard form{display:grid;gap:12px}.modalCard input,.modalCard textarea{padding:13px;border-radius:7px;border:1px solid #3c3c3c;background:#080808;color:white}.modalCard textarea{min-height:110px}.close{position:absolute;right:14px;top:10px;border:0;background:none;color:white;font-size:30px;cursor:pointer}
+.modal{position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.78);backdrop-filter:blur(8px);display:grid;place-items:center;padding:20px}.modalCard{
+  position:relative;
+  width:min(520px,100%);
+  padding:30px;
+  background:#111;
+  border:1px solid #333;
+  border-radius:14px;
+  max-height:calc(100vh - 40px);
+  overflow-y:auto;
+}.modalCard form{display:grid;gap:12px}.modalCard input,.modalCard textarea{padding:13px;border-radius:7px;border:1px solid #3c3c3c;background:#080808;color:white}.modalCard textarea{min-height:110px}.close{position:absolute;right:14px;top:10px;border:0;background:none;color:white;font-size:30px;cursor:pointer}
 @media(max-width:1050px){nav{display:none}.cards,.featureRow{grid-template-columns:repeat(2,1fr)}.hero h1{font-size:90px}}
 @media(max-width:700px){header{padding:0 18px}.actions .ghost{display:none}.hero{min-height:720px;align-items:end;background:linear-gradient(180deg,rgba(0,0,0,.05),rgba(0,0,0,.75) 48%,#050505 80%),url('/assets/jay-hero.jpeg') 60% 20%/cover no-repeat}.heroInner{padding-bottom:50px}.hero h1{font-size:68px}.cards,.featureRow,.about,.placeholderGrid{grid-template-columns:1fr}.card img{height:310px}.about>div{padding:45px 24px}.stats{grid-template-columns:1fr}.featureRow div{border-right:0;border-bottom:1px solid #222}footer{gap:20px;align-items:flex-start;flex-direction:column}}
 
@@ -69,7 +78,17 @@ button.tr{width:100%;color:inherit;border:0;text-align:left;cursor:pointer}
 .programmePrice{text-align:right}.programmePrice small{display:block;color:#666;font-size:9px;margin-bottom:6px}.programmePrice b{font-size:20px;color:#fff}
 .editBtn{padding:9px 13px}
 .programmeEditForm label{display:grid;gap:7px;color:#aaa;font-size:12px}.toggleLine{display:flex!important;align-items:center;gap:9px!important;padding:12px 0}.toggleLine input{width:auto}
-.dialogActions{display:flex;justify-content:flex-end;gap:10px;margin-top:8px}
+.dialogActions{
+  display:flex;
+  justify-content:flex-end;
+  gap:10px;
+  margin-top:12px;
+  position:sticky;
+  bottom:-30px;
+  background:#111;
+  padding:14px 0 18px;
+  z-index:3;
+}
 .paymentStats{margin-top:8px}
 .paymentStatus{font-style:normal;font-size:9px;font-weight:900;padding:5px 7px;border:1px solid #38383b;border-radius:99px}
 .paymentStatus.success{color:#65d99b;border-color:#215f41;background:#0d2117}
