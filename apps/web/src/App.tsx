@@ -4228,17 +4228,17 @@ function AdminNutrition({setNotice}:{setNotice:(s:string)=>void}){
     const name=
       String(f.get("name")||"").trim();
 
-    const calories=
-      Number(f.get("calories"));
+    const caloriesText=
+      String(f.get("calories")||"").trim();
 
-    const proteinG=
-      Number(f.get("proteinG"));
+    const proteinText=
+      String(f.get("proteinG")||"").trim();
 
-    const carbsG=
-      Number(f.get("carbsG"));
+    const carbsText=
+      String(f.get("carbsG")||"").trim();
 
-    const fatsG=
-      Number(f.get("fatsG"));
+    const fatsText=
+      String(f.get("fatsG")||"").trim();
 
     const rawText=
       String(f.get("rawText")||"");
@@ -4246,6 +4246,39 @@ function AdminNutrition({setNotice}:{setNotice:(s:string)=>void}){
     if(!name){
       setNotice(
         "Enter a nutrition plan name."
+      );
+      return;
+    }
+
+    if(
+      !caloriesText ||
+      !proteinText ||
+      !carbsText ||
+      !fatsText
+    ){
+      setNotice(
+        "Enter calories, protein, carbs and fats before saving."
+      );
+      return;
+    }
+
+    const calories=Number(caloriesText);
+    const proteinG=Number(proteinText);
+    const carbsG=Number(carbsText);
+    const fatsG=Number(fatsText);
+
+    if(
+      !Number.isFinite(calories) ||
+      !Number.isFinite(proteinG) ||
+      !Number.isFinite(carbsG) ||
+      !Number.isFinite(fatsG) ||
+      calories<0 ||
+      proteinG<0 ||
+      carbsG<0 ||
+      fatsG<0
+    ){
+      setNotice(
+        "Calories and macros must be valid numbers."
       );
       return;
     }
@@ -4561,13 +4594,13 @@ function AdminNutrition({setNotice}:{setNotice:(s:string)=>void}){
         <form
           className="nutritionEditorForm"
           onSubmit={saveDiet}
+          noValidate
         >
           <label>
             Plan name
 
             <input
               name="name"
-              required
               defaultValue={
                 editingPlan?.name||""
               }
@@ -4583,9 +4616,9 @@ function AdminNutrition({setNotice}:{setNotice:(s:string)=>void}){
               <input
                 name="calories"
                 type="number"
+                inputMode="numeric"
                 min="0"
                 step="1"
-                required
                 defaultValue={
                   editingPlan?.calories||""
                 }
@@ -4599,9 +4632,9 @@ function AdminNutrition({setNotice}:{setNotice:(s:string)=>void}){
               <input
                 name="proteinG"
                 type="number"
+                inputMode="numeric"
                 min="0"
                 step="1"
-                required
                 defaultValue={
                   editingPlan?.proteinG||""
                 }
@@ -4618,9 +4651,9 @@ function AdminNutrition({setNotice}:{setNotice:(s:string)=>void}){
               <input
                 name="carbsG"
                 type="number"
+                inputMode="numeric"
                 min="0"
                 step="1"
-                required
                 defaultValue={
                   editingPlan?.carbsG||""
                 }
@@ -4634,9 +4667,9 @@ function AdminNutrition({setNotice}:{setNotice:(s:string)=>void}){
               <input
                 name="fatsG"
                 type="number"
+                inputMode="numeric"
                 min="0"
                 step="1"
-                required
                 defaultValue={
                   editingPlan?.fatsG||""
                 }
@@ -4708,6 +4741,11 @@ You do not need to follow fixed Meal-1 / Meal-2 timings.`}
             <button
               type="submit"
               className="btn red nutritionSaveButton"
+              aria-label={
+                editingPlan
+                  ?"Save nutrition changes"
+                  :"Save nutrition plan"
+              }
             >
               {editingPlan
                 ?"Save Changes"
