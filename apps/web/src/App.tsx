@@ -4456,11 +4456,15 @@ function AdminNutrition({setNotice}:{setNotice:(s:string)=>void}){
         wide
         close={closeEditor}
       >
-        <form onSubmit={saveDiet}>
-          <label>
+        <form
+          className="nutritionEditorForm"
+          onSubmit={saveDiet}
+        >
+          <label className="nutritionEditorField">
             Complete diet plan
 
             <textarea
+              className="nutritionEditorTextarea"
               key={editingPlan?.id||"new-diet"}
               name="rawText"
               required
@@ -4507,12 +4511,19 @@ Meal-4
             Keep the headings exactly as Meal-1, Meal-2, Meal-3 and Meal-4.
           </p>
 
-          <div className="dialogActions">
-            <button type="button" className="btn ghost" onClick={closeEditor}>
+          <div className="dialogActions nutritionEditorActions">
+            <button
+              type="button"
+              className="btn ghost"
+              onClick={closeEditor}
+            >
               Cancel
             </button>
 
-            <button type="submit" className="btn red">
+            <button
+              type="submit"
+              className="btn red nutritionSaveButton"
+            >
               {editingPlan?"Save Changes":"Save Diet Plan"}
             </button>
           </div>

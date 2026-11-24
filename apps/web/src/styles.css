@@ -9885,3 +9885,107 @@ img{
 
 }
 
+
+
+/* Nutrition editor — mobile-safe save flow */
+.nutritionEditorForm{
+  min-height:0;
+}
+
+.nutritionEditorField{
+  display:flex;
+  flex-direction:column;
+  min-height:0;
+}
+
+.nutritionEditorTextarea{
+  width:100%;
+}
+
+.nutritionSaveButton{
+  touch-action:manipulation;
+  -webkit-tap-highlight-color:transparent;
+  cursor:pointer;
+}
+
+@media(max-width:700px){
+  .modal{
+    padding:0;
+    align-items:stretch;
+    overflow:hidden;
+  }
+
+  .modalCard,
+  .modalCard.wide{
+    width:100%;
+    max-width:none;
+    height:100dvh;
+    max-height:100dvh;
+    border-radius:0;
+    border-left:0;
+    border-right:0;
+    padding:20px 16px 0;
+    overflow:hidden;
+    display:flex;
+    flex-direction:column;
+  }
+
+  .modalCard > h2{
+    flex:0 0 auto;
+    padding-right:34px;
+  }
+
+  .nutritionEditorForm{
+    flex:1;
+    min-height:0;
+    display:flex !important;
+    flex-direction:column;
+    gap:10px;
+    overflow:hidden;
+  }
+
+  .nutritionEditorField{
+    flex:1;
+    min-height:0;
+  }
+
+  .nutritionEditorTextarea{
+    flex:1;
+    min-height:0 !important;
+    height:auto !important;
+    resize:none !important;
+    overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
+  }
+
+  .nutritionEditorForm > .muted{
+    flex:0 0 auto;
+    margin:0;
+    font-size:11px;
+  }
+
+  .nutritionEditorActions{
+    position:relative !important;
+    bottom:auto !important;
+    flex:0 0 auto;
+    margin:0 -16px;
+    padding:
+      12px
+      16px
+      calc(12px + env(safe-area-inset-bottom));
+    background:#111;
+    border-top:1px solid #303033;
+    z-index:30;
+  }
+
+  .nutritionEditorActions .btn{
+    flex:1;
+    min-height:50px;
+  }
+
+  .nutritionSaveButton{
+    position:relative;
+    z-index:31;
+    pointer-events:auto;
+  }
+}
