@@ -1770,33 +1770,30 @@ adminRouter.get("/nutrition-plans", async (_req, res) => {
 
 adminRouter.post("/nutrition-plans/paste", async (req,res)=>{
   const parsed=z.object({
-    rawText:z.string(),
-    planId:z.string().optional()
+    planId:z.string().optional(),
+    name:z.string().min(1),
+    calories:z.number().nonnegative(),
+    proteinG:z.number().nonnegative(),
+    carbsG:z.number().nonnegative(),
+    fatsG:z.number().nonnegative(),
+    rawText:z.string()
   }).safeParse(req.body);
 
-  if(
-    !parsed.success ||
-    !parsed.data.rawText.trim()
-  ){
+  if(!parsed.success){
     return res.status(400).json({
-      error:"Diet text cannot be empty."
+      error:"Enter the plan name and daily nutrition targets."
     });
   }
 
-  // Preserve exactly what the admin typed/pasted.
-  const rawText=
-    parsed.data.rawText;
-
-  const firstLine=
+  const {
+    planId,
+    name,
+    calories,
+    proteinG,
+    carbsG,
+    fatsG,
     rawText
-      .split(/\r?\n/)
-      .map(line=>line.trim())
-      .find(Boolean);
-
-  const displayName=
-    firstLine
-      ?firstLine.slice(0,100)
-      :"Diet Plan";
+  }=parsed.data;
 
   let result:{
     planId:string;
@@ -1808,23 +1805,20 @@ adminRouter.post("/nutrition-plans/paste", async (req,res)=>{
       await prisma.$transaction(
         async tx=>{
 
-          if(parsed.data.planId){
+          if(planId){
             const existing=
               await tx.nutritionPlan.findUnique({
-                where:{
-                  id:parsed.data.planId
-                },
-                select:{
-                  id:true
-                }
+                where:{id:planId},
+                select:{id:true}
               });
 
             if(!existing){
               throw new Error(
-                "Diet plan not found."
+                "Nutrition plan not found."
               );
             }
 
+            // Old meal records are not used by the new flexible system.
             await tx.mealOption.deleteMany({
               where:{
                 nutritionPlanId:
@@ -1836,14 +1830,16 @@ adminRouter.post("/nutrition-plans/paste", async (req,res)=>{
               where:{
                 id:existing.id
               },
+
               data:{
-                name:displayName,
-                calories:null,
-                proteinG:null,
-                carbsG:null,
-                fatsG:null,
+                name:name.trim(),
+                calories,
+                proteinG,
+                carbsG,
+                fatsG,
+
                 content:{
-                  source:"FREE_TEXT",
+                  source:"FLEXIBLE_NUTRITION",
                   rawText
                 }
               }
@@ -1858,13 +1854,14 @@ adminRouter.post("/nutrition-plans/paste", async (req,res)=>{
           const plan=
             await tx.nutritionPlan.create({
               data:{
-                name:displayName,
-                calories:null,
-                proteinG:null,
-                carbsG:null,
-                fatsG:null,
+                name:name.trim(),
+                calories,
+                proteinG,
+                carbsG,
+                fatsG,
+
                 content:{
-                  source:"FREE_TEXT",
+                  source:"FLEXIBLE_NUTRITION",
                   rawText
                 }
               }
@@ -1881,15 +1878,15 @@ adminRouter.post("/nutrition-plans/paste", async (req,res)=>{
     return res.status(400).json({
       error:
         error?.message||
-        "Could not save diet plan."
+        "Could not save nutrition plan."
     });
   }
 
   await audit(
     req.auth!.sub,
     result.created
-      ?"CREATE_FREE_TEXT_NUTRITION"
-      :"UPDATE_FREE_TEXT_NUTRITION",
+      ?"CREATE_FLEXIBLE_NUTRITION"
+      :"UPDATE_FLEXIBLE_NUTRITION",
     "NUTRITION_PLAN",
     result.planId
   );
@@ -1897,7 +1894,7 @@ adminRouter.post("/nutrition-plans/paste", async (req,res)=>{
   res.json({
     ok:true,
     id:result.planId,
-    name:displayName,
+    name:name.trim(),
     created:result.created
   });
 });

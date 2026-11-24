@@ -4185,295 +4185,376 @@ function AdminNutrition({setNotice}:{setNotice:(s:string)=>void}){
   const [editingPlan,setEditingPlan]=useState<any|null>(null);
 
   async function load(){
-    setPlans(await api<any[]>("/admin/nutrition-plans"));
+    setPlans(
+      await api<any[]>(
+        "/admin/nutrition-plans"
+      )
+    );
   }
 
   useEffect(()=>{
-    load().catch(e=>setNotice(e.message));
+    load().catch(
+      e=>setNotice(e.message)
+    );
   },[]);
 
-  function mealNumber(label:string){
-    const match=String(label||"").match(/Meal-(\d+)/i);
-    return match?Number(match[1]):999;
-  }
-
-  function planToText(plan:any){
-    if(
-      typeof plan.content?.rawText==="string"
-    ){
-      return plan.content.rawText;
-    }
-
-    // Legacy structured plans can still be opened.
-    const ffm=
-      plan.content?.ffm ||
-      String(plan.name||"")
-        .match(/(\d+)\s*FFM/i)?.[1] ||
-      "";
-
-    const dailyFoods=
-      Array.isArray(
-        plan.content?.sourceFoods
-      )
-        ?plan.content.sourceFoods.map(
-            (food:any)=>
-              `${food.name}-${food.amount}`
-          )
-        :[];
-
-    const meals=
-      [...(plan.mealOptions||[])]
-        .sort(
-          (a:any,b:any)=>
-            mealNumber(a.mealLabel)-
-            mealNumber(b.mealLabel)
-        )
-        .map((meal:any)=>{
-          const foods=
-            Array.isArray(meal.foods)
-              ?meal.foods.join("\n")
-              :"";
-
-          return[
-            meal.mealLabel,
-            foods,
-            `(P-${meal.proteinG||0},F-${meal.fatsG||0},C-${meal.carbsG||0})(calories-${meal.calories||0})`
-          ].join("\n");
-        });
-
-    return[
-      `${ffm}FFM,`,
-      `(PROTEIN -${plan.proteinG||0},FAT-${plan.fatsG||0},CARBS-${plan.carbsG||0})`,
-      `(calories-${plan.calories||0})`,
-      "",
-      ...dailyFoods,
-      "",
-      ...meals.flatMap(
-        (meal:string,index:number)=>
-          index===0
-            ?[meal]
-            :["",meal]
-      )
-    ].join("\n");
-  }
 
   function openNew(){
     setEditingPlan(null);
     setEditorOpen(true);
   }
 
+
   function openEdit(plan:any){
     setEditingPlan(plan);
     setEditorOpen(true);
   }
+
 
   function closeEditor(){
     setEditorOpen(false);
     setEditingPlan(null);
   }
 
-  async function saveDiet(e:FormEvent<HTMLFormElement>){
+
+  async function saveDiet(
+    e:FormEvent<HTMLFormElement>
+  ){
     e.preventDefault();
 
-    const f=new FormData(e.currentTarget);
-    const rawText=String(f.get("rawText")||"").trim();
+    const f=
+      new FormData(e.currentTarget);
 
-    if(!rawText){
-      setNotice("Paste the complete diet plan.");
+    const name=
+      String(f.get("name")||"").trim();
+
+    const calories=
+      Number(f.get("calories"));
+
+    const proteinG=
+      Number(f.get("proteinG"));
+
+    const carbsG=
+      Number(f.get("carbsG"));
+
+    const fatsG=
+      Number(f.get("fatsG"));
+
+    const rawText=
+      String(f.get("rawText")||"");
+
+    if(!name){
+      setNotice(
+        "Enter a nutrition plan name."
+      );
       return;
     }
 
     try{
-      const result=await api<{
-        ok:boolean;
-        id:string;
-        name:string;
-        created:boolean;
-      }>(
-        "/admin/nutrition-plans/paste",
-        {
-          method:"POST",
-          body:JSON.stringify({
-            rawText,
-            planId:editingPlan?.id
-          })
-        }
-      );
+      const result=
+        await api<{
+          ok:boolean;
+          id:string;
+          name:string;
+          created:boolean;
+        }>(
+          "/admin/nutrition-plans/paste",
+          {
+            method:"POST",
+
+            body:JSON.stringify({
+              planId:
+                editingPlan?.id,
+
+              name,
+              calories,
+              proteinG,
+              carbsG,
+              fatsG,
+              rawText
+            })
+          }
+        );
 
       closeEditor();
 
       setNotice(
         result.created
-          ?"Diet plan saved."
-          :"Diet plan updated."
+          ?"Nutrition plan created."
+          :"Nutrition plan updated."
       );
 
       await load();
+
     }catch(e:any){
       setNotice(e.message);
     }
   }
 
-  async function deletePlan(id:string){
+
+  async function deletePlan(
+    id:string
+  ){
     if(!window.confirm(
-      "Delete this diet plan? Client assignments using it will also be removed."
+      "Delete this nutrition plan?"
     ))return;
 
     try{
-      await api(`/admin/nutrition-plans/${id}`,{method:"DELETE"});
-      setNotice("Diet plan deleted.");
+      await api(
+        `/admin/nutrition-plans/${id}`,
+        {
+          method:"DELETE"
+        }
+      );
+
+      setNotice(
+        "Nutrition plan deleted."
+      );
+
       await load();
+
     }catch(e:any){
       setNotice(e.message);
     }
   }
+
 
   async function deleteAll(){
     if(!window.confirm(
-      "Delete ALL nutrition plans? This also removes linked client nutrition assignments."
+      "Delete ALL nutrition plans?"
     ))return;
 
     if(!window.confirm(
-      "Final confirmation: permanently delete every diet plan?"
+      "Final confirmation: permanently delete every nutrition plan?"
     ))return;
 
     try{
-      const result=await api<{ok:boolean;deletedCount:number}>(
-        "/admin/nutrition-plans",
-        {method:"DELETE"}
+      const result=
+        await api<{
+          ok:boolean;
+          deletedCount:number;
+        }>(
+          "/admin/nutrition-plans",
+          {
+            method:"DELETE"
+          }
+        );
+
+      setNotice(
+        `All nutrition plans deleted: ${result.deletedCount} removed.`
       );
 
-      setNotice(`All nutrition plans deleted: ${result.deletedCount} removed.`);
       await load();
+
     }catch(e:any){
       setNotice(e.message);
     }
   }
 
+
   const visiblePlans=
     plans.filter((plan:any)=>{
-      const q=search.trim().toLowerCase();
+      const q=
+        search
+          .trim()
+          .toLowerCase();
+
       if(!q)return true;
 
-      const sourceFoods=
-        Array.isArray(plan.content?.sourceFoods)
-          ?plan.content.sourceFoods.map((food:any)=>`${food.name} ${food.amount}`)
-          :[];
-
-      const mealText=
-        (plan.mealOptions||[]).flatMap((meal:any)=>[
-          meal.mealLabel,
-          meal.calories,
-          meal.proteinG,
-          meal.carbsG,
-          meal.fatsG,
-          ...(Array.isArray(meal.foods)?meal.foods:[])
-        ]);
-
-      return [
+      return[
         plan.name,
-        plan.content?.rawText||"",
         plan.calories,
         plan.proteinG,
         plan.carbsG,
         plan.fatsG,
-        ...sourceFoods,
-        ...mealText
-      ].join(" ").toLowerCase().includes(q);
+        plan.content?.rawText||""
+      ]
+        .join(" ")
+        .toLowerCase()
+        .includes(q);
     });
+
 
   return <>
     <div className="toolbar">
-      <div style={{flex:"1 1 360px"}}>
-        <h2 style={{margin:"0 0 6px"}}>Nutrition Plans</h2>
+      <div style={{
+        flex:"1 1 360px"
+      }}>
+        <h2 style={{
+          margin:"0 0 6px"
+        }}>
+          Nutrition Plans
+        </h2>
 
-        <p className="muted" style={{margin:"0 0 12px"}}>
-          Write or paste the diet exactly however you want. There is no required format.
+        <p
+          className="muted"
+          style={{
+            margin:"0 0 12px"
+          }}
+        >
+          Set the client's daily calorie and macro targets,
+          then list the foods and guidelines they can use
+          to build their own meals.
         </p>
 
         <input
           value={search}
-          onChange={e=>setSearch(e.target.value)}
-          placeholder="Search diet plans..."
-          style={{width:"100%",maxWidth:"560px"}}
+          onChange={
+            e=>setSearch(
+              e.target.value
+            )
+          }
+          placeholder="Search nutrition plans..."
+          style={{
+            width:"100%",
+            maxWidth:"560px"
+          }}
         />
       </div>
 
       <div className="toolbarActions">
-        <button type="button" className="btn ghost dangerButton" onClick={deleteAll}>
+        <button
+          type="button"
+          className="btn ghost dangerButton"
+          onClick={deleteAll}
+        >
           Delete All Nutrition
         </button>
 
-        <button type="button" className="btn red" onClick={openNew}>
-          + New Diet Plan
+        <button
+          type="button"
+          className="btn red"
+          onClick={openNew}
+        >
+          + New Nutrition Plan
         </button>
       </div>
     </div>
 
-    <div className="planGrid">
-      {visiblePlans.map((plan:any)=>
-        <article className="planCard" key={plan.id}>
-          <div style={{
-            display:"flex",
-            justifyContent:"space-between",
-            alignItems:"flex-start",
-            gap:"12px"
-          }}>
-            <div>
-              <h3 style={{marginTop:0}}>{plan.name}</h3>
 
-              <div className="macroRow">
-                <span>{plan.calories||"—"} kcal</span>
-                <span>P {plan.proteinG||"—"}g</span>
-                <span>C {plan.carbsG||"—"}g</span>
-                <span>F {plan.fatsG||"—"}g</span>
+    <div className="planGrid">
+      {visiblePlans.map(
+        (plan:any)=>
+          <article
+            className="planCard"
+            key={plan.id}
+          >
+            <div style={{
+              display:"flex",
+              justifyContent:"space-between",
+              alignItems:"flex-start",
+              gap:"12px"
+            }}>
+              <div>
+                <h3 style={{
+                  marginTop:0
+                }}>
+                  {plan.name}
+                </h3>
+
+                <div className="macroRow">
+                  <span>
+                    {plan.calories||0} kcal
+                  </span>
+
+                  <span>
+                    P {plan.proteinG||0}g
+                  </span>
+
+                  <span>
+                    C {plan.carbsG||0}g
+                  </span>
+
+                  <span>
+                    F {plan.fatsG||0}g
+                  </span>
+                </div>
+              </div>
+
+              <div style={{
+                display:"flex",
+                gap:"7px",
+                flexWrap:"wrap"
+              }}>
+                <button
+                  type="button"
+                  className="btn ghost"
+                  onClick={()=>
+                    openEdit(plan)
+                  }
+                >
+                  Edit Plan
+                </button>
+
+                <button
+                  type="button"
+                  className="btn ghost dangerButton"
+                  onClick={()=>
+                    deletePlan(plan.id)
+                  }
+                >
+                  Delete
+                </button>
               </div>
             </div>
 
-            <div style={{display:"flex",gap:"7px",flexWrap:"wrap"}}>
-              <button type="button" className="btn ghost" onClick={()=>openEdit(plan)}>
-                Edit Diet
-              </button>
 
-              <button
-                type="button"
-                className="btn ghost dangerButton"
-                onClick={()=>deletePlan(plan.id)}
+            <div style={{
+              marginTop:"18px"
+            }}>
+              <small
+                style={{
+                  display:"block",
+                  marginBottom:"8px",
+                  opacity:.65,
+                  fontWeight:800,
+                  letterSpacing:".06em"
+                }}
               >
-                Delete Diet
-              </button>
-            </div>
-          </div>
+                FOODS & COACH GUIDELINES
+              </small>
 
-          <pre
-            style={{
-              margin:"16px 0 0",
-              padding:"16px",
-              background:"#090909",
-              border:"1px solid #2c2c2f",
-              borderRadius:"8px",
-              whiteSpace:"pre-wrap",
-              overflowWrap:"anywhere",
-              fontFamily:"inherit",
-              fontSize:"13px",
-              lineHeight:1.65
-            }}
-          >
-            {planToText(plan)}
-          </pre>
-        </article>
+              <pre
+                style={{
+                  margin:0,
+                  padding:"16px",
+                  background:"#090909",
+                  border:"1px solid #2c2c2f",
+                  borderRadius:"8px",
+                  whiteSpace:"pre-wrap",
+                  overflowWrap:"anywhere",
+                  fontFamily:"inherit",
+                  fontSize:"13px",
+                  lineHeight:1.65
+                }}
+              >
+                {plan.content?.rawText||
+                  "No foods or guidelines added."}
+              </pre>
+            </div>
+          </article>
       )}
+
 
       {!visiblePlans.length&&
         <Empty
-          text={search.trim()?"No diets match your search.":"No nutrition plans yet."}
+          text={
+            search.trim()
+              ?"No plans match your search."
+              :"No nutrition plans yet."
+          }
         />
       }
     </div>
 
+
     {editorOpen&&
       <Dialog
-        title={editingPlan?"Edit Diet Plan":"New Diet Plan"}
+        title={
+          editingPlan
+            ?"Edit Nutrition Plan"
+            :"New Nutrition Plan"
+        }
         wide
         close={closeEditor}
       >
@@ -4481,41 +4562,139 @@ function AdminNutrition({setNotice}:{setNotice:(s:string)=>void}){
           className="nutritionEditorForm"
           onSubmit={saveDiet}
         >
-          <label className="nutritionEditorField">
-            Complete diet plan
+          <label>
+            Plan name
+
+            <input
+              name="name"
+              required
+              defaultValue={
+                editingPlan?.name||""
+              }
+              placeholder="e.g. Cutting Plan — 2200 kcal"
+            />
+          </label>
+
+
+          <div className="formGrid">
+            <label>
+              Daily Calories
+
+              <input
+                name="calories"
+                type="number"
+                min="0"
+                step="1"
+                required
+                defaultValue={
+                  editingPlan?.calories||""
+                }
+                placeholder="2200"
+              />
+            </label>
+
+            <label>
+              Protein (g)
+
+              <input
+                name="proteinG"
+                type="number"
+                min="0"
+                step="1"
+                required
+                defaultValue={
+                  editingPlan?.proteinG||""
+                }
+                placeholder="150"
+              />
+            </label>
+          </div>
+
+
+          <div className="formGrid">
+            <label>
+              Carbs (g)
+
+              <input
+                name="carbsG"
+                type="number"
+                min="0"
+                step="1"
+                required
+                defaultValue={
+                  editingPlan?.carbsG||""
+                }
+                placeholder="250"
+              />
+            </label>
+
+            <label>
+              Fats (g)
+
+              <input
+                name="fatsG"
+                type="number"
+                min="0"
+                step="1"
+                required
+                defaultValue={
+                  editingPlan?.fatsG||""
+                }
+                placeholder="60"
+              />
+            </label>
+          </div>
+
+
+          <label
+            className="nutritionEditorField"
+          >
+            Foods client can consume + coach guidelines
 
             <textarea
               className="nutritionEditorTextarea"
-              key={editingPlan?.id||"new-diet"}
+              key={
+                editingPlan?.id||
+                "new-nutrition"
+              }
               name="rawText"
-              required
-              rows={28}
-              defaultValue={editingPlan?planToText(editingPlan):""}
-              placeholder={`Type or paste the complete diet here exactly however you want.
+              rows={18}
+              defaultValue={
+                editingPlan
+                  ?.content
+                  ?.rawText||""
+              }
+              placeholder={`Foods you can use:
 
-Example:
-Breakfast
-Oats, eggs, fruit
+Chicken breast
+Eggs
+Oats
+Potatoes
+Curd
+Milk
+Banana
+Cooked rice
+Olive oil
 
-Lunch
-Rice and chicken
-
-Coach notes:
-Drink enough water.
-
-You can use any wording, order or structure.`}
+Guidelines:
+Split these foods into as many meals as you prefer.
+Focus on hitting your daily calories and macros.
+You do not need to follow fixed Meal-1 / Meal-2 timings.`}
               style={{
-                minHeight:"560px",
                 width:"100%",
+                minHeight:"340px",
                 resize:"vertical",
                 whiteSpace:"pre-wrap"
               }}
             />
           </label>
 
+
           <p className="muted">
-            No required format. Write the diet exactly the way you want it saved.
+            The client can arrange these foods into their own meals.
+            The goal is to hit the daily calorie and macro targets.
           </p>
+
 
           <div className="dialogActions nutritionEditorActions">
             <button
@@ -4530,7 +4709,9 @@ You can use any wording, order or structure.`}
               type="submit"
               className="btn red nutritionSaveButton"
             >
-              {editingPlan?"Save Changes":"Save Diet Plan"}
+              {editingPlan
+                ?"Save Changes"
+                :"Save Nutrition Plan"}
             </button>
           </div>
         </form>
@@ -6727,39 +6908,157 @@ function ClientNutrition({
   data:any;
   clientName:string;
 }){
-  const displayName=clientName?.trim()||"Your";
-  const dietTitle=displayName.endsWith("s")
-    ?`${displayName}' Diet Plan`
-    :`${displayName}'s Diet Plan`;
+  const displayName=
+    clientName?.trim()||
+    "Your";
+
+  const dietTitle=
+    displayName.endsWith("s")
+      ?`${displayName}' Nutrition Plan`
+      :`${displayName}'s Nutrition Plan`;
 
   return <div className="planGrid">
-    {data?.length?
-      data.map((a:any)=>
-        <div className="planCard" key={a.id}>
-          <h2>{dietTitle}</h2>
+    {data?.length
+      ?data.map((a:any)=>{
+          const plan=
+            a.nutritionPlan;
 
-          <div className="macroRow">
-            <span>{a.nutritionPlan.calories||"—"} kcal</span>
-            <span>P {a.nutritionPlan.proteinG||"—"}g</span>
-            <span>C {a.nutritionPlan.carbsG||"—"}g</span>
-            <span>F {a.nutritionPlan.fatsG||"—"}g</span>
-          </div>
+          const guidance=
+            typeof plan.content?.rawText==="string"
+              ?plan.content.rawText
+              :"";
 
-          {a.nutritionPlan.pdfUrl&&
-            <div style={{margin:"16px 0"}}>
-              <DietPdfButton src={a.nutritionPlan.pdfUrl}/>
-            </div>
-          }
+          return(
+            <article
+              className="planCard"
+              key={a.id}
+            >
+              <small
+                style={{
+                  opacity:.65,
+                  fontWeight:800,
+                  letterSpacing:".08em"
+                }}
+              >
+                DAILY NUTRITION TARGETS
+              </small>
 
-          {a.nutritionPlan.mealOptions.map((m:any)=>
-            <div className="mealRow" key={m.id}>
-              <b>{m.mealLabel} · {m.optionLabel}</b>
-              <small>{Array.isArray(m.foods)?m.foods.join(" + "):""}</small>
-              <span>{m.calories||"—"} kcal · P {m.proteinG||"—"} · C {m.carbsG||"—"} · F {m.fatsG||"—"}</span>
-            </div>
-          )}
-        </div>
-      )
+              <h2 style={{
+                marginBottom:"6px"
+              }}>
+                {dietTitle}
+              </h2>
+
+              <h3 style={{
+                marginTop:0,
+                opacity:.75
+              }}>
+                {plan.name}
+              </h3>
+
+
+              <div
+                className="macroRow"
+                style={{
+                  marginTop:"18px"
+                }}
+              >
+                <span>
+                  {plan.calories||0} kcal
+                </span>
+
+                <span>
+                  Protein {plan.proteinG||0}g
+                </span>
+
+                <span>
+                  Carbs {plan.carbsG||0}g
+                </span>
+
+                <span>
+                  Fats {plan.fatsG||0}g
+                </span>
+              </div>
+
+
+              <div
+                style={{
+                  marginTop:"22px",
+                  padding:"16px",
+                  border:"1px solid #2d2d30",
+                  borderRadius:"8px",
+                  background:"#0b0b0c"
+                }}
+              >
+                <b>
+                  Flexible meal approach
+                </b>
+
+                <p
+                  className="muted"
+                  style={{
+                    marginBottom:0,
+                    lineHeight:1.6
+                  }}
+                >
+                  You do not have to eat fixed meals at fixed times.
+                  Build your meals using the foods and guidelines below,
+                  while aiming to hit your total daily calorie and macro targets.
+                </p>
+              </div>
+
+
+              <div style={{
+                marginTop:"22px"
+              }}>
+                <small
+                  style={{
+                    display:"block",
+                    marginBottom:"9px",
+                    opacity:.65,
+                    fontWeight:800,
+                    letterSpacing:".07em"
+                  }}
+                >
+                  FOODS & COACH GUIDELINES
+                </small>
+
+                <pre
+                  style={{
+                    margin:0,
+                    whiteSpace:"pre-wrap",
+                    overflowWrap:"anywhere",
+                    fontFamily:"inherit",
+                    fontSize:"14px",
+                    lineHeight:1.75,
+                    padding:"18px",
+                    border:"1px solid #2d2d30",
+                    borderRadius:"8px",
+                    background:"#090909"
+                  }}
+                >
+                  {guidance||
+                    "Your coach has not added food guidelines yet."}
+                </pre>
+              </div>
+
+
+              {a.notes&&
+                <div style={{
+                  marginTop:"18px"
+                }}>
+                  <small>
+                    COACH NOTE
+                  </small>
+
+                  <p>
+                    {a.notes}
+                  </p>
+                </div>
+              }
+            </article>
+          );
+        })
       :
       <Empty text="Jay hasn't assigned a nutrition plan yet."/>
     }
