@@ -4198,36 +4198,62 @@ function AdminNutrition({setNotice}:{setNotice:(s:string)=>void}){
   }
 
   function planToText(plan:any){
+    if(
+      typeof plan.content?.rawText==="string"
+    ){
+      return plan.content.rawText;
+    }
+
+    // Legacy structured plans can still be opened.
     const ffm=
       plan.content?.ffm ||
-      String(plan.name||"").match(/(\d+)\s*FFM/i)?.[1] ||
+      String(plan.name||"")
+        .match(/(\d+)\s*FFM/i)?.[1] ||
       "";
 
     const dailyFoods=
-      Array.isArray(plan.content?.sourceFoods)
-        ?plan.content.sourceFoods.map((food:any)=>`${food.name}-${food.amount}`)
+      Array.isArray(
+        plan.content?.sourceFoods
+      )
+        ?plan.content.sourceFoods.map(
+            (food:any)=>
+              `${food.name}-${food.amount}`
+          )
         :[];
 
     const meals=
       [...(plan.mealOptions||[])]
-        .sort((a:any,b:any)=>mealNumber(a.mealLabel)-mealNumber(b.mealLabel))
+        .sort(
+          (a:any,b:any)=>
+            mealNumber(a.mealLabel)-
+            mealNumber(b.mealLabel)
+        )
         .map((meal:any)=>{
-          const foods=Array.isArray(meal.foods)?meal.foods.join("\n"):"";
-          return [
+          const foods=
+            Array.isArray(meal.foods)
+              ?meal.foods.join("\n")
+              :"";
+
+          return[
             meal.mealLabel,
             foods,
             `(P-${meal.proteinG||0},F-${meal.fatsG||0},C-${meal.carbsG||0})(calories-${meal.calories||0})`
           ].join("\n");
         });
 
-    return [
+    return[
       `${ffm}FFM,`,
       `(PROTEIN -${plan.proteinG||0},FAT-${plan.fatsG||0},CARBS-${plan.carbsG||0})`,
       `(calories-${plan.calories||0})`,
       "",
       ...dailyFoods,
       "",
-      ...meals.flatMap((meal:string,index:number)=>index===0?[meal]:["",meal])
+      ...meals.flatMap(
+        (meal:string,index:number)=>
+          index===0
+            ?[meal]
+            :["",meal]
+      )
     ].join("\n");
   }
 
@@ -4263,7 +4289,6 @@ function AdminNutrition({setNotice}:{setNotice:(s:string)=>void}){
         id:string;
         name:string;
         created:boolean;
-        meals:number;
       }>(
         "/admin/nutrition-plans/paste",
         {
@@ -4279,8 +4304,8 @@ function AdminNutrition({setNotice}:{setNotice:(s:string)=>void}){
 
       setNotice(
         result.created
-          ?`${result.name} created with ${result.meals} meals.`
-          :`${result.name} updated with ${result.meals} meals.`
+          ?"Diet plan saved."
+          :"Diet plan updated."
       );
 
       await load();
@@ -4347,6 +4372,7 @@ function AdminNutrition({setNotice}:{setNotice:(s:string)=>void}){
 
       return [
         plan.name,
+        plan.content?.rawText||"",
         plan.calories,
         plan.proteinG,
         plan.carbsG,
@@ -4362,13 +4388,13 @@ function AdminNutrition({setNotice}:{setNotice:(s:string)=>void}){
         <h2 style={{margin:"0 0 6px"}}>Nutrition Plans</h2>
 
         <p className="muted" style={{margin:"0 0 12px"}}>
-          Paste the complete diet in one box. The plan and Meal sections are created automatically.
+          Write or paste the diet exactly however you want. There is no required format.
         </p>
 
         <input
           value={search}
           onChange={e=>setSearch(e.target.value)}
-          placeholder="Search 35FFM, 100C, chicken, cooked rice..."
+          placeholder="Search diet plans..."
           style={{width:"100%",maxWidth:"560px"}}
         />
       </div>
@@ -4419,27 +4445,22 @@ function AdminNutrition({setNotice}:{setNotice:(s:string)=>void}){
             </div>
           </div>
 
-          <div style={{marginTop:"14px"}}>
-            {[...(plan.mealOptions||[])]
-              .sort((a:any,b:any)=>mealNumber(a.mealLabel)-mealNumber(b.mealLabel))
-              .map((meal:any)=>
-                <div className="mealRow" key={meal.id}>
-                  <b>{meal.mealLabel}</b>
-
-                  <small>
-                    {Array.isArray(meal.foods)?meal.foods.join(" + "):""}
-                  </small>
-
-                  <span>
-                    P {meal.proteinG||"—"} ·
-                    C {meal.carbsG||"—"} ·
-                    F {meal.fatsG||"—"} ·
-                    {meal.calories||"—"} kcal
-                  </span>
-                </div>
-              )
-            }
-          </div>
+          <pre
+            style={{
+              margin:"16px 0 0",
+              padding:"16px",
+              background:"#090909",
+              border:"1px solid #2c2c2f",
+              borderRadius:"8px",
+              whiteSpace:"pre-wrap",
+              overflowWrap:"anywhere",
+              fontFamily:"inherit",
+              fontSize:"13px",
+              lineHeight:1.65
+            }}
+          >
+            {planToText(plan)}
+          </pre>
         </article>
       )}
 
@@ -4470,34 +4491,19 @@ function AdminNutrition({setNotice}:{setNotice:(s:string)=>void}){
               required
               rows={28}
               defaultValue={editingPlan?planToText(editingPlan):""}
-              placeholder={`35FFM,
-(PROTEIN -88,FAT-35,CARBS-100)
-(calories-1070)
+              placeholder={`Type or paste the complete diet here exactly however you want.
 
-chicken breast-230
-eggs-3
-oats-20
-potatoes-120
-curd-50
-milk-50
-banana-50
-cooked rice-65
-oil-10
+Example:
+Breakfast
+Oats, eggs, fruit
 
-Meal-1
-oats-20g
-milk-50g
-banana-50g
-(P-5,F-3,C-26)(calories-151)
+Lunch
+Rice and chicken
 
-Meal-2
-...
+Coach notes:
+Drink enough water.
 
-Meal-3
-...
-
-Meal-4
-...`}
+You can use any wording, order or structure.`}
               style={{
                 minHeight:"560px",
                 width:"100%",
@@ -4508,7 +4514,7 @@ Meal-4
           </label>
 
           <p className="muted">
-            Keep the headings exactly as Meal-1, Meal-2, Meal-3 and Meal-4.
+            No required format. Write the diet exactly the way you want it saved.
           </p>
 
           <div className="dialogActions nutritionEditorActions">
